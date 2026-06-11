@@ -1445,9 +1445,69 @@ class CollectionScene extends Phaser.Scene {
       }).setOrigin(0.5);
     });
 
-    const backBtn = this.add.rectangle(width / 2, height - 36, 200, 44, 0x4c1d95).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    this.add.text(width / 2, height - 36, '← 돌아가기', { fontSize: '16px', fontFamily: 'Malgun Gothic', color: '#fff' }).setOrigin(0.5);
+    const backBtn = this.add.rectangle(width / 2 - 65, height - 36, 120, 44, 0x4c1d95).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    this.add.text(width / 2 - 65, height - 36, '← 돌아가기', { fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#fff' }).setOrigin(0.5);
     backBtn.on('pointerdown', () => this.scene.start('TitleScene'));
+
+    const typeBtn = this.add.rectangle(width / 2 + 65, height - 36, 120, 44, 0x0f6e56).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    this.add.text(width / 2 + 65, height - 36, '속성 도감 ⚡', { fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#fff' }).setOrigin(0.5);
+    typeBtn.on('pointerdown', () => this.scene.start('TypeChartScene', { saveData: this.saveData }));
+  }
+}
+
+// ── 씬: 속성 도감 ─────────────────────────────────────────────────────────────
+class TypeChartScene extends Phaser.Scene {
+  constructor() { super('TypeChartScene'); }
+
+  init(data) { this.saveData = data.saveData || Save.load(); }
+
+  create() {
+    const { width, height } = this.scale;
+    this.add.rectangle(0, 0, width, height, 0x0f0728).setOrigin(0);
+    this.add.text(width / 2, 30, '⚡ 속성 도감', { fontSize: '22px', fontFamily: 'Malgun Gothic', color: '#e9d5ff' }).setOrigin(0.5);
+    this.add.text(width / 2, 56, '내 속성이 상대에게 강하면 데미지 1.5배!', { fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#a78bfa' }).setOrigin(0.5);
+
+    const typeChart = PETS_DATA.typeChart;
+    const typeColors = {
+      '불꽃':'#f97316','물':'#3b82f6','풀':'#22c55e','전기':'#eab308',
+      '얼음':'#67e8f9','땅':'#a16207','바람':'#86efac','어둠':'#7c3aed',
+      '에스퍼':'#d8b4fe','페어리':'#f9a8d4','빛':'#fde047','노말':'#9ca3af'
+    };
+    const typeEmoji = {
+      '불꽃':'🔥','물':'💧','풀':'🌿','전기':'⚡','얼음':'❄️','땅':'🏔️',
+      '바람':'🌪️','어둠':'🌑','에스퍼':'🔮','페어리':'🧚','빛':'✨','노말':'⭐'
+    };
+
+    const types = Object.keys(typeChart);
+    let y = 90;
+    types.forEach((type) => {
+      const strong = typeChart[type];
+      // 속성 박스
+      const box = this.add.rectangle(70, y, 110, 34, 0x1e1145).setOrigin(0.5);
+      box.setStrokeStyle(1.5, Phaser.Display.Color.HexStringToColor(typeColors[type]).color);
+      this.add.text(70, y, `${typeEmoji[type]} ${type}`, { fontSize: '13px', fontFamily: 'Malgun Gothic', color: typeColors[type], fontStyle: 'bold' }).setOrigin(0.5);
+
+      // 화살표
+      this.add.text(140, y, '▶', { fontSize: '12px', color: '#4ade80' }).setOrigin(0.5);
+
+      // 강한 상대들
+      if (strong.length === 0) {
+        this.add.text(165, y, '상성 없음', { fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#6b7280' }).setOrigin(0, 0.5);
+      } else {
+        const text = strong.map(t => `${typeEmoji[t]||''}${t}`).join('  ');
+        this.add.text(160, y, text, { fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#4ade80' }).setOrigin(0, 0.5);
+      }
+      y += 36;
+    });
+
+    // 전설 안내
+    this.add.text(width / 2, y + 8, '👑 전설 펫은 모든 속성 상성에 면역!', {
+      fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#fbbf24', fontStyle: 'bold',
+    }).setOrigin(0.5);
+
+    const backBtn = this.add.rectangle(width / 2, height - 36, 200, 44, 0x4c1d95).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    this.add.text(width / 2, height - 36, '← 도감으로', { fontSize: '16px', fontFamily: 'Malgun Gothic', color: '#fff' }).setOrigin(0.5);
+    backBtn.on('pointerdown', () => this.scene.start('CollectionScene', { saveData: this.saveData }));
   }
 }
 
@@ -1506,7 +1566,7 @@ async function init() {
       TitleScene, GradeScene, CharScene,
       MapScene, QuizScene, HatchScene, ResultScene,
       BattleScene, PetSwapScene,
-      BagScene, CollectionScene, WorldMapScene,
+      BagScene, CollectionScene, TypeChartScene, WorldMapScene,
     ],
     scale: {
       mode: Phaser.Scale.FIT,
