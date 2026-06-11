@@ -37,8 +37,25 @@ const Utils = {
     return pet.img.lv5;
   },
 
+  // 레벨별 스탯 계산 (6레벨 이상 무한 지원)
+  getLevelStats(level) {
+    const rule = PETS_DATA.levelRule;
+    if (level <= rule.maxFixed) {
+      return PETS_DATA.levels[String(level)];
+    }
+    // 6레벨 이상: 5레벨 기준 + 추가
+    const base = PETS_DATA.levels[String(rule.maxFixed)];
+    const extra = level - rule.maxFixed;
+    return {
+      xpToNext: rule.xpPerLevelAfter5,
+      atkMin: base.atkMin + extra * rule.atkPerLevelAfter5,
+      atkMax: base.atkMax + extra * rule.atkPerLevelAfter5,
+      hp: base.hp + extra * rule.hpPerLevelAfter5,
+    };
+  },
+
   buildPetInstance(petData, level) {
-    const lvData = PETS_DATA.levels[String(level)];
+    const lvData = Utils.getLevelStats(level);
     return {
       id: petData.id,
       name: petData.name,
@@ -55,6 +72,44 @@ const Utils = {
       alive: true,
       isActive: false,
     };
+  },
+
+  // 속성 상성 배율 계산
+  // attacker가 defender를 공격할 때의 배율 반환
+  typeMultiplier(attacker, defender) {
+    // 방어자가 전설이면 상성 면역 (항상 1.0)
+    if (defender.isLegend) return 1.0;
+    const chart = PETS_DATA.typeChart;
+    const strongAgainst = chart[attacker.type] || [];
+    if (strongAgainst.includes(defender.type)) return 'advantage';
+    // 역상성 체크 (방어자 속성이 공격자를 이기면 불리)
+    const defenderStrong = chart[defender.type] || [];
+    if (defenderStrong.includes(attacker.type)) return 'disadvantage';
+    return 'normal';
+  },
+
+  // 최종 데미지 계산
+  calcDamage(attacker, defender, isSkill) {
+    const rule = PETS_DATA.battleRule;
+    const typeResult = Utils.typeMultiplier(attacker, defender);
+    let mult = 1.0;
+    let label = '';
+
+    if (isSkill && typeResult === 'advantage') {
+      mult = rule.skillAndAdvantage; // 1.8 (곱연산 방지)
+      label = '필살기 + 효과적!';
+    } else if (isSkill) {
+      mult = rule.skillMultiplier; // 1.5
+      label = '필살기!';
+      if (typeResult === 'disadvantage') { mult *= rule.typeDisadvantage; label = '필살기 (효과 약함)'; }
+    } else if (typeResult === 'advantage') {
+      mult = rule.typeAdvantage; // 1.5
+      label = '효과적!';
+    } else if (typeResult === 'disadvantage') {
+      mult = rule.typeDisadvantage; // 0.75
+      label = '효과 약함...';
+    }
+    return { damage: Math.round(attacker.atk * mult), label };
   },
 
   gacha() {
@@ -806,18 +861,20 @@ class QuizScene extends Phaser.Scene {
       }).setOrigin(0.5);
     }
 
-    // XP 적용
+    // XP 적용 (레벨 무한)
     const activePet = this.saveData.bag.find(p => p.isActive && p.alive);
     if (activePet) {
       activePet.xp += xpGain;
-      if (activePet.level < 5 && activePet.xp >= activePet.xpToNext) {
+      // 여러 레벨 한 번에 오를 수 있으니 while
+      while (activePet.xp >= activePet.xpToNext) {
+        activePet.xp -= activePet.xpToNext;
         activePet.level++;
-        const lvData = PETS_DATA.levels[String(activePet.level)];
-        activePet.xp = 0;
+        const lvData = Utils.getLevelStats(activePet.level);
         activePet.xpToNext = lvData.xpToNext;
         activePet.atk = Utils.randInt(lvData.atkMin, lvData.atkMax);
         activePet.maxHp = lvData.hp;
         activePet.hp = lvData.hp;
+        this.leveledUp = true;
       }
     }
     Save.save(this.saveData);
@@ -1056,17 +1113,27 @@ class BattleScene extends Phaser.Scene {
 
     this.children.removeAll();
     this.add.rectangle(0, 0, width, height, 0x0f0728).setOrigin(0);
-    this.add.text(width / 2, 30, '⚔️ 배틀!', { fontSize: '22px', fontFamily: 'Malgun Gothic', color: '#e9d5ff' }).setOrigin(0.5);
+    this.add.text(width / 2, 28, '⚔️ 배틀!', { fontSize: '22px', fontFamily: 'Malgun Gothic', color: '#e9d5ff' }).setOrigin(0.5);
 
-    this.add.text(width * 0.25, 80,  `야생 ${this.wildPet.name}`,  { fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#fb923c' }).setOrigin(0.5);
-    this.add.text(width * 0.25, 100, `Lv.${this.wildPet.level}`, { fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#9ca3af' }).setOrigin(0.5);
-    this.add.text(width * 0.25, 150, '🐾', { fontSize: '60px' }).setOrigin(0.5);
-    this.drawHpBar(width * 0.25, 190, this.wildPet.hp, this.wildPet.maxHp, 0xe11d48);
+    const legendMark = (p) => p.isLegend ? ' 👑' : '';
 
-    this.add.text(width * 0.75, 80,  `내 ${this.myPet.name}`,     { fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#60a5fa' }).setOrigin(0.5);
-    this.add.text(width * 0.75, 100, `Lv.${this.myPet.level}`, { fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#9ca3af' }).setOrigin(0.5);
-    this.add.text(width * 0.75, 150, '🐉', { fontSize: '60px' }).setOrigin(0.5);
-    this.drawHpBar(width * 0.75, 190, this.myPet.hp, this.myPet.maxHp, 0x2563eb);
+    this.add.text(width * 0.25, 72,  `야생 ${this.wildPet.name}${legendMark(this.wildPet)}`,  { fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#fb923c' }).setOrigin(0.5);
+    this.add.text(width * 0.25, 92, `Lv.${this.wildPet.level}  [${this.wildPet.type}]`, { fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#9ca3af' }).setOrigin(0.5);
+    this.add.text(width * 0.25, 145, '🐾', { fontSize: '56px' }).setOrigin(0.5);
+    this.drawHpBar(width * 0.25, 185, this.wildPet.hp, this.wildPet.maxHp, 0xe11d48);
+
+    this.add.text(width * 0.75, 72,  `내 ${this.myPet.name}${legendMark(this.myPet)}`,     { fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#60a5fa' }).setOrigin(0.5);
+    this.add.text(width * 0.75, 92, `Lv.${this.myPet.level}  [${this.myPet.type}]`, { fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#9ca3af' }).setOrigin(0.5);
+    this.add.text(width * 0.75, 145, '🐉', { fontSize: '56px' }).setOrigin(0.5);
+    this.drawHpBar(width * 0.75, 185, this.myPet.hp, this.myPet.maxHp, 0x2563eb);
+
+    // 속성 상성 표시
+    const adv = Utils.typeMultiplier(this.myPet, this.wildPet);
+    let advText = '', advColor = '#9ca3af';
+    if (this.wildPet.isLegend) { advText = '상대는 전설 — 상성 면역!'; advColor = '#fbbf24'; }
+    else if (adv === 'advantage')    { advText = '내 속성이 효과적! 💪'; advColor = '#4ade80'; }
+    else if (adv === 'disadvantage') { advText = '내 속성이 불리해요...'; advColor = '#fb7185'; }
+    if (advText) this.add.text(width / 2, 218, advText, { fontSize: '12px', fontFamily: 'Malgun Gothic', color: advColor }).setOrigin(0.5);
 
     this.logText = this.add.text(width / 2, 240, this.turn === 'player' ? '행동을 선택하세요!' : '야생 펫의 턴...', {
       fontSize: '15px', fontFamily: 'Malgun Gothic', color: '#e9d5ff', align: 'center',
@@ -1107,47 +1174,67 @@ class BattleScene extends Phaser.Scene {
 
   playerAction(action) {
     this.defending = false;
-    let dmg = 0;
 
     if (action === 'run') {
       this.scene.start('MapScene', { saveData: this.saveData });
       return;
     }
-    if (action === 'attack') dmg = this.myPet.atk;
-    if (action === 'defend') { this.defending = true; dmg = 0; }
-    if (action === 'skill' && this.skillCooldown === 0) {
-      dmg = this.myPet.atk * 2;
-      this.skillCooldown = 3;
+    if (action === 'defend') {
+      this.defending = true;
+      this.showDamageLabel('🛡️ 방어 태세!', '#60a5fa');
+      if (this.skillCooldown > 0) this.skillCooldown--;
+      this.turn = 'enemy';
+      this.time.delayedCall(700, () => this.enemyTurn());
+      return;
     }
 
-    if (dmg > 0) {
-      this.wildPet.hp = Math.max(this.wildPet.hp - dmg, 0);
-      if (this.wildPet.hp <= 0) { this.battleWin(); return; }
+    const isSkill = action === 'skill' && this.skillCooldown === 0;
+    const { damage, label } = Utils.calcDamage(this.myPet, this.wildPet, isSkill);
+
+    if (isSkill) this.skillCooldown = 3;
+    else if (this.skillCooldown > 0) this.skillCooldown--;
+
+    this.wildPet.hp = Math.max(this.wildPet.hp - damage, 0);
+    this.showDamageLabel(`${label ? label + ' ' : ''}${damage} 데미지!`, label.includes('효과적') || label.includes('필살기') ? '#fbbf24' : '#ffffff');
+
+    if (this.wildPet.hp <= 0) {
+      this.time.delayedCall(700, () => this.battleWin());
+      return;
     }
-    if (this.skillCooldown > 0 && action !== 'skill') this.skillCooldown--;
 
     this.turn = 'enemy';
-    this.time.delayedCall(600, () => this.enemyTurn());
+    this.time.delayedCall(800, () => this.enemyTurn());
+  }
+
+  showDamageLabel(text, color) {
+    const { width, height } = this.scale;
+    const t = this.add.text(width / 2, height * 0.42, text, {
+      fontSize: '20px', fontFamily: 'Malgun Gothic', color, fontStyle: 'bold',
+      stroke: '#000', strokeThickness: 3,
+    }).setOrigin(0.5).setDepth(30);
+    this.tweens.add({ targets: t, y: t.y - 40, alpha: 0, duration: 1000, onComplete: () => t.destroy() });
   }
 
   enemyTurn() {
-    const dmg = this.defending ? Math.floor(this.wildPet.atk * 0.5) : this.wildPet.atk;
-    this.myPet.hp = Math.max(this.myPet.hp - dmg, 0);
+    const { damage, label } = Utils.calcDamage(this.wildPet, this.myPet, false);
+    const finalDmg = this.defending ? Math.round(damage * PETS_DATA.battleRule.defendReduction) : damage;
+    this.myPet.hp = Math.max(this.myPet.hp - finalDmg, 0);
+    this.showDamageLabel(`적 공격! ${finalDmg} 데미지`, '#fb7185');
 
     if (this.myPet.hp <= 0) {
       this.myPet.alive = false;
       const nextPet = this.saveData.bag.find(p => p.alive && !p.isActive);
       if (nextPet) {
-        this.scene.start('PetSwapScene', { saveData: this.saveData, wildPet: this.wildPet });
+        this.time.delayedCall(700, () => this.scene.start('PetSwapScene', { saveData: this.saveData, wildPet: this.wildPet, wildDataId: this.wildDataId }));
         return;
       } else {
-        this.battleLose();
+        this.time.delayedCall(700, () => this.battleLose());
         return;
       }
     }
 
     this.turn = 'player';
-    this.drawBattle();
+    this.time.delayedCall(700, () => this.drawBattle());
   }
 
   battleWin() {
@@ -1178,7 +1265,7 @@ class BattleScene extends Phaser.Scene {
 class PetSwapScene extends Phaser.Scene {
   constructor() { super('PetSwapScene'); }
 
-  init(data) { this.saveData = data.saveData; this.wildPet = data.wildPet; }
+  init(data) { this.saveData = data.saveData; this.wildPet = data.wildPet; this.wildDataId = data.wildDataId; }
 
   create() {
     const { width, height } = this.scale;
@@ -1201,7 +1288,7 @@ class PetSwapScene extends Phaser.Scene {
       btn.on('pointerdown', () => {
         this.saveData.bag.forEach(p => p.isActive = false);
         pet.isActive = true;
-        this.scene.start('BattleScene', { saveData: this.saveData, wildPet: this.wildPet });
+        this.scene.start('BattleScene', { saveData: this.saveData, wildPet: this.wildPet, wildDataId: this.wildDataId });
       });
     });
   }
