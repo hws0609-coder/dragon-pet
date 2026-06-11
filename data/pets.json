@@ -303,10 +303,38 @@
   ],
   "levels": {
     "1": { "xpToNext": 100, "atkMin": 1,  "atkMax": 10, "hp": 20  },
-    "2": { "xpToNext": 200, "atkMin": 11, "atkMax": 20, "hp": 35  },
-    "3": { "xpToNext": 300, "atkMin": 21, "atkMax": 30, "hp": 50  },
-    "4": { "xpToNext": 400, "atkMin": 31, "atkMax": 40, "hp": 70  },
-    "5": { "xpToNext": 500, "atkMin": 41, "atkMax": 50, "hp": 100 }
+    "2": { "xpToNext": 200, "atkMin": 11, "atkMax": 20, "hp": 55  },
+    "3": { "xpToNext": 300, "atkMin": 21, "atkMax": 30, "hp": 85  },
+    "4": { "xpToNext": 400, "atkMin": 31, "atkMax": 40, "hp": 120 },
+    "5": { "xpToNext": 500, "atkMin": 41, "atkMax": 50, "hp": 160 }
+  },
+  "levelRule": {
+    "maxFixed": 5,
+    "hpPerLevelAfter5": 10,
+    "atkPerLevelAfter5": 10,
+    "xpPerLevelAfter5": 500
+  },
+  "typeChart": {
+    "불꽃":   ["풀", "얼음"],
+    "물":     ["불꽃", "땅"],
+    "풀":     ["물", "땅"],
+    "전기":   ["물", "바람"],
+    "얼음":   ["풀", "바람"],
+    "땅":     ["불꽃", "전기"],
+    "바람":   ["풀", "땅"],
+    "어둠":   ["에스퍼", "페어리"],
+    "에스퍼": ["바람", "독"],
+    "페어리": ["어둠", "에스퍼"],
+    "빛":     ["어둠"],
+    "노말":   []
+  },
+  "battleRule": {
+    "skillMultiplier": 1.5,
+    "typeAdvantage": 1.5,
+    "typeDisadvantage": 0.75,
+    "skillAndAdvantage": 1.8,
+    "defendReduction": 0.5,
+    "skillCooldown": 3
   },
   "gachaProb": {
     "normal":  0.80,
