@@ -101,6 +101,7 @@ const Save = {
       collection: [],
       items: { heal: 0, revive: 0 },
       mapProgress: { zone: 1, x: 0 },
+      mapObjects: null,
     };
   },
   load() {
@@ -263,61 +264,109 @@ class MapScene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.scale;
-    const zone = PETS_DATA.zones.find(z => z.id === this.saveData.mapProgress.zone);
+    const zoneId = this.saveData.mapProgress.zone;
+    const zone = PETS_DATA.zones.find(z => z.id === zoneId);
+
+    // 지역 바뀌었으면 오브젝트 상태 초기화
+    if (!this.saveData.mapObjects || this.saveData.mapObjects.zoneId !== zoneId) {
+      const positions = this.generatePositions(10);
+      const wildPetPool = [Utils.pickWildPets(zoneId)[0], Utils.pickWildPets(zoneId)[1]];
+      this.saveData.mapObjects = {
+        zoneId,
+        eggs: positions.slice(0, 8).map((pos, i) => ({ id: i, x: pos.x, y: pos.y, collected: false })),
+        wildPets: positions.slice(8).map((pos, i) => ({
+          id: i, x: pos.x, y: pos.y,
+          defeated: false,
+          pet: wildPetPool[i] || wildPetPool[0],
+        })),
+      };
+      Save.save(this.saveData);
+    }
 
     const zoneColors = { ice:0x9BB8D4, forest:0x3a7d44, fire:0xc2410c, cave:0x374151, village:0xf9a8d4, desert:0xfbbf24, cloud:0x7c9bbf, rainbow:0xd946ef, aurora:0x065f46 };
     const bgColor = zoneColors[zone.theme] || 0x2d1b69;
     this.add.rectangle(0, 0, width, height, bgColor).setOrigin(0);
     this.add.rectangle(0, height - 80, width, 80, 0x1a0a0a).setOrigin(0);
 
+    // 남은 오브젝트 카운트 표시
+    const remainEggs = this.saveData.mapObjects.eggs.filter(e => !e.collected).length;
+    const remainWild = this.saveData.mapObjects.wildPets.filter(w => !w.defeated).length;
     this.add.text(width / 2, 24, `지역 ${zone.id} — ${zone.name}`, {
       fontSize: '16px', fontFamily: 'Malgun Gothic', color: '#ffffff',
     }).setOrigin(0.5);
+    this.add.text(width / 2, 48, `🥚 ${remainEggs}  ⚔️ ${remainWild}`, {
+      fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#c4b5fd',
+    }).setOrigin(0.5);
 
-    this.spawnObjects(zone);
+    this.spawnObjects();
     this.createHUD();
   }
 
-  spawnObjects(zone) {
-    const { width, height } = this.scale;
-    const positions = this.generatePositions(10);
+  spawnObjects() {
+    const objs = this.saveData.mapObjects;
 
-    positions.slice(0, 8).forEach(pos => {
-      const egg = this.add.text(pos.x, pos.y, '🥚', { fontSize: '32px' }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-      this.tweens.add({ targets: egg, y: pos.y - 6, duration: 1000 + Math.random() * 500, yoyo: true, repeat: -1 });
+    // 알 — 수집 안 된 것만 표시
+    objs.eggs.forEach(eggData => {
+      if (eggData.collected) return;
+      const egg = this.add.text(eggData.x, eggData.y, '🥚', { fontSize: '32px' }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      this.tweens.add({ targets: egg, y: eggData.y - 6, duration: 1000 + Math.random() * 500, yoyo: true, repeat: -1 });
       egg.on('pointerdown', () => {
+        eggData.collected = true;
         Save.save(this.saveData);
         this.scene.start('QuizScene', { saveData: this.saveData });
       });
     });
 
-    positions.slice(8).forEach(pos => {
-      const wildPets = Utils.pickWildPets(this.saveData.mapProgress.zone);
-      const pet = wildPets[0];
+    // 야생 펫 — 잡히지 않은 것만 표시
+    objs.wildPets.forEach(wildData => {
+      if (wildData.defeated) return;
+      const pet = wildData.pet;
       const isLegend = pet.isLegend;
       const icon = isLegend ? '✨' : '⚔️';
-      const color = isLegend ? '#FFD700' : '#ff6b6b';
 
-      const sprite = this.add.text(pos.x, pos.y, icon, { fontSize: isLegend ? '40px' : '32px' }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      const sprite = this.add.text(wildData.x, wildData.y, icon, { fontSize: isLegend ? '40px' : '32px' }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
       if (isLegend) {
         this.tweens.add({ targets: sprite, scaleX: 1.2, scaleY: 1.2, duration: 700, yoyo: true, repeat: -1 });
-        const glow = this.add.text(pos.x, pos.y, '✨', { fontSize: '50px', alpha: 0.3 }).setOrigin(0.5);
+        const glow = this.add.text(wildData.x, wildData.y, '✨', { fontSize: '50px', alpha: 0.3 }).setOrigin(0.5);
         this.tweens.add({ targets: glow, alpha: 0.6, scale: 1.3, duration: 900, yoyo: true, repeat: -1 });
       }
 
       sprite.on('pointerdown', () => {
         if (isLegend) {
           this.showLegendWarning(() => {
+            wildData.defeated = true;
             Save.save(this.saveData);
-            this.scene.start('BattleScene', { saveData: this.saveData, wildPet: pet });
+            this.scene.start('BattleScene', { saveData: this.saveData, wildPet: pet, wildDataId: wildData.id });
           });
         } else {
+          wildData.defeated = true;
           Save.save(this.saveData);
-          this.scene.start('BattleScene', { saveData: this.saveData, wildPet: pet });
+          this.scene.start('BattleScene', { saveData: this.saveData, wildPet: pet, wildDataId: wildData.id });
         }
       });
     });
+
+    // 모두 클리어 시 다음 지역 버튼 표시
+    const allDone = objs.eggs.every(e => e.collected) && objs.wildPets.every(w => w.defeated);
+    if (allDone) {
+      const { width, height } = this.scale;
+      const nextZone = this.saveData.mapProgress.zone < 9 ? this.saveData.mapProgress.zone + 1 : null;
+      if (nextZone) {
+        const btn = this.add.rectangle(width / 2, height / 2, 240, 56, 0x7c3aed).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        btn.setStrokeStyle(2, 0xe879f9);
+        this.add.text(width / 2, height / 2, `🎉 다음 지역으로 →`, { fontSize: '18px', fontFamily: 'Malgun Gothic', color: '#fff' }).setOrigin(0.5);
+        btn.on('pointerdown', () => {
+          this.saveData.mapProgress.zone = nextZone;
+          this.saveData.mapObjects = null;
+          Save.save(this.saveData);
+          this.scene.restart({ saveData: this.saveData });
+        });
+      } else {
+        const { width, height } = this.scale;
+        this.add.text(width / 2, height / 2, '🏆 모든 지역 클리어!', { fontSize: '22px', fontFamily: 'Malgun Gothic', color: '#fbbf24' }).setOrigin(0.5);
+      }
+    }
   }
 
   showLegendWarning(onConfirm) {
@@ -581,10 +630,11 @@ class BattleScene extends Phaser.Scene {
   constructor() { super('BattleScene'); }
 
   init(data) {
-    this.saveData = data.saveData;
-    this.wildPet = data.wildPet;
-    this.myPet   = this.saveData.bag.find(p => p.isActive && p.alive) || this.saveData.bag.find(p => p.alive);
-    this.turn    = 'player';
+    this.saveData  = data.saveData;
+    this.wildPet   = data.wildPet;
+    this.wildDataId = data.wildDataId;
+    this.myPet     = this.saveData.bag.find(p => p.isActive && p.alive) || this.saveData.bag.find(p => p.alive);
+    this.turn      = 'player';
     this.skillCooldown = 0;
   }
 
@@ -714,6 +764,11 @@ class BattleScene extends Phaser.Scene {
   }
 
   battleLose() {
+    // 패배 시 야생 펫 다시 살아남 (맵에 재등장)
+    if (this.saveData.mapObjects && this.wildDataId !== undefined) {
+      const wildData = this.saveData.mapObjects.wildPets.find(w => w.id === this.wildDataId);
+      if (wildData) wildData.defeated = false;
+    }
     Save.save(this.saveData);
     this.scene.start('MapScene', { saveData: this.saveData });
   }
