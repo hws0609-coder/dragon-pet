@@ -17,10 +17,13 @@ canvas { display: block; }
 <script>
 // ── 전역 데이터 ──────────────────────────────────────────────────────────────
 let PETS_DATA = null;
+let QUIZ_DATA = null;
 
 async function loadPetsData() {
   const res = await fetch('data/pets.json');
   PETS_DATA = await res.json();
+  const qres = await fetch('data/quiz.json');
+  QUIZ_DATA = await qres.json();
 }
 
 // ── 유틸 ─────────────────────────────────────────────────────────────────────
@@ -682,10 +685,9 @@ class MapScene extends Phaser.Scene {
     hud.setStrokeStyle(1, 0x4c1d95);
 
     const btns = [
-      { label:'가방', x:width*0.45, scene:'BagScene'        },
-      { label:'도감', x:width*0.6,  scene:'CollectionScene' },
-      { label:'맵',   x:width*0.75, scene:'WorldMapScene'   },
-      { label:'설정', x:width*0.9,  scene:'TitleScene'      },
+      { label:'가방', x:width*0.35, scene:'BagScene'        },
+      { label:'도감', x:width*0.55, scene:'CollectionScene' },
+      { label:'설정', x:width*0.75, scene:'TitleScene'      },
     ];
     btns.forEach(({ label, x, scene }) => {
       const btn = this.add.rectangle(x, height-35, 72, 44, 0x1e1145).setScrollFactor(0).setDepth(21).setOrigin(0.5).setInteractive({ useHandCursor:true });
@@ -725,18 +727,55 @@ class QuizScene extends Phaser.Scene {
       fontSize: '22px', fontFamily: 'Malgun Gothic', color: '#ffffff', align: 'center', wordWrap: { width: width - 80 },
     }).setOrigin(0.5);
 
+    this.answered = false;
+    this.btnList  = [];
+
     quiz.choices.forEach((choice, i) => {
       const x = i % 2 === 0 ? width * 0.28 : width * 0.72;
       const y = height * 0.55 + Math.floor(i / 2) * 80;
       const btn = this.add.rectangle(x, y, 180, 60, 0x4c1d95).setOrigin(0.5).setInteractive({ useHandCursor: true });
       btn.setStrokeStyle(2, 0x7c3aed);
-      this.add.text(x, y, String(choice), { fontSize: '20px', fontFamily: 'Malgun Gothic', color: '#ffffff' }).setOrigin(0.5);
-      btn.on('pointerdown', () => this.answer(choice === quiz.answer));
+      const txt = this.add.text(x, y, String(choice), { fontSize: '20px', fontFamily: 'Malgun Gothic', color: '#ffffff' }).setOrigin(0.5);
+      this.btnList.push({ btn, txt, choice, isAnswer: choice === quiz.answer });
+      btn.on('pointerdown', () => this.answer(choice === quiz.answer, quiz.answer));
     });
   }
 
-  answer(correct) {
+  answer(correct, correctAnswer) {
+    if (this.answered) return;
+    this.answered = true;
+
+    // 모든 버튼 비활성화 + 정답 강조
+    this.btnList.forEach(({ btn, txt, isAnswer }) => {
+      btn.disableInteractive();
+      if (isAnswer) {
+        btn.setFillStyle(0x16a34a);
+        btn.setStrokeStyle(3, 0x4ade80);
+        txt.setColor('#ffffff');
+      } else {
+        btn.setFillStyle(0x374151);
+        btn.setStrokeStyle(1, 0x6b7280);
+        txt.setColor('#9ca3af');
+      }
+    });
+
     const xpGain = correct ? 10 : 3;
+    const { width, height } = this.scale;
+
+    if (correct) {
+      this.add.text(width / 2, height * 0.82, '✅ 정답! +10 XP', {
+        fontSize: '22px', fontFamily: 'Malgun Gothic', color: '#4ade80', fontStyle: 'bold',
+      }).setOrigin(0.5);
+    } else {
+      this.add.text(width / 2, height * 0.80, '❌ 오답! +3 XP', {
+        fontSize: '20px', fontFamily: 'Malgun Gothic', color: '#fb923c', fontStyle: 'bold',
+      }).setOrigin(0.5);
+      this.add.text(width / 2, height * 0.88, `정답: ${correctAnswer}`, {
+        fontSize: '18px', fontFamily: 'Malgun Gothic', color: '#fbbf24',
+      }).setOrigin(0.5);
+    }
+
+    // XP 적용
     const activePet = this.saveData.bag.find(p => p.isActive && p.alive);
     if (activePet) {
       activePet.xp += xpGain;
@@ -751,7 +790,15 @@ class QuizScene extends Phaser.Scene {
       }
     }
     Save.save(this.saveData);
-    this.scene.start('HatchScene', { saveData: this.saveData, correct, xpGain });
+
+    // 정답: 1.2초 후 부화 씬으로 / 오답: 2초 후 맵으로 (알 못 깸)
+    this.time.delayedCall(correct ? 1200 : 2000, () => {
+      if (correct) {
+        this.scene.start('HatchScene', { saveData: this.saveData, correct, xpGain });
+      } else {
+        this.scene.start('MapScene', { saveData: this.saveData });
+      }
+    });
   }
 
   makeQuiz(grade) {
@@ -760,29 +807,66 @@ class QuizScene extends Phaser.Scene {
   }
 
   makeGrade2Quiz() {
-    const type = Phaser.Math.Between(0, 1);
-    if (type === 0) {
-      const a = Phaser.Math.Between(10, 50), b = Phaser.Math.Between(10, 40);
-      const answer = a + b;
-      return { question: `${a} + ${b} = ?`, answer, choices: Utils.shuffle([answer, answer + 3, answer - 2, answer + 5]).slice(0, 4) };
-    } else {
+    const isMath = Math.random() < 0.5;
+    if (isMath) {
+      const type = Phaser.Math.Between(0, 2);
+      if (type === 0) {
+        const a = Phaser.Math.Between(5, 50), b = Phaser.Math.Between(5, 40);
+        const answer = a + b;
+        return { question: `${a} + ${b} = ?`, answer,
+          choices: Utils.shuffle([answer, answer+3, answer-2, answer+5]).slice(0,4) };
+      }
+      if (type === 1) {
+        const a = Phaser.Math.Between(20, 80), b = Phaser.Math.Between(5, a-1);
+        const answer = a - b;
+        return { question: `${a} - ${b} = ?`, answer,
+          choices: Utils.shuffle([answer, answer+2, answer-3, answer+4]).slice(0,4) };
+      }
       const table = Phaser.Math.Between(2, 5), num = Phaser.Math.Between(2, 9);
       const answer = table * num;
-      return { question: `${table} × ${num} = ?`, answer, choices: Utils.shuffle([answer, answer + table, answer - table, answer + 2]).slice(0, 4) };
+      return { question: `${table} × ${num} = ?`, answer,
+        choices: Utils.shuffle([answer, answer+table, answer-table, answer+table*2]).slice(0,4) };
     }
+    // 백과사전 퀴즈
+    const pool = QUIZ_DATA.grade2.encyclopedia;
+    const q = pool[Phaser.Math.Between(0, pool.length-1)];
+    return { question: q.question, answer: q.answer, choices: Utils.shuffle([...q.choices]) };
   }
 
   makeGrade4Quiz() {
-    const type = Phaser.Math.Between(0, 1);
-    if (type === 0) {
-      const a = Phaser.Math.Between(10, 30), b = Phaser.Math.Between(2, 9);
-      const answer = a * b;
-      return { question: `${a} × ${b} = ?`, answer, choices: Utils.shuffle([answer, answer + b, answer - b, answer + 2 * b]).slice(0, 4) };
-    } else {
-      const b = Phaser.Math.Between(2, 9), answer = Phaser.Math.Between(10, 20);
-      const a = b * answer;
-      return { question: `${a} ÷ ${b} = ?`, answer, choices: Utils.shuffle([answer, answer + 1, answer - 1, answer + 2]).slice(0, 4) };
+    const r = Math.random();
+    // 수학 50%
+    if (r < 0.5) {
+      const type = Phaser.Math.Between(0, 2);
+      if (type === 0) {
+        const a = Phaser.Math.Between(10, 30), b = Phaser.Math.Between(3, 9);
+        const answer = a * b;
+        return { question: `${a} × ${b} = ?`, answer,
+          choices: Utils.shuffle([answer, answer+b, answer-b, answer+b*2]).slice(0,4) };
+      }
+      if (type === 1) {
+        const b = Phaser.Math.Between(2, 9), answer = Phaser.Math.Between(10, 20);
+        const a = b * answer;
+        return { question: `${a} ÷ ${b} = ?`, answer,
+          choices: Utils.shuffle([answer, answer+1, answer-1, answer+2]).slice(0,4) };
+      }
+      const fracs = [
+        { question: '1/2 + 1/2 = ?', answer: '1', choices: ['1/2','1','3/2','2'] },
+        { question: '3/4 - 1/4 = ?', answer: '1/2', choices: ['1/4','1/2','3/4','1'] },
+        { question: '1/3 + 1/3 = ?', answer: '2/3', choices: ['1/3','2/3','3/3','1'] },
+        { question: '5/6 - 1/6 = ?', answer: '4/6', choices: ['2/6','3/6','4/6','5/6'] },
+        { question: '1/4 + 2/4 = ?', answer: '3/4', choices: ['1/4','2/4','3/4','4/4'] },
+        { question: '2/5 + 1/5 = ?', answer: '3/5', choices: ['1/5','2/5','3/5','4/5'] },
+      ];
+      const f = fracs[Phaser.Math.Between(0, fracs.length-1)];
+      return { question: f.question, answer: f.answer, choices: Utils.shuffle([...f.choices]) };
     }
+    // 백과사전 25% / 영어 25%
+    let pool;
+    if (r < 0.75) pool = QUIZ_DATA.grade4.encyclopedia;
+    else pool = QUIZ_DATA.grade4.english;
+    const q = pool[Phaser.Math.Between(0, pool.length-1)];
+    return { question: q.question, answer: q.answer, choices: Utils.shuffle([...q.choices]) };
   }
 }
 
@@ -833,13 +917,21 @@ class HatchScene extends Phaser.Scene {
   hatch() {
     const result = Utils.hatchResult();
     if (result.type === 'pet') {
-      if (this.saveData.bag.length < 30) this.saveData.bag.push(result.pet);
       if (!this.saveData.collection.includes(result.pet.id)) this.saveData.collection.push(result.pet.id);
+      if (this.saveData.bag.length < 30) {
+        this.saveData.bag.push(result.pet);
+        Save.save(this.saveData);
+        this.scene.start('ResultScene', { saveData: this.saveData, result });
+      } else {
+        // 가방 꽉 참 → 버리기 모드로 BagScene 이동
+        Save.save(this.saveData);
+        this.scene.start('BagScene', { saveData: this.saveData, releaseMode: true, newPet: result.pet });
+      }
     } else {
       this.saveData.items[result.item]++;
+      Save.save(this.saveData);
+      this.scene.start('ResultScene', { saveData: this.saveData, result });
     }
-    Save.save(this.saveData);
-    this.scene.start('ResultScene', { saveData: this.saveData, result });
   }
 }
 
@@ -1028,14 +1120,16 @@ class BattleScene extends Phaser.Scene {
   }
 
   battleWin() {
+    if (!this.saveData.collection.includes(this.wildPet.id)) this.saveData.collection.push(this.wildPet.id);
     if (this.saveData.bag.length < 30) {
       this.saveData.bag.push(this.wildPet);
-      if (!this.saveData.collection.includes(this.wildPet.id)) this.saveData.collection.push(this.wildPet.id);
-    } else if (!this.saveData.collection.includes(this.wildPet.id)) {
-      this.saveData.collection.push(this.wildPet.id);
+      Save.save(this.saveData);
+      this.scene.start('ResultScene', { saveData: this.saveData, result: { type: 'pet', pet: this.wildPet } });
+    } else {
+      // 가방 꽉 참 → 버리기 모드
+      Save.save(this.saveData);
+      this.scene.start('BagScene', { saveData: this.saveData, releaseMode: true, newPet: this.wildPet });
     }
-    Save.save(this.saveData);
-    this.scene.start('ResultScene', { saveData: this.saveData, result: { type: 'pet', pet: this.wildPet } });
   }
 
   battleLose() {
@@ -1086,33 +1180,52 @@ class PetSwapScene extends Phaser.Scene {
 class BagScene extends Phaser.Scene {
   constructor() { super('BagScene'); }
 
-  init(data) { this.saveData = data.saveData || Save.load(); }
+  init(data) {
+    this.saveData    = data.saveData || Save.load();
+    this.releaseMode = data.releaseMode || false;  // 버리기 모드
+    this.newPet      = data.newPet || null;         // 가방 꽉 찼을 때 새 펫
+  }
 
   create() {
     const { width, height } = this.scale;
     this.add.rectangle(0, 0, width, height, 0x1a0a3e).setOrigin(0);
-    this.add.text(width / 2, 36, `가방  ${this.saveData.bag.length}/30`, { fontSize: '22px', fontFamily: 'Malgun Gothic', color: '#e9d5ff' }).setOrigin(0.5);
-    this.add.text(width / 2, 68, `아이템: 체력회복 ${this.saveData.items.heal}개  소환 ${this.saveData.items.revive}개`, { fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#a78bfa' }).setOrigin(0.5);
+
+    if (this.releaseMode && this.newPet) {
+      // 가방 꽉 찼을 때 — 버릴 펫 선택 안내
+      this.add.text(width / 2, 28, '가방이 꽉 찼어요!', { fontSize: '20px', fontFamily: 'Malgun Gothic', color: '#fb923c', fontStyle: 'bold' }).setOrigin(0.5);
+      this.add.text(width / 2, 56, `새 펫: ${this.newPet.name} (Lv.${this.newPet.level})`, { fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#fbbf24' }).setOrigin(0.5);
+      this.add.text(width / 2, 78, '버릴 펫을 선택하세요 (길게 누르기)', { fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#a78bfa' }).setOrigin(0.5);
+    } else {
+      this.add.text(width / 2, 28, `가방  ${this.saveData.bag.length}/30`, { fontSize: '22px', fontFamily: 'Malgun Gothic', color: '#e9d5ff' }).setOrigin(0.5);
+      this.add.text(width / 2, 56, `아이템: 체력회복 ${this.saveData.items.heal}개  소환 ${this.saveData.items.revive}개`, { fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#a78bfa' }).setOrigin(0.5);
+      this.add.text(width / 2, 76, '펫 클릭: 동행 설정  |  길게 누르기: 버리기', { fontSize: '11px', fontFamily: 'Malgun Gothic', color: '#6b7280' }).setOrigin(0.5);
+    }
 
     this.saveData.bag.forEach((pet, i) => {
       const col = i % 3, row = Math.floor(i / 3);
-      const x = 80 + col * 140, y = 110 + row * 100;
+      const x = 80 + col * 140, y = 105 + row * 100;
       const isActive = pet.isActive;
-      const bg = this.add.rectangle(x, y, 120, 80, isActive ? 0x5b21b6 : pet.alive ? 0x2d1b69 : 0x1f1f2e).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      const bg = this.add.rectangle(x, y, 120, 82, isActive ? 0x5b21b6 : pet.alive ? 0x2d1b69 : 0x1f1f2e)
+        .setOrigin(0.5).setInteractive({ useHandCursor: true });
       bg.setStrokeStyle(2, isActive ? 0xe879f9 : pet.alive ? 0x4c1d95 : 0x374151);
 
-      this.add.text(x, y - 22, pet.alive ? '🐾' : '💀', { fontSize: '22px' }).setOrigin(0.5);
-      this.add.text(x, y + 4,  pet.name.length > 6 ? pet.name.slice(0,6)+'...' : pet.name, { fontSize: '12px', fontFamily: 'Malgun Gothic', color: pet.alive ? '#e9d5ff' : '#6b7280' }).setOrigin(0.5);
-      this.add.text(x, y + 20, `Lv.${pet.level}  HP${pet.hp}`, { fontSize: '11px', fontFamily: 'Malgun Gothic', color: '#9ca3af' }).setOrigin(0.5);
+      const gradeColor = { legend:'#fbbf24', rare:'#60a5fa', normal:'#9ca3af' };
+      this.add.text(x, y - 26, pet.alive ? '●' : '💀', { fontSize: '16px', color: gradeColor[pet.grade] || '#9ca3af' }).setOrigin(0.5);
+      this.add.text(x, y - 8,  pet.name.length > 6 ? pet.name.slice(0,6)+'...' : pet.name, { fontSize: '12px', fontFamily: 'Malgun Gothic', color: pet.alive ? '#e9d5ff' : '#6b7280' }).setOrigin(0.5);
+      this.add.text(x, y + 10, `Lv.${pet.level}  ATK${pet.atk}`, { fontSize: '11px', fontFamily: 'Malgun Gothic', color: '#9ca3af' }).setOrigin(0.5);
+      this.add.text(x, y + 26, `HP ${pet.hp}/${pet.maxHp}`, { fontSize: '10px', fontFamily: 'Malgun Gothic', color: '#6b7280' }).setOrigin(0.5);
 
+      // 짧게 누르기: 동행 설정 / 소환
       bg.on('pointerdown', () => {
+        if (this.releaseMode) return; // 버리기 모드에선 짧은 탭 무시
         if (!pet.alive) {
           if (this.saveData.items.revive > 0) {
             this.saveData.items.revive--;
-            pet.alive = true;
-            pet.hp = pet.maxHp;
+            pet.alive = true; pet.hp = pet.maxHp;
             Save.save(this.saveData);
             this.scene.restart({ saveData: this.saveData });
+          } else {
+            this.showMsg('소환 아이템이 없어요!');
           }
           return;
         }
@@ -1122,11 +1235,70 @@ class BagScene extends Phaser.Scene {
         Save.save(this.saveData);
         this.scene.restart({ saveData: this.saveData });
       });
+
+      // 길게 누르기: 버리기
+      let holdTimer = null;
+      bg.on('pointerdown', () => {
+        holdTimer = this.time.delayedCall(600, () => this.confirmRelease(pet));
+      });
+      bg.on('pointerup',   () => { if (holdTimer) { holdTimer.remove(); holdTimer = null; } });
+      bg.on('pointerout',  () => { if (holdTimer) { holdTimer.remove(); holdTimer = null; } });
     });
 
-    const backBtn = this.add.rectangle(width / 2, height - 36, 200, 44, 0x4c1d95).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    this.add.text(width / 2, height - 36, '← 모험으로', { fontSize: '16px', fontFamily: 'Malgun Gothic', color: '#fff' }).setOrigin(0.5);
-    backBtn.on('pointerdown', () => { Save.save(this.saveData); this.scene.start('MapScene', { saveData: this.saveData }); });
+    // 가방 꽉 찼을 때 새 펫 포기 버튼
+    if (this.releaseMode && this.newPet) {
+      const skipBtn = this.add.rectangle(width / 2, height - 36, 220, 44, 0x374151).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      this.add.text(width / 2, height - 36, '새 펫 포기하기', { fontSize: '15px', fontFamily: 'Malgun Gothic', color: '#9ca3af' }).setOrigin(0.5);
+      skipBtn.on('pointerdown', () => {
+        // 도감에만 등록
+        if (!this.saveData.collection.includes(this.newPet.id)) this.saveData.collection.push(this.newPet.id);
+        Save.save(this.saveData);
+        this.scene.start('MapScene', { saveData: this.saveData });
+      });
+    } else {
+      const backBtn = this.add.rectangle(width / 2, height - 36, 200, 44, 0x4c1d95).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      this.add.text(width / 2, height - 36, '← 모험으로', { fontSize: '16px', fontFamily: 'Malgun Gothic', color: '#fff' }).setOrigin(0.5);
+      backBtn.on('pointerdown', () => { Save.save(this.saveData); this.scene.start('MapScene', { saveData: this.saveData }); });
+    }
+  }
+
+  confirmRelease(pet) {
+    const { width, height } = this.scale;
+    const overlay = this.add.rectangle(width/2, height/2, width, height, 0x000000, 0.7).setOrigin(0.5).setDepth(50);
+    const box = this.add.rectangle(width/2, height/2, 320, 220, 0x1a0a3e).setOrigin(0.5).setDepth(51);
+    box.setStrokeStyle(2, 0xe11d48);
+    const t1 = this.add.text(width/2, height/2 - 70, '정말 버릴까요?', { fontSize: '20px', fontFamily: 'Malgun Gothic', color: '#fb923c', fontStyle: 'bold' }).setOrigin(0.5).setDepth(52);
+    const t2 = this.add.text(width/2, height/2 - 30, `${pet.name}  Lv.${pet.level}`, { fontSize: '16px', fontFamily: 'Malgun Gothic', color: '#ffffff' }).setOrigin(0.5).setDepth(52);
+    const t3 = this.add.text(width/2, height/2 + 5, '한 번 버리면 되돌릴 수 없어요!', { fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#9ca3af' }).setOrigin(0.5).setDepth(52);
+
+    const yes = this.add.rectangle(width/2 - 70, height/2 + 60, 120, 44, 0xb91c1c).setOrigin(0.5).setDepth(52).setInteractive({ useHandCursor: true });
+    const ty  = this.add.text(width/2 - 70, height/2 + 60, '버리기', { fontSize: '16px', fontFamily: 'Malgun Gothic', color: '#fff' }).setOrigin(0.5).setDepth(53);
+    const no  = this.add.rectangle(width/2 + 70, height/2 + 60, 120, 44, 0x374151).setOrigin(0.5).setDepth(52).setInteractive({ useHandCursor: true });
+    const tn  = this.add.text(width/2 + 70, height/2 + 60, '취소', { fontSize: '16px', fontFamily: 'Malgun Gothic', color: '#fff' }).setOrigin(0.5).setDepth(53);
+
+    const closeAll = () => [overlay,box,t1,t2,t3,yes,ty,no,tn].forEach(o=>o.destroy());
+
+    yes.on('pointerdown', () => {
+      closeAll();
+      this.saveData.bag = this.saveData.bag.filter(p => p !== pet);
+      // 가방 꽉 찼던 경우 새 펫 추가
+      if (this.releaseMode && this.newPet) {
+        this.saveData.bag.push(this.newPet);
+        if (!this.saveData.collection.includes(this.newPet.id)) this.saveData.collection.push(this.newPet.id);
+        Save.save(this.saveData);
+        this.scene.start('ResultScene', { saveData: this.saveData, result: { type: 'pet', pet: this.newPet } });
+      } else {
+        Save.save(this.saveData);
+        this.scene.restart({ saveData: this.saveData, releaseMode: false });
+      }
+    });
+    no.on('pointerdown', () => closeAll());
+  }
+
+  showMsg(msg) {
+    const { width, height } = this.scale;
+    const t = this.add.text(width/2, height/2, msg, { fontSize: '16px', fontFamily: 'Malgun Gothic', color: '#fb923c', stroke: '#000', strokeThickness: 3 }).setOrigin(0.5).setDepth(60);
+    this.time.delayedCall(1500, () => t.destroy());
   }
 }
 
