@@ -297,14 +297,41 @@ class MapScene extends Phaser.Scene {
     // ── 캐릭터 ──
     const startX = this.saveData.mapProgress.px || this.MAP_W / 2;
     const startY = this.saveData.mapProgress.py || this.MAP_H / 2;
-    const charEmoji = this.saveData.character === 'f' ? '👧' : '🧒';
-    this.player = this.add.text(startX, startY, charEmoji, { fontSize: '36px' }).setOrigin(0.5).setDepth(10);
+    const isFemale = this.saveData.character === 'f';
 
-    // 동행 펫 표시
+    // 캐릭터 컨테이너 (그래픽 기반)
+    this.player = this.add.container(startX, startY).setDepth(10);
+    const shadow = this.add.ellipse(0, 18, 28, 10, 0x000000, 0.3);
+    const body   = this.add.rectangle(0, 4, 22, 26, isFemale ? 0xe879f9 : 0x60a5fa);
+    const head   = this.add.circle(0, -16, 13, isFemale ? 0xfcd34d : 0xfbbf24);
+    const eyes   = this.add.rectangle(0, -16, 10, 4, 0x1a1a2e);
+    // 머리 장식
+    const hat = isFemale
+      ? this.add.triangle(0, -32, -8, 0, 8, 0, 0, -14, 0xff69b4)
+      : this.add.rectangle(0, -30, 18, 6, 0x2563eb);
+    this.player.add([shadow, body, head, eyes, hat]);
+
+    // 캐릭터 위에 이름 표시
+    this.playerLabel = this.add.text(startX, startY - 36,
+      isFemale ? '여자아이' : '남자아이',
+      { fontSize: '11px', fontFamily: 'Malgun Gothic', color: '#ffffff',
+        stroke: '#000000', strokeThickness: 3 }
+    ).setOrigin(0.5).setDepth(11);
+
+    // 동행 펫 표시 (그래픽)
     const activePet = this.saveData.bag.find(p => p.isActive && p.alive);
-    this.petFollow = activePet
-      ? this.add.text(startX - 40, startY + 10, '🐾', { fontSize: '24px' }).setOrigin(0.5).setDepth(9)
-      : null;
+    if (activePet) {
+      this.petFollow = this.add.container(startX - 44, startY + 8).setDepth(9);
+      const petBody   = this.add.circle(0, 0, 12, 0xa855f7);
+      const petEyes   = this.add.rectangle(0, -2, 8, 3, 0xffffff);
+      const petLabel  = this.add.text(0, 16, activePet.name.slice(0, 4),
+        { fontSize: '9px', fontFamily: 'Malgun Gothic', color: '#e9d5ff',
+          stroke: '#000', strokeThickness: 2 }
+      ).setOrigin(0.5);
+      this.petFollow.add([petBody, petEyes, petLabel]);
+    } else {
+      this.petFollow = null;
+    }
 
     // ── 카메라 ──
     this.cameras.main.setBounds(0, 0, this.MAP_W, this.MAP_H);
@@ -575,10 +602,15 @@ class MapScene extends Phaser.Scene {
       const ny = this.player.y + (dy/len) * this.SPEED;
       this.player.x = Phaser.Math.Clamp(nx, 20, this.MAP_W - 20);
       this.player.y = Phaser.Math.Clamp(ny, 20, this.MAP_H - 20);
+      // 이름 라벨 따라오기
+      if (this.playerLabel) {
+        this.playerLabel.x = this.player.x;
+        this.playerLabel.y = this.player.y - 36;
+      }
       // 동행 펫 따라오기
       if (this.petFollow) {
-        this.petFollow.x += (this.player.x - 40 - this.petFollow.x) * 0.12;
-        this.petFollow.y += (this.player.y + 10 - this.petFollow.y) * 0.12;
+        this.petFollow.x += (this.player.x - 44 - this.petFollow.x) * 0.12;
+        this.petFollow.y += (this.player.y + 8  - this.petFollow.y) * 0.12;
       }
       // 위치 저장 (매 60프레임)
       if (this.game.getFrame() % 60 === 0) {
@@ -588,8 +620,9 @@ class MapScene extends Phaser.Scene {
     }
     // 미니맵 플레이어 점 업데이트
     if (this.minimapDot) {
-      this.minimapDot.x = 320 + (this.player.x / this.MAP_W) * 80;
-      this.minimapDot.y = 20  + (this.player.y / this.MAP_H) * 60;
+      const { width } = this.scale;
+      this.minimapDot.x = (width - 90) + (this.player.x / this.MAP_W) * 80;
+      this.minimapDot.y = 22 + (this.player.y / this.MAP_H) * 58;
     }
   }
 
@@ -770,7 +803,7 @@ class HatchScene extends Phaser.Scene {
     this.add.text(width / 2, 160, '알을 두드려서 부화시키자!', { fontSize: '15px', fontFamily: 'Malgun Gothic', color: '#a78bfa' }).setOrigin(0.5);
 
     this.tapCount = 0;
-    this.maxTaps = Phaser.Math.Between(15, 25);
+    this.maxTaps = Phaser.Math.Between(3, 5);
 
     this.eggText = this.add.text(width / 2, height * 0.45, '🥚', { fontSize: '100px' }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     this.tweens.add({ targets: this.eggText, y: this.eggText.y - 10, duration: 900, yoyo: true, repeat: -1 });
