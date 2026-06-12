@@ -1301,7 +1301,7 @@ class QuizScene extends Phaser.Scene {
     let quiz;
     if (this.retryMode && this.saveData.wrongQuiz && this.saveData.wrongQuiz.length > 0) {
       const w = this.saveData.wrongQuiz[Phaser.Math.Between(0, this.saveData.wrongQuiz.length - 1)];
-      quiz = { question: w.question, answer: w.answer, choices: Utils.shuffle([...w.choices]) };
+      quiz = { question: w.question, answer: w.answer, choices: Utils.shuffle([...w.choices]), bonus: !!w.bonus, category: w.category };
       this.currentWrong = w;
     } else {
       quiz = this.makeQuiz(grade);
@@ -1311,7 +1311,12 @@ class QuizScene extends Phaser.Scene {
 
     const headTitle = this.retryMode ? '📝 틀린 문제 다시 풀기!' : '🥚 알을 발견했어요!';
     this.add.text(width / 2, 60, headTitle, { fontSize: '20px', fontFamily: 'Malgun Gothic', color: '#e9d5ff' }).setOrigin(0.5);
-    this.add.text(width / 2, 110, '문제를 풀면 경험치를 얻어요', { fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#a78bfa' }).setOrigin(0.5);
+    if (quiz.bonus) {
+      const bonusTag = this.add.text(width / 2, 110, '⭐ 경험치가 높은 문제예요! (+15 XP) ⭐', { fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#fde047', fontStyle: 'bold' }).setOrigin(0.5);
+      this.tweens.add({ targets: bonusTag, scale: 1.08, duration: 600, yoyo: true, repeat: -1 });
+    } else {
+      this.add.text(width / 2, 110, '문제를 풀면 경험치를 얻어요', { fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#a78bfa' }).setOrigin(0.5);
+    }
 
     this.add.rectangle(width / 2, height * 0.35, width - 40, 80, 0x312e81).setOrigin(0.5);
     this.add.text(width / 2, height * 0.35, quiz.question, {
@@ -1350,13 +1355,27 @@ class QuizScene extends Phaser.Scene {
       }
     });
 
-    const xpGain = correct ? 10 : 3;
+    // 경험치: 보너스 문제(수학/영어) 정답 시 15, 일반 정답 10, 오답 3
+    const isBonus = this.currentQuiz && this.currentQuiz.bonus;
+    const xpGain = correct ? (isBonus ? 15 : 10) : 3;
     const { width, height } = this.scale;
 
     if (correct) {
-      this.add.text(width / 2, height * 0.82, '✅ 정답! +10 XP', {
-        fontSize: '22px', fontFamily: 'Malgun Gothic', color: '#4ade80', fontStyle: 'bold',
-      }).setOrigin(0.5);
+      if (isBonus) {
+        // 강조 표시
+        this.add.text(width / 2, height * 0.80, '✅ 정답! +15 XP', {
+          fontSize: '24px', fontFamily: 'Malgun Gothic', color: '#fde047', fontStyle: 'bold',
+          stroke: '#7c3aed', strokeThickness: 4,
+        }).setOrigin(0.5);
+        const star = this.add.text(width / 2, height * 0.87, '⭐ 경험치가 높은 문제예요! ⭐', {
+          fontSize: '16px', fontFamily: 'Malgun Gothic', color: '#fbbf24', fontStyle: 'bold',
+        }).setOrigin(0.5);
+        this.tweens.add({ targets: star, scale: 1.12, duration: 400, yoyo: true, repeat: 2 });
+      } else {
+        this.add.text(width / 2, height * 0.82, '✅ 정답! +10 XP', {
+          fontSize: '22px', fontFamily: 'Malgun Gothic', color: '#4ade80', fontStyle: 'bold',
+        }).setOrigin(0.5);
+      }
     } else {
       this.add.text(width / 2, height * 0.80, '❌ 오답! +3 XP', {
         fontSize: '20px', fontFamily: 'Malgun Gothic', color: '#fb923c', fontStyle: 'bold',
@@ -1378,7 +1397,7 @@ class QuizScene extends Phaser.Scene {
       const q = this.currentQuiz;
       const exists = this.saveData.wrongQuiz.some(w => w.question === q.question);
       if (!exists && q) {
-        this.saveData.wrongQuiz.push({ question: q.question, answer: q.answer, choices: [...q.choices] });
+        this.saveData.wrongQuiz.push({ question: q.question, answer: q.answer, choices: [...q.choices], bonus: !!q.bonus, category: q.category });
         if (this.saveData.wrongQuiz.length > 50) this.saveData.wrongQuiz.shift();
       }
     }
@@ -1427,24 +1446,24 @@ class QuizScene extends Phaser.Scene {
       if (type === 0) {
         const a = Phaser.Math.Between(5, 50), b = Phaser.Math.Between(5, 40);
         const answer = a + b;
-        return { question: `${a} + ${b} = ?`, answer,
+        return { category: 'math', bonus: true, question: `${a} + ${b} = ?`, answer,
           choices: Utils.shuffle([answer, answer+3, answer-2, answer+5]).slice(0,4) };
       }
       if (type === 1) {
         const a = Phaser.Math.Between(20, 80), b = Phaser.Math.Between(5, a-1);
         const answer = a - b;
-        return { question: `${a} - ${b} = ?`, answer,
+        return { category: 'math', bonus: true, question: `${a} - ${b} = ?`, answer,
           choices: Utils.shuffle([answer, answer+2, answer-3, answer+4]).slice(0,4) };
       }
       const table = Phaser.Math.Between(2, 5), num = Phaser.Math.Between(2, 9);
       const answer = table * num;
-      return { question: `${table} × ${num} = ?`, answer,
+      return { category: 'math', bonus: true, question: `${table} × ${num} = ?`, answer,
         choices: Utils.shuffle([answer, answer+table, answer-table, answer+table*2]).slice(0,4) };
     }
     // 백과사전 퀴즈
     const pool = QUIZ_DATA.grade2.encyclopedia;
     const q = pool[Phaser.Math.Between(0, pool.length-1)];
-    return { question: q.question, answer: q.answer, choices: Utils.shuffle([...q.choices]) };
+    return { category: 'encyclopedia', bonus: false, question: q.question, answer: q.answer, choices: Utils.shuffle([...q.choices]) };
   }
 
   makeGrade4Quiz() {
@@ -1455,13 +1474,13 @@ class QuizScene extends Phaser.Scene {
       if (type === 0) {
         const a = Phaser.Math.Between(10, 30), b = Phaser.Math.Between(3, 9);
         const answer = a * b;
-        return { question: `${a} × ${b} = ?`, answer,
+        return { category: 'math', bonus: true, question: `${a} × ${b} = ?`, answer,
           choices: Utils.shuffle([answer, answer+b, answer-b, answer+b*2]).slice(0,4) };
       }
       if (type === 1) {
         const b = Phaser.Math.Between(2, 9), answer = Phaser.Math.Between(10, 20);
         const a = b * answer;
-        return { question: `${a} ÷ ${b} = ?`, answer,
+        return { category: 'math', bonus: true, question: `${a} ÷ ${b} = ?`, answer,
           choices: Utils.shuffle([answer, answer+1, answer-1, answer+2]).slice(0,4) };
       }
       const fracs = [
@@ -1473,14 +1492,14 @@ class QuizScene extends Phaser.Scene {
         { question: '2/5 + 1/5 = ?', answer: '3/5', choices: ['1/5','2/5','3/5','4/5'] },
       ];
       const f = fracs[Phaser.Math.Between(0, fracs.length-1)];
-      return { question: f.question, answer: f.answer, choices: Utils.shuffle([...f.choices]) };
+      return { category: 'math', bonus: true, question: f.question, answer: f.answer, choices: Utils.shuffle([...f.choices]) };
     }
     // 백과사전 25% / 영어 25%
-    let pool;
-    if (r < 0.75) pool = QUIZ_DATA.grade4.encyclopedia;
-    else pool = QUIZ_DATA.grade4.english;
+    let pool, cat;
+    if (r < 0.75) { pool = QUIZ_DATA.grade4.encyclopedia; cat = 'encyclopedia'; }
+    else { pool = QUIZ_DATA.grade4.english; cat = 'english'; }
     const q = pool[Phaser.Math.Between(0, pool.length-1)];
-    return { question: q.question, answer: q.answer, choices: Utils.shuffle([...q.choices]) };
+    return { category: cat, bonus: (cat === 'english'), question: q.question, answer: q.answer, choices: Utils.shuffle([...q.choices]) };
   }
 }
 
