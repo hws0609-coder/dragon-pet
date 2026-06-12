@@ -517,13 +517,17 @@
       "id": "heal",
       "name": "체력 회복",
       "effect": "hp+20",
-      "img": "assets/items/heal.png"
+      "img": "assets/items/heal.png",
+      "sellPrice": 5,
+      "emoji": "💊"
     },
     "revive": {
       "id": "revive",
       "name": "소환",
       "effect": "revive",
-      "img": "assets/items/revive.png"
+      "img": "assets/items/revive.png",
+      "sellPrice": 15,
+      "emoji": "⭐"
     }
   },
   "sellPrices": {
@@ -535,89 +539,339 @@
   },
   "cosmetics": [
     {
-      "id": "hat_crown",
+      "id": "hat_1",
       "name": "왕관",
       "type": "hat",
-      "price": 100,
+      "price": 150,
       "emoji": "👑"
     },
     {
-      "id": "hat_party",
-      "name": "파티모자",
-      "type": "hat",
-      "price": 60,
-      "emoji": "🎉"
-    },
-    {
-      "id": "hat_wizard",
-      "name": "마법사모자",
+      "id": "hat_2",
+      "name": "실크햇",
       "type": "hat",
       "price": 80,
-      "emoji": "🧙"
+      "emoji": "🎩"
     },
     {
-      "id": "hat_cap",
+      "id": "hat_3",
       "name": "야구모자",
       "type": "hat",
       "price": 40,
-      "emoji": "🧢",
-      "img": "hat-1"
+      "emoji": "🧢"
     },
     {
-      "id": "hat_flower",
-      "name": "꽃",
+      "id": "hat_4",
+      "name": "헬멧",
+      "type": "hat",
+      "price": 60,
+      "emoji": "🪖"
+    },
+    {
+      "id": "hat_5",
+      "name": "밀짚모자",
+      "type": "hat",
+      "price": 50,
+      "emoji": "👒"
+    },
+    {
+      "id": "hat_6",
+      "name": "졸업모자",
+      "type": "hat",
+      "price": 70,
+      "emoji": "🎓"
+    },
+    {
+      "id": "hat_7",
+      "name": "카우보이",
+      "type": "hat",
+      "price": 60,
+      "emoji": "🤠"
+    },
+    {
+      "id": "hat_8",
+      "name": "벚꽃",
       "type": "hat",
       "price": 30,
       "emoji": "🌸"
     },
     {
-      "id": "hat_star",
+      "id": "hat_9",
       "name": "별",
       "type": "hat",
       "price": 50,
       "emoji": "⭐"
     },
     {
-      "id": "color_red",
-      "name": "빨강 옷",
-      "type": "color",
-      "price": 30,
-      "color": "0xef4444"
+      "id": "hat_10",
+      "name": "반짝별",
+      "type": "hat",
+      "price": 40,
+      "emoji": "💫"
     },
     {
-      "id": "color_blue",
-      "name": "파랑 옷",
-      "type": "color",
-      "price": 30,
-      "color": "0x3b82f6"
+      "id": "hat_11",
+      "name": "무지개",
+      "type": "hat",
+      "price": 80,
+      "emoji": "🌈"
     },
     {
-      "id": "color_green",
-      "name": "초록 옷",
-      "type": "color",
-      "price": 30,
-      "color": "0x22c55e"
+      "id": "hat_12",
+      "name": "버섯",
+      "type": "hat",
+      "price": 45,
+      "emoji": "🍄"
     },
     {
-      "id": "color_gold",
-      "name": "황금 옷",
-      "type": "color",
+      "id": "hat_13",
+      "name": "불꽃",
+      "type": "hat",
+      "price": 70,
+      "emoji": "🔥"
+    },
+    {
+      "id": "hat_14",
+      "name": "다이아몬드",
+      "type": "hat",
+      "price": 200,
+      "emoji": "💎"
+    },
+    {
+      "id": "hat_15",
+      "name": "유니콘",
+      "type": "hat",
+      "price": 120,
+      "emoji": "🦄"
+    },
+    {
+      "id": "hat_16",
+      "name": "고양이귀",
+      "type": "hat",
+      "price": 55,
+      "emoji": "🐱"
+    },
+    {
+      "id": "hat_17",
+      "name": "개구리",
+      "type": "hat",
+      "price": 35,
+      "emoji": "🐸"
+    },
+    {
+      "id": "hat_18",
+      "name": "광대모자",
+      "type": "hat",
+      "price": 45,
+      "emoji": "🎪"
+    },
+    {
+      "id": "hat_19",
+      "name": "달",
+      "type": "hat",
+      "price": 65,
+      "emoji": "🌙"
+    },
+    {
+      "id": "hat_20",
+      "name": "과녁",
+      "type": "hat",
+      "price": 30,
+      "emoji": "🎯"
+    },
+    {
+      "id": "shoes_1",
+      "name": "강아지",
+      "type": "shoes",
+      "price": 30,
+      "emoji": "🐶",
+      "speed": 3.5
+    },
+    {
+      "id": "shoes_2",
+      "name": "토끼",
+      "type": "shoes",
+      "price": 30,
+      "emoji": "🐰",
+      "speed": 4.5
+    },
+    {
+      "id": "shoes_3",
+      "name": "곰",
+      "type": "shoes",
+      "price": 40,
+      "emoji": "🐻",
+      "speed": 3.0
+    },
+    {
+      "id": "shoes_4",
+      "name": "판다",
+      "type": "shoes",
+      "price": 50,
+      "emoji": "🐼",
+      "speed": 3.0
+    },
+    {
+      "id": "shoes_5",
+      "name": "호랑이",
+      "type": "shoes",
+      "price": 60,
+      "emoji": "🐯",
+      "speed": 5.5
+    },
+    {
+      "id": "shoes_6",
+      "name": "사자",
+      "type": "shoes",
+      "price": 70,
+      "emoji": "🦁",
+      "speed": 5.0
+    },
+    {
+      "id": "shoes_7",
+      "name": "돼지",
+      "type": "shoes",
+      "price": 30,
+      "emoji": "🐷",
+      "speed": 2.5
+    },
+    {
+      "id": "shoes_8",
+      "name": "펭귄",
+      "type": "shoes",
+      "price": 40,
+      "emoji": "🐧",
+      "speed": 2.5
+    },
+    {
+      "id": "shoes_9",
+      "name": "나비",
+      "type": "shoes",
+      "price": 35,
+      "emoji": "🦋",
+      "speed": 4.0
+    },
+    {
+      "id": "shoes_10",
+      "name": "여우",
+      "type": "shoes",
+      "price": 50,
+      "emoji": "🦊",
+      "speed": 5.0
+    },
+    {
+      "id": "shoes_11",
+      "name": "자동차",
+      "type": "shoes",
+      "price": 50,
+      "emoji": "🚗",
+      "speed": 6.0
+    },
+    {
+      "id": "shoes_12",
+      "name": "레이싱카",
+      "type": "shoes",
+      "price": 80,
+      "emoji": "🏎️",
+      "speed": 8.0
+    },
+    {
+      "id": "shoes_13",
+      "name": "버스",
+      "type": "shoes",
+      "price": 60,
+      "emoji": "🚌",
+      "speed": 5.0
+    },
+    {
+      "id": "shoes_14",
+      "name": "로켓",
+      "type": "shoes",
+      "price": 120,
+      "emoji": "🚀",
+      "speed": 10.0
+    },
+    {
+      "id": "shoes_15",
+      "name": "UFO",
+      "type": "shoes",
+      "price": 100,
+      "emoji": "🛸",
+      "speed": 9.0
+    },
+    {
+      "id": "shoes_16",
+      "name": "자전거",
+      "type": "shoes",
+      "price": 40,
+      "emoji": "🚲",
+      "speed": 4.0
+    },
+    {
+      "id": "shoes_17",
+      "name": "스쿠터",
+      "type": "shoes",
+      "price": 55,
+      "emoji": "🛵",
+      "speed": 6.0
+    },
+    {
+      "id": "shoes_18",
+      "name": "헬리콥터",
+      "type": "shoes",
+      "price": 90,
+      "emoji": "🚁",
+      "speed": 7.0
+    },
+    {
+      "id": "shoes_19",
+      "name": "기차",
+      "type": "shoes",
+      "price": 65,
+      "emoji": "🚂",
+      "speed": 7.0
+    },
+    {
+      "id": "shoes_20",
+      "name": "돛배",
+      "type": "shoes",
+      "price": 45,
+      "emoji": "⛵",
+      "speed": 3.5
+    },
+    {
+      "id": "hat_w1",
+      "name": "검",
+      "type": "hat",
       "price": 150,
-      "color": "0xfbbf24"
+      "emoji": "⚔️"
     },
     {
-      "id": "color_pink",
-      "name": "분홍 옷",
-      "type": "color",
-      "price": 40,
-      "color": "0xec4899"
+      "id": "hat_w2",
+      "name": "단검",
+      "type": "hat",
+      "price": 100,
+      "emoji": "🗡️"
     },
     {
-      "id": "color_purple",
-      "name": "보라 옷",
-      "type": "color",
-      "price": 40,
-      "color": "0xa855f7"
+      "id": "hat_w3",
+      "name": "활",
+      "type": "hat",
+      "price": 120,
+      "emoji": "🏹"
+    },
+    {
+      "id": "hat_w4",
+      "name": "마법봉",
+      "type": "hat",
+      "price": 130,
+      "emoji": "🪄"
+    },
+    {
+      "id": "hat_w5",
+      "name": "방패",
+      "type": "hat",
+      "price": 110,
+      "emoji": "🛡️"
     }
   ],
   "zones": [
