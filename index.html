@@ -2257,6 +2257,7 @@ class BagScene extends Phaser.Scene {
 
   showPetDetail(pet) {
     const { width, height } = this.scale;
+    this.popupOpen = true;   // 팝업 열림 → 뒤 펫 카드 클릭 차단
     const overlay=this.add.rectangle(width/2,height/2,width,height,0x000000,0.8).setDepth(50).setOrigin(0.5).setInteractive();
     const panel=this.add.rectangle(width/2,height/2,340,440,0x1a0a3e).setDepth(51).setOrigin(0.5);
     const gradeBorder={legend:0xfbbf24,rare:0x60a5fa,normal:0xa855f7};
@@ -2298,7 +2299,11 @@ class BagScene extends Phaser.Scene {
     const closeTxt=this.add.text(width/2+75,height/2+165,'✕ 닫기',{fontSize:'15px',fontFamily:'Malgun Gothic',color:'#9ca3af'}).setDepth(53).setOrigin(0.5);
     allObjs.push(closeBg,closeTxt);
 
-    const closeAll=()=>allObjs.forEach(o=>o.destroy());
+    const closeAll=()=>{
+      allObjs.forEach(o=>o.destroy());
+      // 같은 클릭의 pointerup이 뒤 펫 카드에 닿지 않도록 잠깐 차단 유지
+      this.time.delayedCall(120, () => { this.popupOpen = false; });
+    };
     overlay.on('pointerdown',closeAll);
     closeBg.on('pointerdown',closeAll);
 
