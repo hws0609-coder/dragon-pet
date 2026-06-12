@@ -8,7 +8,7 @@
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: #1a0a3e; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; font-family: 'Malgun Gothic', sans-serif; }
-#game-container { width: 480px; height: 640px; position: relative; }
+#game-container { width: 600px; height: 800px; position: relative; }
 canvas { display: block; }
 </style>
 </head>
@@ -425,7 +425,8 @@ class MapScene extends Phaser.Scene {
         if (hatItem) {
           if (hatItem.img && this.textures.exists(hatItem.img)) {
             // 이미지 모자: origin(0.5,1) → 아래쪽 기준 정렬
-            const hatImg = this.add.image(0, -38, hatItem.img);
+            // y값이 클수록 아래로 내려옴 (-15 = 머리 위에 살짝 걸침)
+            const hatImg = this.add.image(0, -15, hatItem.img);
             hatImg.setDisplaySize(36, 24);   // 원본 비율(W:H=1:0.68) 유지
             hatImg.setOrigin(0.5, 1);
             this.player.add(hatImg);
@@ -1828,7 +1829,7 @@ class CosmeticScene extends Phaser.Scene {
         const hatItem = PETS_DATA.cosmetics.find(c => c.id === equip.hat);
         if (hatItem) {
           if (hatItem.img && this.textures.exists(hatItem.img)) {
-            const hat = this.add.image(0, -52, hatItem.img);
+            const hat = this.add.image(0, -20, hatItem.img);
             hat.setDisplaySize(46, 31);   // 원본 비율 유지
             hat.setOrigin(0.5, 1);
             this.preview.add(hat);
@@ -1960,8 +1961,8 @@ async function init() {
 
   new Phaser.Game({
     type: Phaser.AUTO,
-    width: 480,
-    height: 640,
+    width: 600,
+    height: 800,
     parent: 'game-container',
     backgroundColor: '#1a0a3e',
     scene: [
