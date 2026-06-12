@@ -1443,22 +1443,38 @@ class QuizScene extends Phaser.Scene {
     const isMath = Math.random() < 0.75;  // 수학 75% / 상식 25%
     if (isMath) {
       const type = Phaser.Math.Between(0, 2);
+      // 정답 주변의 서로 다른 오답 3개 생성 (음수 제외, 중복 없음)
+      const makeChoices = (answer) => {
+        const set = new Set([answer]);
+        const offsets = [10, -3, 4, 5, -5, 8, -8, 12, 2, -2];
+        let oi = 0;
+        while (set.size < 4 && oi < offsets.length) {
+          const v = answer + offsets[oi++];
+          if (v >= 0) set.add(v);
+        }
+        let extra = 13;
+        while (set.size < 4) { set.add(answer + extra); extra += 3; }
+        return Utils.shuffle([...set]).slice(0, 4);
+      };
       if (type === 0) {
-        const a = Phaser.Math.Between(5, 50), b = Phaser.Math.Between(5, 40);
+        // 덧셈: 두 자리(10XP) 또는 세 자리(15XP, 보너스)
+        const big = Math.random() < 0.5;
+        const a = big ? Phaser.Math.Between(100, 500) : Phaser.Math.Between(5, 90);
+        const b = big ? Phaser.Math.Between(100, 400) : Phaser.Math.Between(5, 90);
         const answer = a + b;
-        return { category: 'math', bonus: true, question: `${a} + ${b} = ?`, answer,
-          choices: Utils.shuffle([answer, answer+3, answer-2, answer+5]).slice(0,4) };
+        return { category: 'math', bonus: big, question: `${a} + ${b} = ?`, answer, choices: makeChoices(answer) };
       }
       if (type === 1) {
-        const a = Phaser.Math.Between(20, 80), b = Phaser.Math.Between(5, a-1);
+        // 뺄셈: 두 자리(10XP) 또는 세 자리(15XP, 보너스)
+        const big = Math.random() < 0.5;
+        const a = big ? Phaser.Math.Between(200, 900) : Phaser.Math.Between(20, 90);
+        const b = big ? Phaser.Math.Between(100, a-1) : Phaser.Math.Between(5, a-1);
         const answer = a - b;
-        return { category: 'math', bonus: true, question: `${a} - ${b} = ?`, answer,
-          choices: Utils.shuffle([answer, answer+2, answer-3, answer+4]).slice(0,4) };
+        return { category: 'math', bonus: big, question: `${a} - ${b} = ?`, answer, choices: makeChoices(answer) };
       }
       const table = Phaser.Math.Between(2, 5), num = Phaser.Math.Between(2, 9);
       const answer = table * num;
-      return { category: 'math', bonus: true, question: `${table} × ${num} = ?`, answer,
-        choices: Utils.shuffle([answer, answer+table, answer-table, answer+table*2]).slice(0,4) };
+      return { category: 'math', bonus: true, question: `${table} × ${num} = ?`, answer, choices: makeChoices(answer) };
     }
     // 백과사전 퀴즈
     const pool = QUIZ_DATA.grade2.encyclopedia;
