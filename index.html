@@ -1364,7 +1364,7 @@ class QuizScene extends Phaser.Scene {
   }
 
   makeGrade2Quiz() {
-    const isMath = Math.random() < 0.5;
+    const isMath = Math.random() < 0.75;  // 수학 75% / 상식 25%
     if (isMath) {
       const type = Phaser.Math.Between(0, 2);
       if (type === 0) {
