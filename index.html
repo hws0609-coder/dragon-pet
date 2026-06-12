@@ -1598,7 +1598,7 @@ class BagScene extends Phaser.Scene {
       const tx=this.add.text(x,34,t.label,{fontSize:'11px',fontFamily:'Malgun Gothic',color:i===0?'#fff':'#a78bfa'}).setOrigin(0.5);
       tabBgs.push(bg); tabTxts.push(tx);
     });
-    const helpTxt=this.add.text(width/2,57,'펫 클릭: 동행  |  길게 누르기: 버리기',{fontSize:'10px',fontFamily:'Malgun Gothic',color:'#6b7280'}).setOrigin(0.5);
+    const helpTxt=this.add.text(width/2,64,'펫 클릭: 동행  |  길게 누르기: 버리기',{fontSize:'10px',fontFamily:'Malgun Gothic',color:'#6b7280'}).setOrigin(0.5);
 
     this.tabObjs=[];
     const switchTab=(idx)=>{
@@ -1606,10 +1606,10 @@ class BagScene extends Phaser.Scene {
       tabBgs.forEach((b,i)=>{ b.setFillStyle(i===idx?0x5b21b6:0x1e1145); b.setStrokeStyle(1,i===idx?0xe879f9:0x4c1d95); });
       tabTxts.forEach((t,i)=>t.setColor(i===idx?'#fff':'#a78bfa'));
       helpTxt.setVisible(idx===0);
-      if      (idx===0) this.renderPetCards(68, this.tabObjs);
-      else if (idx===1) this.renderConsumableCards(68, this.tabObjs);
-      else if (idx===2) this.renderCosmeticCards('hat',   68, this.tabObjs);
-      else              this.renderCosmeticCards('shoes', 68, this.tabObjs);
+      if      (idx===0) this.renderPetCards(120, this.tabObjs);
+      else if (idx===1) this.renderConsumableCards(120, this.tabObjs);
+      else if (idx===2) this.renderCosmeticCards('hat',   100, this.tabObjs);
+      else              this.renderCosmeticCards('shoes', 100, this.tabObjs);
     };
     switchTab(0);
     tabBgs.forEach((b,i)=>b.on('pointerdown',()=>switchTab(i)));
@@ -1622,20 +1622,20 @@ class BagScene extends Phaser.Scene {
   renderPetCards(startY, objs) {
     this.saveData.bag.forEach((pet, i) => {
       const col=i%3, row=Math.floor(i/3);
-      const x=80+col*140, y=startY+row*108;
+      const x=80+col*140, y=startY+row*96;
       const isActive=pet.isActive;
-      const bg=this.add.rectangle(x,y,122,92,isActive?0x5b21b6:pet.alive?0x2d1b69:0x1f1f2e).setOrigin(0.5).setInteractive({useHandCursor:true});
+      const bg=this.add.rectangle(x,y,122,84,isActive?0x5b21b6:pet.alive?0x2d1b69:0x1f1f2e).setOrigin(0.5).setInteractive({useHandCursor:true});
       bg.setStrokeStyle(2,isActive?0xe879f9:pet.alive?0x4c1d95:0x374151);
       const gc={legend:'#fbbf24',rare:'#60a5fa',normal:'#9ca3af'};
-      const d =this.add.text(x,y-32,pet.alive?'●':'💀',{fontSize:'14px',color:gc[pet.grade]||'#9ca3af'}).setOrigin(0.5);
-      const nT=this.add.text(x,y-16,pet.name.length>6?pet.name.slice(0,6)+'...':pet.name,{fontSize:'12px',fontFamily:'Malgun Gothic',color:pet.alive?'#e9d5ff':'#6b7280'}).setOrigin(0.5);
+      const d =this.add.text(x,y-30,pet.alive?'●':'💀',{fontSize:'13px',color:gc[pet.grade]||'#9ca3af'}).setOrigin(0.5);
+      const nT=this.add.text(x,y-15,pet.name.length>6?pet.name.slice(0,6)+'...':pet.name,{fontSize:'12px',fontFamily:'Malgun Gothic',color:pet.alive?'#e9d5ff':'#6b7280'}).setOrigin(0.5);
       const aT=this.add.text(x,y,`Lv.${pet.level}  ATK${pet.atk}`,{fontSize:'11px',fontFamily:'Malgun Gothic',color:'#9ca3af'}).setOrigin(0.5);
-      const hT=this.add.text(x,y+16,`HP ${pet.hp}/${pet.maxHp}`,{fontSize:'10px',fontFamily:'Malgun Gothic',color:'#6b7280'}).setOrigin(0.5);
-      const bW=100,bH=6,bY=y+32;
+      const hT=this.add.text(x,y+14,`HP ${pet.hp}/${pet.maxHp}`,{fontSize:'10px',fontFamily:'Malgun Gothic',color:'#6b7280'}).setOrigin(0.5);
+      const bW=100,bH=5,bY=y+28;
       const bBg=this.add.rectangle(x,bY,bW,bH,0x1a1a2e).setOrigin(0.5);
       const xPct=Math.max(0,Math.min(pet.xp/pet.xpToNext,1));
       const bFg=xPct>0?this.add.rectangle(x-bW/2+(bW*xPct)/2,bY,bW*xPct,bH,0xfbbf24).setOrigin(0.5):null;
-      const xT=this.add.text(x,bY+9,`XP ${pet.xp}/${pet.xpToNext}`,{fontSize:'8px',fontFamily:'Malgun Gothic',color:'#a78bfa'}).setOrigin(0.5);
+      const xT=this.add.text(x,bY+8,`XP ${pet.xp}/${pet.xpToNext}`,{fontSize:'8px',fontFamily:'Malgun Gothic',color:'#a78bfa'}).setOrigin(0.5);
       objs.push(bg,d,nT,aT,hT,bBg,xT); if(bFg) objs.push(bFg);
       bg.on('pointerdown',()=>{
         if(this.releaseMode) return;
