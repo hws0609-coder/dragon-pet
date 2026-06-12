@@ -7,7 +7,9 @@
       "type": "불꽃",
       "img": {
         "lv1": "assets/pets/fire-dragon-lv1.png",
+        "lv2": "assets/pets/fire-dragon-lv2.png",
         "lv3": "assets/pets/fire-dragon-lv3.png",
+        "lv4": "assets/pets/fire-dragon-lv4.png",
         "lv5": "assets/pets/fire-dragon-lv5.png"
       },
       "baseAtk": {
@@ -27,7 +29,9 @@
       "type": "전기",
       "img": {
         "lv1": "assets/pets/thunder-dragon-lv1.png",
+        "lv2": "assets/pets/thunder-dragon-lv2.png",
         "lv3": "assets/pets/thunder-dragon-lv3.png",
+        "lv4": "assets/pets/thunder-dragon-lv4.png",
         "lv5": "assets/pets/thunder-dragon-lv5.png"
       },
       "baseAtk": {
@@ -47,7 +51,9 @@
       "type": "풀",
       "img": {
         "lv1": "assets/pets/leaf-dragon-lv1.png",
+        "lv2": "assets/pets/leaf-dragon-lv2.png",
         "lv3": "assets/pets/leaf-dragon-lv3.png",
+        "lv4": "assets/pets/leaf-dragon-lv4.png",
         "lv5": "assets/pets/leaf-dragon-lv5.png"
       },
       "baseAtk": {
@@ -67,7 +73,9 @@
       "type": "빛",
       "img": {
         "lv1": "assets/pets/aurora-dragon-lv1.png",
+        "lv2": "assets/pets/aurora-dragon-lv2.png",
         "lv3": "assets/pets/aurora-dragon-lv3.png",
+        "lv4": "assets/pets/aurora-dragon-lv4.png",
         "lv5": "assets/pets/aurora-dragon-lv5.png"
       },
       "baseAtk": {
@@ -87,7 +95,9 @@
       "type": "얼음",
       "img": {
         "lv1": "assets/pets/ice-horse-lv1.png",
+        "lv2": "assets/pets/ice-horse-lv2.png",
         "lv3": "assets/pets/ice-horse-lv3.png",
+        "lv4": "assets/pets/ice-horse-lv4.png",
         "lv5": "assets/pets/ice-horse-lv5.png"
       },
       "baseAtk": {
@@ -107,7 +117,9 @@
       "type": "물",
       "img": {
         "lv1": "assets/pets/water-turtle-lv1.png",
+        "lv2": "assets/pets/water-turtle-lv2.png",
         "lv3": "assets/pets/water-turtle-lv3.png",
+        "lv4": "assets/pets/water-turtle-lv4.png",
         "lv5": "assets/pets/water-turtle-lv5.png"
       },
       "baseAtk": {
@@ -127,7 +139,9 @@
       "type": "어둠",
       "img": {
         "lv1": "assets/pets/dark-cat-lv1.png",
+        "lv2": "assets/pets/dark-cat-lv2.png",
         "lv3": "assets/pets/dark-cat-lv3.png",
+        "lv4": "assets/pets/dark-cat-lv4.png",
         "lv5": "assets/pets/dark-cat-lv5.png"
       },
       "baseAtk": {
@@ -147,7 +161,9 @@
       "type": "바람",
       "img": {
         "lv1": "assets/pets/cloud-sheep-lv1.png",
+        "lv2": "assets/pets/cloud-sheep-lv2.png",
         "lv3": "assets/pets/cloud-sheep-lv3.png",
+        "lv4": "assets/pets/cloud-sheep-lv4.png",
         "lv5": "assets/pets/cloud-sheep-lv5.png"
       },
       "baseAtk": {
@@ -167,7 +183,9 @@
       "type": "불꽃",
       "img": {
         "lv1": "assets/pets/lava-lizard-lv1.png",
+        "lv2": "assets/pets/lava-lizard-lv2.png",
         "lv3": "assets/pets/lava-lizard-lv3.png",
+        "lv4": "assets/pets/lava-lizard-lv4.png",
         "lv5": "assets/pets/lava-lizard-lv5.png"
       },
       "baseAtk": {
@@ -187,7 +205,9 @@
       "type": "에스퍼",
       "img": {
         "lv1": "assets/pets/star-fox-lv1.png",
+        "lv2": "assets/pets/star-fox-lv2.png",
         "lv3": "assets/pets/star-fox-lv3.png",
+        "lv4": "assets/pets/star-fox-lv4.png",
         "lv5": "assets/pets/star-fox-lv5.png"
       },
       "baseAtk": {
@@ -208,7 +228,9 @@
       "type": "페어리",
       "img": {
         "lv1": "assets/pets/fairy-rabbit-lv1.png",
+        "lv2": "assets/pets/fairy-rabbit-lv2.png",
         "lv3": "assets/pets/fairy-rabbit-lv3.png",
+        "lv4": "assets/pets/fairy-rabbit-lv4.png",
         "lv5": "assets/pets/fairy-rabbit-lv5.png"
       },
       "baseAtk": {
@@ -229,7 +251,9 @@
       "type": "에스퍼",
       "img": {
         "lv1": "assets/pets/esper-owl-lv1.png",
+        "lv2": "assets/pets/esper-owl-lv2.png",
         "lv3": "assets/pets/esper-owl-lv3.png",
+        "lv4": "assets/pets/esper-owl-lv4.png",
         "lv5": "assets/pets/esper-owl-lv5.png"
       },
       "baseAtk": {
@@ -250,7 +274,9 @@
       "type": "노말",
       "img": {
         "lv1": "assets/pets/normal-dog-lv1.png",
+        "lv2": "assets/pets/normal-dog-lv2.png",
         "lv3": "assets/pets/normal-dog-lv3.png",
+        "lv4": "assets/pets/normal-dog-lv4.png",
         "lv5": "assets/pets/normal-dog-lv5.png"
       },
       "baseAtk": {
@@ -270,7 +296,9 @@
       "type": "얼음",
       "img": {
         "lv1": "assets/pets/ice-penguin-lv1.png",
+        "lv2": "assets/pets/ice-penguin-lv2.png",
         "lv3": "assets/pets/ice-penguin-lv3.png",
+        "lv4": "assets/pets/ice-penguin-lv4.png",
         "lv5": "assets/pets/ice-penguin-lv5.png"
       },
       "baseAtk": {
@@ -290,7 +318,9 @@
       "type": "풀",
       "img": {
         "lv1": "assets/pets/grass-hedgehog-lv1.png",
+        "lv2": "assets/pets/grass-hedgehog-lv2.png",
         "lv3": "assets/pets/grass-hedgehog-lv3.png",
+        "lv4": "assets/pets/grass-hedgehog-lv4.png",
         "lv5": "assets/pets/grass-hedgehog-lv5.png"
       },
       "baseAtk": {
@@ -311,7 +341,9 @@
       "type": "땅",
       "img": {
         "lv1": "assets/pets/sand-camel-lv1.png",
+        "lv2": "assets/pets/sand-camel-lv2.png",
         "lv3": "assets/pets/sand-camel-lv3.png",
+        "lv4": "assets/pets/sand-camel-lv4.png",
         "lv5": "assets/pets/sand-camel-lv5.png"
       },
       "baseAtk": {
@@ -331,7 +363,9 @@
       "type": "어둠",
       "img": {
         "lv1": "assets/pets/cave-bat-lv1.png",
+        "lv2": "assets/pets/cave-bat-lv2.png",
         "lv3": "assets/pets/cave-bat-lv3.png",
+        "lv4": "assets/pets/cave-bat-lv4.png",
         "lv5": "assets/pets/cave-bat-lv5.png"
       },
       "baseAtk": {
@@ -351,7 +385,9 @@
       "type": "페어리",
       "img": {
         "lv1": "assets/pets/rainbow-butterfly-lv1.png",
+        "lv2": "assets/pets/rainbow-butterfly-lv2.png",
         "lv3": "assets/pets/rainbow-butterfly-lv3.png",
+        "lv4": "assets/pets/rainbow-butterfly-lv4.png",
         "lv5": "assets/pets/rainbow-butterfly-lv5.png"
       },
       "baseAtk": {
@@ -373,7 +409,9 @@
       "type": "전기",
       "img": {
         "lv1": "assets/pets/thunder-hamster-lv1.png",
+        "lv2": "assets/pets/thunder-hamster-lv2.png",
         "lv3": "assets/pets/thunder-hamster-lv3.png",
+        "lv4": "assets/pets/thunder-hamster-lv4.png",
         "lv5": "assets/pets/thunder-hamster-lv5.png"
       },
       "baseAtk": {
@@ -395,7 +433,9 @@
       "type": "물",
       "img": {
         "lv1": "assets/pets/water-frog-lv1.png",
+        "lv2": "assets/pets/water-frog-lv2.png",
         "lv3": "assets/pets/water-frog-lv3.png",
+        "lv4": "assets/pets/water-frog-lv4.png",
         "lv5": "assets/pets/water-frog-lv5.png"
       },
       "baseAtk": {
