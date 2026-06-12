@@ -5006,6 +5006,2006 @@
           "leg",
           "horn"
         ]
+      },
+      {
+        "question": "\"엄마\"를 영어로 하면?",
+        "answer": "mom",
+        "choices": [
+          "push",
+          "refrigerator",
+          "dolphin",
+          "mom"
+        ]
+      },
+      {
+        "question": "\"아빠\"를 영어로 하면?",
+        "answer": "dad",
+        "choices": [
+          "calf",
+          "throw",
+          "dad",
+          "black"
+        ]
+      },
+      {
+        "question": "\"소방관\"를 영어로 하면?",
+        "answer": "firefighter",
+        "choices": [
+          "crocodile",
+          "theater",
+          "firefighter",
+          "camel"
+        ]
+      },
+      {
+        "question": "\"화가\"를 영어로 하면?",
+        "answer": "painter",
+        "choices": [
+          "calf",
+          "truck",
+          "monday",
+          "painter"
+        ]
+      },
+      {
+        "question": "\"배우\"를 영어로 하면?",
+        "answer": "actor",
+        "choices": [
+          "shape",
+          "bank",
+          "green",
+          "actor"
+        ]
+      },
+      {
+        "question": "\"운전사\"를 영어로 하면?",
+        "answer": "driver",
+        "choices": [
+          "high",
+          "driver",
+          "wednesday",
+          "girl"
+        ]
+      },
+      {
+        "question": "\"우주비행사\"를 영어로 하면?",
+        "answer": "astronaut",
+        "choices": [
+          "moon",
+          "astronaut",
+          "field",
+          "summer"
+        ]
+      },
+      {
+        "question": "\"과학자\"를 영어로 하면?",
+        "answer": "scientist",
+        "choices": [
+          "glue",
+          "scientist",
+          "table",
+          "church"
+        ]
+      },
+      {
+        "question": "\"왕\"를 영어로 하면?",
+        "answer": "king",
+        "choices": [
+          "easy",
+          "spoon",
+          "happy",
+          "king"
+        ]
+      },
+      {
+        "question": "\"여왕\"를 영어로 하면?",
+        "answer": "queen",
+        "choices": [
+          "queen",
+          "airplane",
+          "duck",
+          "pen"
+        ]
+      },
+      {
+        "question": "\"왕자\"를 영어로 하면?",
+        "answer": "prince",
+        "choices": [
+          "throw",
+          "umbrella",
+          "prince",
+          "pants"
+        ]
+      },
+      {
+        "question": "\"공주\"를 영어로 하면?",
+        "answer": "princess",
+        "choices": [
+          "leaf",
+          "rocket",
+          "tomorrow",
+          "princess"
+        ]
+      },
+      {
+        "question": "\"이웃\"를 영어로 하면?",
+        "answer": "neighbor",
+        "choices": [
+          "neighbor",
+          "key",
+          "bridge",
+          "duck"
+        ]
+      },
+      {
+        "question": "\"손님\"를 영어로 하면?",
+        "answer": "guest",
+        "choices": [
+          "story",
+          "heavy",
+          "bed",
+          "guest"
+        ]
+      },
+      {
+        "question": "\"주인\"를 영어로 하면?",
+        "answer": "owner",
+        "choices": [
+          "owner",
+          "bird",
+          "two",
+          "ten"
+        ]
+      },
+      {
+        "question": "\"치아\"를 영어로 하면?",
+        "answer": "tooth",
+        "choices": [
+          "tooth",
+          "scary",
+          "ant",
+          "wall"
+        ]
+      },
+      {
+        "question": "\"목\"를 영어로 하면?",
+        "answer": "neck",
+        "choices": [
+          "deer",
+          "duck",
+          "neck",
+          "shape"
+        ]
+      },
+      {
+        "question": "\"어깨\"를 영어로 하면?",
+        "answer": "shoulder",
+        "choices": [
+          "clean",
+          "lake",
+          "panda",
+          "shoulder"
+        ]
+      },
+      {
+        "question": "\"무릎\"를 영어로 하면?",
+        "answer": "knee",
+        "choices": [
+          "knee",
+          "shape",
+          "cat",
+          "evening"
+        ]
+      },
+      {
+        "question": "\"등\"를 영어로 하면?",
+        "answer": "back",
+        "choices": [
+          "fog",
+          "wall",
+          "elephant",
+          "back"
+        ]
+      },
+      {
+        "question": "\"배\"를 영어로 하면?",
+        "answer": "belly",
+        "choices": [
+          "chick",
+          "airport",
+          "belly",
+          "root"
+        ]
+      },
+      {
+        "question": "\"당근\"를 영어로 하면?",
+        "answer": "carrot",
+        "choices": [
+          "carrot",
+          "trunk",
+          "snow",
+          "pretty"
+        ]
+      },
+      {
+        "question": "\"감자\"를 영어로 하면?",
+        "answer": "potato",
+        "choices": [
+          "stomach",
+          "sandwich",
+          "rainbow",
+          "potato"
+        ]
+      },
+      {
+        "question": "\"토마토\"를 영어로 하면?",
+        "answer": "tomato",
+        "choices": [
+          "tomato",
+          "walk",
+          "year",
+          "long"
+        ]
+      },
+      {
+        "question": "\"양파\"를 영어로 하면?",
+        "answer": "onion",
+        "choices": [
+          "name",
+          "sick",
+          "onion",
+          "octopus"
+        ]
+      },
+      {
+        "question": "\"배\"를 영어로 하면?",
+        "answer": "pear",
+        "choices": [
+          "refrigerator",
+          "pear",
+          "teacher",
+          "sunday"
+        ]
+      },
+      {
+        "question": "\"레몬\"를 영어로 하면?",
+        "answer": "lemon",
+        "choices": [
+          "lemon",
+          "shark",
+          "size",
+          "dad"
+        ]
+      },
+      {
+        "question": "\"멜론\"를 영어로 하면?",
+        "answer": "melon",
+        "choices": [
+          "melon",
+          "sell",
+          "tall",
+          "computer"
+        ]
+      },
+      {
+        "question": "\"설탕\"를 영어로 하면?",
+        "answer": "sugar",
+        "choices": [
+          "girl",
+          "smell",
+          "flower",
+          "sugar"
+        ]
+      },
+      {
+        "question": "\"소금\"를 영어로 하면?",
+        "answer": "salt",
+        "choices": [
+          "dolphin",
+          "honey",
+          "green",
+          "salt"
+        ]
+      },
+      {
+        "question": "\"햄버거\"를 영어로 하면?",
+        "answer": "hamburger",
+        "choices": [
+          "grandmother",
+          "hamburger",
+          "cheese",
+          "police"
+        ]
+      },
+      {
+        "question": "\"도넛\"를 영어로 하면?",
+        "answer": "donut",
+        "choices": [
+          "bottle",
+          "baby",
+          "big",
+          "donut"
+        ]
+      },
+      {
+        "question": "\"팝콘\"를 영어로 하면?",
+        "answer": "popcorn",
+        "choices": [
+          "bad",
+          "piano",
+          "tired",
+          "popcorn"
+        ]
+      },
+      {
+        "question": "\"꿀\"를 영어로 하면?",
+        "answer": "honey",
+        "choices": [
+          "king",
+          "classroom",
+          "honey",
+          "game"
+        ]
+      },
+      {
+        "question": "\"뿌리\"를 영어로 하면?",
+        "answer": "root",
+        "choices": [
+          "drink",
+          "cheetah",
+          "root",
+          "soap"
+        ]
+      },
+      {
+        "question": "\"씨앗\"를 영어로 하면?",
+        "answer": "seed",
+        "choices": [
+          "seed",
+          "peacock",
+          "house",
+          "ear"
+        ]
+      },
+      {
+        "question": "\"폭포\"를 영어로 하면?",
+        "answer": "waterfall",
+        "choices": [
+          "waterfall",
+          "pencil",
+          "church",
+          "clock"
+        ]
+      },
+      {
+        "question": "\"동굴\"를 영어로 하면?",
+        "answer": "cave",
+        "choices": [
+          "see",
+          "cave",
+          "cry",
+          "postoffice"
+        ]
+      },
+      {
+        "question": "\"언덕\"를 영어로 하면?",
+        "answer": "hill",
+        "choices": [
+          "umbrella",
+          "hill",
+          "bowl",
+          "tuesday"
+        ]
+      },
+      {
+        "question": "\"천둥\"를 영어로 하면?",
+        "answer": "thunder",
+        "choices": [
+          "carrot",
+          "catch",
+          "bowl",
+          "thunder"
+        ]
+      },
+      {
+        "question": "\"번개\"를 영어로 하면?",
+        "answer": "lightning",
+        "choices": [
+          "soap",
+          "lightning",
+          "city",
+          "ladybug"
+        ]
+      },
+      {
+        "question": "\"안개\"를 영어로 하면?",
+        "answer": "fog",
+        "choices": [
+          "bear",
+          "fog",
+          "milk",
+          "mirror"
+        ]
+      },
+      {
+        "question": "\"크레용\"를 영어로 하면?",
+        "answer": "crayon",
+        "choices": [
+          "friend",
+          "zebra",
+          "crayon",
+          "fly"
+        ]
+      },
+      {
+        "question": "\"풀\"를 영어로 하면?",
+        "answer": "glue",
+        "choices": [
+          "glue",
+          "study",
+          "tooth",
+          "cow"
+        ]
+      },
+      {
+        "question": "\"가위\"를 영어로 하면?",
+        "answer": "scissors",
+        "choices": [
+          "beach",
+          "dragonfly",
+          "orange",
+          "scissors"
+        ]
+      },
+      {
+        "question": "\"종이\"를 영어로 하면?",
+        "answer": "paper",
+        "choices": [
+          "paper",
+          "see",
+          "fox",
+          "spider"
+        ]
+      },
+      {
+        "question": "\"붓\"를 영어로 하면?",
+        "answer": "brush",
+        "choices": [
+          "garden",
+          "soap",
+          "paper",
+          "brush"
+        ]
+      },
+      {
+        "question": "\"물감\"를 영어로 하면?",
+        "answer": "paint",
+        "choices": [
+          "bus",
+          "paint",
+          "hear",
+          "tuesday"
+        ]
+      },
+      {
+        "question": "\"색연필\"를 영어로 하면?",
+        "answer": "marker",
+        "choices": [
+          "young",
+          "marker",
+          "sticker",
+          "city"
+        ]
+      },
+      {
+        "question": "\"스티커\"를 영어로 하면?",
+        "answer": "sticker",
+        "choices": [
+          "brother",
+          "sticker",
+          "hill",
+          "hand"
+        ]
+      },
+      {
+        "question": "\"방\"를 영어로 하면?",
+        "answer": "room",
+        "choices": [
+          "room",
+          "snake",
+          "leg",
+          "angry"
+        ]
+      },
+      {
+        "question": "\"침대\"를 영어로 하면?",
+        "answer": "bed",
+        "choices": [
+          "bed",
+          "fish",
+          "knife",
+          "rain"
+        ]
+      },
+      {
+        "question": "\"탁자\"를 영어로 하면?",
+        "answer": "table",
+        "choices": [
+          "cool",
+          "pencil",
+          "table",
+          "forest"
+        ]
+      },
+      {
+        "question": "\"거울\"를 영어로 하면?",
+        "answer": "mirror",
+        "choices": [
+          "beach",
+          "mirror",
+          "refrigerator",
+          "turtle"
+        ]
+      },
+      {
+        "question": "\"냉장고\"를 영어로 하면?",
+        "answer": "refrigerator",
+        "choices": [
+          "refrigerator",
+          "fly",
+          "truck",
+          "sleep"
+        ]
+      },
+      {
+        "question": "\"안경\"를 영어로 하면?",
+        "answer": "glasses",
+        "choices": [
+          "warm",
+          "easy",
+          "clothes",
+          "glasses"
+        ]
+      },
+      {
+        "question": "\"드레스\"를 영어로 하면?",
+        "answer": "dress",
+        "choices": [
+          "bowl",
+          "good",
+          "dress",
+          "puppy"
+        ]
+      },
+      {
+        "question": "\"벨트\"를 영어로 하면?",
+        "answer": "belt",
+        "choices": [
+          "beach",
+          "belt",
+          "motorcycle",
+          "swim"
+        ]
+      },
+      {
+        "question": "\"비누\"를 영어로 하면?",
+        "answer": "soap",
+        "choices": [
+          "soap",
+          "waterfall",
+          "ice",
+          "eight"
+        ]
+      },
+      {
+        "question": "\"수건\"를 영어로 하면?",
+        "answer": "towel",
+        "choices": [
+          "towel",
+          "police",
+          "brother",
+          "clothes"
+        ]
+      },
+      {
+        "question": "\"칫솔\"를 영어로 하면?",
+        "answer": "toothbrush",
+        "choices": [
+          "hamster",
+          "toothbrush",
+          "sandwich",
+          "truck"
+        ]
+      },
+      {
+        "question": "\"빗\"를 영어로 하면?",
+        "answer": "comb",
+        "choices": [
+          "key",
+          "face",
+          "comb",
+          "butter"
+        ]
+      },
+      {
+        "question": "\"램프\"를 영어로 하면?",
+        "answer": "lamp",
+        "choices": [
+          "rhino",
+          "fork",
+          "lamp",
+          "neck"
+        ]
+      },
+      {
+        "question": "\"소파\"를 영어로 하면?",
+        "answer": "sofa",
+        "choices": [
+          "hand",
+          "sea",
+          "dog",
+          "sofa"
+        ]
+      },
+      {
+        "question": "\"선풍기\"를 영어로 하면?",
+        "answer": "fan",
+        "choices": [
+          "hedgehog",
+          "money",
+          "old",
+          "fan"
+        ]
+      },
+      {
+        "question": "\"상자\"를 영어로 하면?",
+        "answer": "box",
+        "choices": [
+          "tea",
+          "door",
+          "submarine",
+          "box"
+        ]
+      },
+      {
+        "question": "\"컵\"를 영어로 하면?",
+        "answer": "cup",
+        "choices": [
+          "catch",
+          "beach",
+          "cake",
+          "cup"
+        ]
+      },
+      {
+        "question": "\"접시\"를 영어로 하면?",
+        "answer": "plate",
+        "choices": [
+          "plate",
+          "music",
+          "water",
+          "fly"
+        ]
+      },
+      {
+        "question": "\"숟가락\"를 영어로 하면?",
+        "answer": "spoon",
+        "choices": [
+          "pants",
+          "spoon",
+          "park",
+          "cloud"
+        ]
+      },
+      {
+        "question": "\"포크\"를 영어로 하면?",
+        "answer": "fork",
+        "choices": [
+          "rocket",
+          "fork",
+          "bridge",
+          "road"
+        ]
+      },
+      {
+        "question": "\"칼\"를 영어로 하면?",
+        "answer": "knife",
+        "choices": [
+          "taxi",
+          "ice cream",
+          "knife",
+          "puppy"
+        ]
+      },
+      {
+        "question": "\"병\"를 영어로 하면?",
+        "answer": "bottle",
+        "choices": [
+          "night",
+          "bottle",
+          "story",
+          "write"
+        ]
+      },
+      {
+        "question": "\"그릇\"를 영어로 하면?",
+        "answer": "bowl",
+        "choices": [
+          "hat",
+          "motorcycle",
+          "seven",
+          "bowl"
+        ]
+      },
+      {
+        "question": "\"주전자\"를 영어로 하면?",
+        "answer": "pot",
+        "choices": [
+          "map",
+          "pot",
+          "glasses",
+          "clock"
+        ]
+      },
+      {
+        "question": "\"비행기\"를 영어로 하면?",
+        "answer": "airplane",
+        "choices": [
+          "teeth",
+          "popcorn",
+          "airplane",
+          "cold"
+        ]
+      },
+      {
+        "question": "\"자전거\"를 영어로 하면?",
+        "answer": "bicycle",
+        "choices": [
+          "bicycle",
+          "name",
+          "boy",
+          "banana"
+        ]
+      },
+      {
+        "question": "\"트럭\"를 영어로 하면?",
+        "answer": "truck",
+        "choices": [
+          "store",
+          "shirt",
+          "orange",
+          "truck"
+        ]
+      },
+      {
+        "question": "\"오토바이\"를 영어로 하면?",
+        "answer": "motorcycle",
+        "choices": [
+          "baby",
+          "motorcycle",
+          "butter",
+          "belt"
+        ]
+      },
+      {
+        "question": "\"헬리콥터\"를 영어로 하면?",
+        "answer": "helicopter",
+        "choices": [
+          "grasshopper",
+          "helicopter",
+          "jump",
+          "week"
+        ]
+      },
+      {
+        "question": "\"로켓\"를 영어로 하면?",
+        "answer": "rocket",
+        "choices": [
+          "zebra",
+          "station",
+          "rocket",
+          "hippo"
+        ]
+      },
+      {
+        "question": "\"보트\"를 영어로 하면?",
+        "answer": "boat",
+        "choices": [
+          "lake",
+          "boat",
+          "ant",
+          "brown"
+        ]
+      },
+      {
+        "question": "\"수레\"를 영어로 하면?",
+        "answer": "cart",
+        "choices": [
+          "house",
+          "cart",
+          "dream",
+          "meat"
+        ]
+      },
+      {
+        "question": "\"썰매\"를 영어로 하면?",
+        "answer": "sled",
+        "choices": [
+          "sled",
+          "cloud",
+          "station",
+          "lemon"
+        ]
+      },
+      {
+        "question": "\"잠수함\"를 영어로 하면?",
+        "answer": "submarine",
+        "choices": [
+          "year",
+          "submarine",
+          "calf",
+          "treasure"
+        ]
+      },
+      {
+        "question": "\"강아지\"를 영어로 하면?",
+        "answer": "puppy",
+        "choices": [
+          "fire",
+          "crab",
+          "stone",
+          "puppy"
+        ]
+      },
+      {
+        "question": "\"새끼고양이\"를 영어로 하면?",
+        "answer": "kitten",
+        "choices": [
+          "slow",
+          "read",
+          "bed",
+          "kitten"
+        ]
+      },
+      {
+        "question": "\"병아리\"를 영어로 하면?",
+        "answer": "chick",
+        "choices": [
+          "letter",
+          "chick",
+          "crayon",
+          "baby"
+        ]
+      },
+      {
+        "question": "\"송아지\"를 영어로 하면?",
+        "answer": "calf",
+        "choices": [
+          "happy",
+          "bowl",
+          "calf",
+          "noodle"
+        ]
+      },
+      {
+        "question": "\"사슴\"를 영어로 하면?",
+        "answer": "deer",
+        "choices": [
+          "deer",
+          "mouse",
+          "river",
+          "doctor"
+        ]
+      },
+      {
+        "question": "\"늑대\"를 영어로 하면?",
+        "answer": "wolf",
+        "choices": [
+          "tuesday",
+          "wolf",
+          "thunder",
+          "bird"
+        ]
+      },
+      {
+        "question": "\"다람쥐\"를 영어로 하면?",
+        "answer": "squirrel",
+        "choices": [
+          "fog",
+          "fish",
+          "stone",
+          "squirrel"
+        ]
+      },
+      {
+        "question": "\"판다\"를 영어로 하면?",
+        "answer": "panda",
+        "choices": [
+          "panda",
+          "small",
+          "butter",
+          "coat"
+        ]
+      },
+      {
+        "question": "\"캥거루\"를 영어로 하면?",
+        "answer": "kangaroo",
+        "choices": [
+          "kangaroo",
+          "saturday",
+          "three",
+          "old"
+        ]
+      },
+      {
+        "question": "\"악어\"를 영어로 하면?",
+        "answer": "crocodile",
+        "choices": [
+          "crocodile",
+          "easy",
+          "brother",
+          "leg"
+        ]
+      },
+      {
+        "question": "\"펭귄\"를 영어로 하면?",
+        "answer": "penguin",
+        "choices": [
+          "yellow",
+          "hair",
+          "penguin",
+          "mole"
+        ]
+      },
+      {
+        "question": "\"부엉이\"를 영어로 하면?",
+        "answer": "owl",
+        "choices": [
+          "shrimp",
+          "fog",
+          "owl",
+          "watermelon"
+        ]
+      },
+      {
+        "question": "\"독수리\"를 영어로 하면?",
+        "answer": "eagle",
+        "choices": [
+          "sky",
+          "eagle",
+          "play",
+          "astronaut"
+        ]
+      },
+      {
+        "question": "\"문어\"를 영어로 하면?",
+        "answer": "octopus",
+        "choices": [
+          "octopus",
+          "potato",
+          "pencil",
+          "skirt"
+        ]
+      },
+      {
+        "question": "\"게\"를 영어로 하면?",
+        "answer": "crab",
+        "choices": [
+          "see",
+          "sleep",
+          "crab",
+          "leaf"
+        ]
+      },
+      {
+        "question": "\"새우\"를 영어로 하면?",
+        "answer": "shrimp",
+        "choices": [
+          "pig",
+          "yesterday",
+          "shrimp",
+          "stone"
+        ]
+      },
+      {
+        "question": "\"달팽이\"를 영어로 하면?",
+        "answer": "snail",
+        "choices": [
+          "belly",
+          "easy",
+          "snail",
+          "helicopter"
+        ]
+      },
+      {
+        "question": "\"지렁이\"를 영어로 하면?",
+        "answer": "worm",
+        "choices": [
+          "run",
+          "foot",
+          "worm",
+          "finger"
+        ]
+      },
+      {
+        "question": "\"모기\"를 영어로 하면?",
+        "answer": "mosquito",
+        "choices": [
+          "bike",
+          "mosquito",
+          "ship",
+          "pencil"
+        ]
+      },
+      {
+        "question": "\"파리\"를 영어로 하면?",
+        "answer": "fly",
+        "choices": [
+          "go",
+          "car",
+          "neck",
+          "fly"
+        ]
+      },
+      {
+        "question": "\"햄스터\"를 영어로 하면?",
+        "answer": "hamster",
+        "choices": [
+          "post office",
+          "hamster",
+          "sad",
+          "clock"
+        ]
+      },
+      {
+        "question": "\"기니피그\"를 영어로 하면?",
+        "answer": "guineapig",
+        "choices": [
+          "pot",
+          "guineapig",
+          "woman",
+          "hot"
+        ]
+      },
+      {
+        "question": "\"앵무새\"를 영어로 하면?",
+        "answer": "parrot",
+        "choices": [
+          "parrot",
+          "thunder",
+          "bank",
+          "pencil"
+        ]
+      },
+      {
+        "question": "\"공작\"를 영어로 하면?",
+        "answer": "peacock",
+        "choices": [
+          "ice",
+          "waterfall",
+          "peacock",
+          "gray"
+        ]
+      },
+      {
+        "question": "\"낙타\"를 영어로 하면?",
+        "answer": "camel",
+        "choices": [
+          "friday",
+          "apple",
+          "camel",
+          "sea"
+        ]
+      },
+      {
+        "question": "\"하마\"를 영어로 하면?",
+        "answer": "hippo",
+        "choices": [
+          "friend",
+          "hippo",
+          "queen",
+          "small"
+        ]
+      },
+      {
+        "question": "\"코뿔소\"를 영어로 하면?",
+        "answer": "rhino",
+        "choices": [
+          "throw",
+          "shoes",
+          "rhino",
+          "truck"
+        ]
+      },
+      {
+        "question": "\"표범\"를 영어로 하면?",
+        "answer": "leopard",
+        "choices": [
+          "soup",
+          "submarine",
+          "leopard",
+          "high"
+        ]
+      },
+      {
+        "question": "\"치타\"를 영어로 하면?",
+        "answer": "cheetah",
+        "choices": [
+          "brother",
+          "wednesday",
+          "onion",
+          "cheetah"
+        ]
+      },
+      {
+        "question": "\"고슴도치\"를 영어로 하면?",
+        "answer": "hedgehog",
+        "choices": [
+          "hedgehog",
+          "pen",
+          "airplane",
+          "eye"
+        ]
+      },
+      {
+        "question": "\"박쥐\"를 영어로 하면?",
+        "answer": "bat",
+        "choices": [
+          "speed",
+          "kitchen",
+          "frog",
+          "bat"
+        ]
+      },
+      {
+        "question": "\"두더지\"를 영어로 하면?",
+        "answer": "mole",
+        "choices": [
+          "bowl",
+          "mole",
+          "book",
+          "flag"
+        ]
+      },
+      {
+        "question": "\"메뚜기\"를 영어로 하면?",
+        "answer": "grasshopper",
+        "choices": [
+          "brown",
+          "neighbor",
+          "grasshopper",
+          "house"
+        ]
+      },
+      {
+        "question": "\"잠자리\"를 영어로 하면?",
+        "answer": "dragonfly",
+        "choices": [
+          "comb",
+          "sofa",
+          "cook",
+          "dragonfly"
+        ]
+      },
+      {
+        "question": "\"무당벌레\"를 영어로 하면?",
+        "answer": "ladybug",
+        "choices": [
+          "dog",
+          "horse",
+          "ladybug",
+          "cup"
+        ]
+      },
+      {
+        "question": "\"전갈\"를 영어로 하면?",
+        "answer": "scorpion",
+        "choices": [
+          "gift",
+          "scorpion",
+          "strawberry",
+          "toe"
+        ]
+      },
+      {
+        "question": "\"듣다\"를 영어로 하면?",
+        "answer": "listen",
+        "choices": [
+          "postoffice",
+          "listen",
+          "dad",
+          "police"
+        ]
+      },
+      {
+        "question": "\"앉다\"를 영어로 하면?",
+        "answer": "sit",
+        "choices": [
+          "sit",
+          "paper",
+          "see",
+          "spring"
+        ]
+      },
+      {
+        "question": "\"서다\"를 영어로 하면?",
+        "answer": "stand",
+        "choices": [
+          "ear",
+          "cup",
+          "rabbit",
+          "stand"
+        ]
+      },
+      {
+        "question": "\"만들다\"를 영어로 하면?",
+        "answer": "make",
+        "choices": [
+          "painter",
+          "pencil",
+          "scientist",
+          "make"
+        ]
+      },
+      {
+        "question": "\"씻다\"를 영어로 하면?",
+        "answer": "wash",
+        "choices": [
+          "wash",
+          "strong",
+          "scary",
+          "water"
+        ]
+      },
+      {
+        "question": "\"던지다\"를 영어로 하면?",
+        "answer": "throw",
+        "choices": [
+          "sandwich",
+          "shoulder",
+          "television",
+          "throw"
+        ]
+      },
+      {
+        "question": "\"잡다\"를 영어로 하면?",
+        "answer": "catch",
+        "choices": [
+          "big",
+          "grandfather",
+          "catch",
+          "clothes"
+        ]
+      },
+      {
+        "question": "\"무서운\"를 영어로 하면?",
+        "answer": "scary",
+        "choices": [
+          "rainbow",
+          "scary",
+          "firefighter",
+          "melon"
+        ]
+      },
+      {
+        "question": "\"어린\"를 영어로 하면?",
+        "answer": "young",
+        "choices": [
+          "young",
+          "speed",
+          "pig",
+          "cook"
+        ]
+      },
+      {
+        "question": "\"밝은\"를 영어로 하면?",
+        "answer": "bright",
+        "choices": [
+          "bright",
+          "tall",
+          "four",
+          "juice"
+        ]
+      },
+      {
+        "question": "\"어두운\"를 영어로 하면?",
+        "answer": "dark",
+        "choices": [
+          "gift",
+          "ice cream",
+          "hand",
+          "dark"
+        ]
+      },
+      {
+        "question": "\"무거운\"를 영어로 하면?",
+        "answer": "heavy",
+        "choices": [
+          "hand",
+          "heavy",
+          "green",
+          "buy"
+        ]
+      },
+      {
+        "question": "\"가벼운\"를 영어로 하면?",
+        "answer": "light",
+        "choices": [
+          "heavy",
+          "light",
+          "nine",
+          "cow"
+        ]
+      },
+      {
+        "question": "\"목마른\"를 영어로 하면?",
+        "answer": "thirsty",
+        "choices": [
+          "today",
+          "uncle",
+          "dolphin",
+          "thirsty"
+        ]
+      },
+      {
+        "question": "\"아픈\"를 영어로 하면?",
+        "answer": "sick",
+        "choices": [
+          "white",
+          "purple",
+          "farm",
+          "sick"
+        ]
+      },
+      {
+        "question": "\"가을\"를 영어로 하면?",
+        "answer": "fall",
+        "choices": [
+          "kite",
+          "fall",
+          "hill",
+          "brother"
+        ]
+      },
+      {
+        "question": "\"시간\"를 영어로 하면?",
+        "answer": "hour",
+        "choices": [
+          "speak",
+          "car",
+          "hour",
+          "bathroom"
+        ]
+      },
+      {
+        "question": "\"분\"를 영어로 하면?",
+        "answer": "minute",
+        "choices": [
+          "glasses",
+          "student",
+          "bat",
+          "minute"
+        ]
+      },
+      {
+        "question": "\"주말\"를 영어로 하면?",
+        "answer": "weekend",
+        "choices": [
+          "belt",
+          "weekend",
+          "bridge",
+          "weak"
+        ]
+      },
+      {
+        "question": "\"극장\"를 영어로 하면?",
+        "answer": "theater",
+        "choices": [
+          "mouse",
+          "theater",
+          "mouth",
+          "weekend"
+        ]
+      },
+      {
+        "question": "\"공항\"를 영어로 하면?",
+        "answer": "airport",
+        "choices": [
+          "apple",
+          "today",
+          "airport",
+          "taste"
+        ]
+      },
+      {
+        "question": "\"시장\"를 영어로 하면?",
+        "answer": "market",
+        "choices": [
+          "market",
+          "morning",
+          "picture",
+          "painter"
+        ]
+      },
+      {
+        "question": "\"농장\"를 영어로 하면?",
+        "answer": "farm",
+        "choices": [
+          "strawberry",
+          "farm",
+          "toe",
+          "boat"
+        ]
+      },
+      {
+        "question": "\"해변\"를 영어로 하면?",
+        "answer": "beach",
+        "choices": [
+          "seven",
+          "shark",
+          "beach",
+          "work"
+        ]
+      },
+      {
+        "question": "\"우체국\"를 영어로 하면?",
+        "answer": "postoffice",
+        "choices": [
+          "postoffice",
+          "television",
+          "boy",
+          "apple"
+        ]
+      },
+      {
+        "question": "\"경찰서\"를 영어로 하면?",
+        "answer": "station",
+        "choices": [
+          "station",
+          "onion",
+          "ball",
+          "paper"
+        ]
+      },
+      {
+        "question": "\"운동장\"를 영어로 하면?",
+        "answer": "playground",
+        "choices": [
+          "paint",
+          "ball",
+          "playground",
+          "puppy"
+        ]
+      },
+      {
+        "question": "\"수영장\"를 영어로 하면?",
+        "answer": "pool",
+        "choices": [
+          "treasure",
+          "two",
+          "pool",
+          "belt"
+        ]
+      },
+      {
+        "question": "\"이름\"를 영어로 하면?",
+        "answer": "name",
+        "choices": [
+          "squirrel",
+          "tired",
+          "name",
+          "heart"
+        ]
+      },
+      {
+        "question": "\"나이\"를 영어로 하면?",
+        "answer": "age",
+        "choices": [
+          "age",
+          "sick",
+          "guineapig",
+          "bike"
+        ]
+      },
+      {
+        "question": "\"나라\"를 영어로 하면?",
+        "answer": "country",
+        "choices": [
+          "country",
+          "burger",
+          "hear",
+          "police"
+        ]
+      },
+      {
+        "question": "\"도시\"를 영어로 하면?",
+        "answer": "city",
+        "choices": [
+          "shoes",
+          "dirty",
+          "city",
+          "flower"
+        ]
+      },
+      {
+        "question": "\"길\"를 영어로 하면?",
+        "answer": "road",
+        "choices": [
+          "road",
+          "melon",
+          "car",
+          "bike"
+        ]
+      },
+      {
+        "question": "\"다리\"를 영어로 하면?",
+        "answer": "bridge",
+        "choices": [
+          "banana",
+          "scientist",
+          "house",
+          "bridge"
+        ]
+      },
+      {
+        "question": "\"게임\"를 영어로 하면?",
+        "answer": "game",
+        "choices": [
+          "game",
+          "penguin",
+          "happy",
+          "waterfall"
+        ]
+      },
+      {
+        "question": "\"로봇\"를 영어로 하면?",
+        "answer": "robot",
+        "choices": [
+          "story",
+          "robot",
+          "six",
+          "pot"
+        ]
+      },
+      {
+        "question": "\"북\"를 영어로 하면?",
+        "answer": "drum",
+        "choices": [
+          "read",
+          "new",
+          "drum",
+          "hedgehog"
+        ]
+      },
+      {
+        "question": "\"피아노\"를 영어로 하면?",
+        "answer": "piano",
+        "choices": [
+          "color",
+          "rain",
+          "piano",
+          "queen"
+        ]
+      },
+      {
+        "question": "\"기타\"를 영어로 하면?",
+        "answer": "guitar",
+        "choices": [
+          "flower",
+          "guitar",
+          "hedgehog",
+          "six"
+        ]
+      },
+      {
+        "question": "\"깃발\"를 영어로 하면?",
+        "answer": "flag",
+        "choices": [
+          "flag",
+          "brush",
+          "take",
+          "sugar"
+        ]
+      },
+      {
+        "question": "\"지도\"를 영어로 하면?",
+        "answer": "map",
+        "choices": [
+          "thunder",
+          "nurse",
+          "speak",
+          "map"
+        ]
+      },
+      {
+        "question": "\"보물\"를 영어로 하면?",
+        "answer": "treasure",
+        "choices": [
+          "treasure",
+          "key",
+          "throw",
+          "bicycle"
+        ]
+      },
+      {
+        "question": "\"꿈\"를 영어로 하면?",
+        "answer": "dream",
+        "choices": [
+          "zebra",
+          "read",
+          "owner",
+          "dream"
+        ]
+      },
+      {
+        "question": "\"이야기\"를 영어로 하면?",
+        "answer": "story",
+        "choices": [
+          "year",
+          "story",
+          "night",
+          "giraffe"
+        ]
+      },
+      {
+        "question": "\"질문\"를 영어로 하면?",
+        "answer": "question",
+        "choices": [
+          "question",
+          "easy",
+          "board",
+          "beach"
+        ]
+      },
+      {
+        "question": "\"대답\"를 영어로 하면?",
+        "answer": "answer",
+        "choices": [
+          "answer",
+          "potato",
+          "hot",
+          "shirt"
+        ]
+      },
+      {
+        "question": "\"색깔\"를 영어로 하면?",
+        "answer": "color",
+        "choices": [
+          "hungry",
+          "color",
+          "garden",
+          "study"
+        ]
+      },
+      {
+        "question": "\"모양\"를 영어로 하면?",
+        "answer": "shape",
+        "choices": [
+          "shape",
+          "cook",
+          "panda",
+          "monkey"
+        ]
+      },
+      {
+        "question": "\"크기\"를 영어로 하면?",
+        "answer": "size",
+        "choices": [
+          "evening",
+          "dolphin",
+          "size",
+          "umbrella"
+        ]
+      },
+      {
+        "question": "\"소리\"를 영어로 하면?",
+        "answer": "sound",
+        "choices": [
+          "sofa",
+          "cow",
+          "water",
+          "sound"
+        ]
+      },
+      {
+        "question": "\"냄새\"를 영어로 하면?",
+        "answer": "smell",
+        "choices": [
+          "scientist",
+          "cup",
+          "smell",
+          "bright"
+        ]
+      },
+      {
+        "question": "\"맛\"를 영어로 하면?",
+        "answer": "taste",
+        "choices": [
+          "bee",
+          "playground",
+          "taste",
+          "brown"
+        ]
+      },
+      {
+        "question": "\"힘\"를 영어로 하면?",
+        "answer": "power",
+        "choices": [
+          "power",
+          "yesterday",
+          "butterfly",
+          "airport"
+        ]
+      },
+      {
+        "question": "\"속도\"를 영어로 하면?",
+        "answer": "speed",
+        "choices": [
+          "skirt",
+          "speed",
+          "thirsty",
+          "fast"
+        ]
+      },
+      {
+        "question": "\"우주\"를 영어로 하면?",
+        "answer": "space",
+        "choices": [
+          "eat",
+          "space",
+          "worm",
+          "guitar"
+        ]
+      },
+      {
+        "question": "\"행성\"를 영어로 하면?",
+        "answer": "planet",
+        "choices": [
+          "painter",
+          "planet",
+          "pool",
+          "hope"
+        ]
+      },
+      {
+        "question": "\"지구\"를 영어로 하면?",
+        "answer": "earth",
+        "choices": [
+          "make",
+          "temperature",
+          "earth",
+          "bad"
+        ]
+      },
+      {
+        "question": "\"화성\"를 영어로 하면?",
+        "answer": "mars",
+        "choices": [
+          "chocolate",
+          "mars",
+          "fall",
+          "museum"
+        ]
+      },
+      {
+        "question": "\"로켓발사\"를 영어로 하면?",
+        "answer": "launch",
+        "choices": [
+          "today",
+          "sand",
+          "one",
+          "launch"
+        ]
+      },
+      {
+        "question": "\"우주선\"를 영어로 하면?",
+        "answer": "spaceship",
+        "choices": [
+          "push",
+          "tall",
+          "wing",
+          "spaceship"
+        ]
+      },
+      {
+        "question": "\"별자리\"를 영어로 하면?",
+        "answer": "constellation",
+        "choices": [
+          "cake",
+          "constellation",
+          "pretty",
+          "neck"
+        ]
+      },
+      {
+        "question": "\"은하\"를 영어로 하면?",
+        "answer": "galaxy",
+        "choices": [
+          "bed",
+          "fox",
+          "peacock",
+          "galaxy"
+        ]
+      },
+      {
+        "question": "\"계절\"를 영어로 하면?",
+        "answer": "season",
+        "choices": [
+          "lie",
+          "season",
+          "smile",
+          "bear"
+        ]
+      },
+      {
+        "question": "\"기후\"를 영어로 하면?",
+        "answer": "climate",
+        "choices": [
+          "climate",
+          "star",
+          "week",
+          "notebook"
+        ]
+      },
+      {
+        "question": "\"온도\"를 영어로 하면?",
+        "answer": "temperature",
+        "choices": [
+          "singer",
+          "coffee",
+          "cheetah",
+          "temperature"
+        ]
+      },
+      {
+        "question": "\"그림자\"를 영어로 하면?",
+        "answer": "shadow",
+        "choices": [
+          "galaxy",
+          "television",
+          "whale",
+          "shadow"
+        ]
+      },
+      {
+        "question": "\"거품\"를 영어로 하면?",
+        "answer": "bubble",
+        "choices": [
+          "paper",
+          "snow",
+          "lake",
+          "bubble"
+        ]
+      },
+      {
+        "question": "\"연기\"를 영어로 하면?",
+        "answer": "smoke",
+        "choices": [
+          "mosquito",
+          "notebook",
+          "smoke",
+          "open"
+        ]
+      },
+      {
+        "question": "\"재\"를 영어로 하면?",
+        "answer": "ash",
+        "choices": [
+          "soup",
+          "story",
+          "ash",
+          "shoes"
+        ]
+      },
+      {
+        "question": "\"진흙\"를 영어로 하면?",
+        "answer": "mud",
+        "choices": [
+          "lamp",
+          "sand",
+          "mud",
+          "pear"
+        ]
+      },
+      {
+        "question": "\"이슬\"를 영어로 하면?",
+        "answer": "dew",
+        "choices": [
+          "balloon",
+          "buy",
+          "station",
+          "dew"
+        ]
+      },
+      {
+        "question": "\"서리\"를 영어로 하면?",
+        "answer": "frost",
+        "choices": [
+          "crayon",
+          "frost",
+          "thunder",
+          "gloves"
+        ]
+      },
+      {
+        "question": "\"우박\"를 영어로 하면?",
+        "answer": "hail",
+        "choices": [
+          "hail",
+          "chair",
+          "root",
+          "umbrella"
+        ]
+      },
+      {
+        "question": "\"홍수\"를 영어로 하면?",
+        "answer": "flood",
+        "choices": [
+          "bag",
+          "girl",
+          "flood",
+          "tree"
+        ]
+      },
+      {
+        "question": "\"지진\"를 영어로 하면?",
+        "answer": "earthquake",
+        "choices": [
+          "work",
+          "cherry",
+          "earthquake",
+          "onion"
+        ]
+      },
+      {
+        "question": "\"화산\"를 영어로 하면?",
+        "answer": "volcano",
+        "choices": [
+          "painter",
+          "ball",
+          "house",
+          "volcano"
+        ]
+      },
+      {
+        "question": "\"정글\"를 영어로 하면?",
+        "answer": "jungle",
+        "choices": [
+          "stone",
+          "lake",
+          "noon",
+          "jungle"
+        ]
+      },
+      {
+        "question": "\"초원\"를 영어로 하면?",
+        "answer": "meadow",
+        "choices": [
+          "one",
+          "fork",
+          "hat",
+          "meadow"
+        ]
+      },
+      {
+        "question": "\"절벽\"를 영어로 하면?",
+        "answer": "cliff",
+        "choices": [
+          "head",
+          "knife",
+          "cliff",
+          "bread"
+        ]
+      },
+      {
+        "question": "\"계곡\"를 영어로 하면?",
+        "answer": "valley",
+        "choices": [
+          "valley",
+          "worm",
+          "snake",
+          "hungry"
+        ]
       }
     ]
   }
