@@ -158,12 +158,23 @@ const Save = {
       bag: [], activePetId: null,
       collection: [],
       items: { heal: 0, revive: 0 },
+      coins: 0,
+      cosmetics: { owned: [], equipped: { hat: null, color: null } },
       mapProgress: { zone: 1, x: 0 },
       mapObjects: null,
     };
   },
+  // 기존 저장 데이터에 새 필드 보강
+  migrate(data) {
+    if (data.coins === undefined) data.coins = 0;
+    if (!data.cosmetics) data.cosmetics = { owned: [], equipped: { hat: null, color: null } };
+    return data;
+  },
   load() {
-    try { return JSON.parse(localStorage.getItem(this.key)) || this.defaultData(); }
+    try {
+      const data = JSON.parse(localStorage.getItem(this.key));
+      return data ? this.migrate(data) : this.defaultData();
+    }
     catch { return this.defaultData(); }
   },
   save(data) {
@@ -320,6 +331,16 @@ class MapScene extends Phaser.Scene {
 
   init(data) { this.saveData = data.saveData || Save.load(); }
 
+  preload() {
+    const zoneId = this.saveData.mapProgress.zone;
+    const key = `zone${zoneId}-bg`;
+    if (!this.textures.exists(key)) {
+      this.load.image(key, `assets/maps/${key}.png`);
+    }
+    // 이미지 로드 실패해도 게임 진행 (색 배경 fallback)
+    this.load.on('loaderror', () => { this.bgLoadFailed = true; });
+  }
+
   create() {
     const { width, height } = this.scale;
     const zoneId = this.saveData.mapProgress.zone;
@@ -331,12 +352,16 @@ class MapScene extends Phaser.Scene {
 
     // 지역 바뀌었으면 오브젝트 초기화
     if (!this.saveData.mapObjects || this.saveData.mapObjects.zoneId !== zoneId) {
-      const positions  = this.generatePositions(10);
+      const positions  = this.generatePositions(12);
       const wildPool   = [Utils.pickWildPets(zoneId)[0], Utils.pickWildPets(zoneId)[1]];
+      const isVillage  = zone.theme === 'village';
       this.saveData.mapObjects = {
         zoneId,
         eggs:     positions.slice(0, 8).map((p, i) => ({ id:i, x:p.x, y:p.y, collected:false })),
-        wildPets: positions.slice(8).map((p, i) => ({ id:i, x:p.x, y:p.y, defeated:false, pet: wildPool[i]||wildPool[0] })),
+        wildPets: positions.slice(8, 10).map((p, i) => ({ id:i, x:p.x, y:p.y, defeated:false, pet: wildPool[i]||wildPool[0] })),
+        // 마을 지역(5번)에만 수의사 + 상점 배치
+        vet:  isVillage ? { x: positions[10].x, y: positions[10].y, used: false } : null,
+        shop: isVillage ? { x: positions[11].x, y: positions[11].y } : null,
       };
       Save.save(this.saveData);
     }
@@ -344,10 +369,17 @@ class MapScene extends Phaser.Scene {
     // ── 배경 ──
     const zoneColors = { ice:0x9BB8D4, forest:0x2d6a35, fire:0xb03010, cave:0x2a2f38, village:0xe8a0b0, desert:0xd4a020, cloud:0x6070a0, rainbow:0xb040c0, aurora:0x054030 };
     const bgColor = zoneColors[zone.theme] || 0x2d1b69;
+    const bgKey = `zone${zoneId}-bg`;
 
-    // 배경 타일 (맵 전체)
-    this.add.rectangle(0, 0, this.MAP_W, this.MAP_H, bgColor).setOrigin(0);
-    this.drawMapDecoration(zone.theme);
+    if (this.textures.exists(bgKey)) {
+      // 배경 이미지를 맵 전체 크기로 늘려서 배치
+      const bg = this.add.image(0, 0, bgKey).setOrigin(0).setDepth(0);
+      bg.setDisplaySize(this.MAP_W, this.MAP_H);
+    } else {
+      // 이미지 없으면 색 배경 + 이모지 장식
+      this.add.rectangle(0, 0, this.MAP_W, this.MAP_H, bgColor).setOrigin(0).setDepth(0);
+      this.drawMapDecoration(zone.theme);
+    }
 
     // ── 오브젝트 배치 ──
     this.spawnObjects();
@@ -358,16 +390,33 @@ class MapScene extends Phaser.Scene {
     const isFemale = this.saveData.character === 'f';
 
     // 캐릭터 컨테이너 (그래픽 기반)
+    const equip = this.saveData.cosmetics ? this.saveData.cosmetics.equipped : { hat: null, color: null };
+    let bodyColor = isFemale ? 0xe879f9 : 0x60a5fa;
+    if (equip.color) {
+      const colorItem = PETS_DATA.cosmetics.find(c => c.id === equip.color);
+      if (colorItem) bodyColor = parseInt(colorItem.color);
+    }
+
     this.player = this.add.container(startX, startY).setDepth(10);
     const shadow = this.add.ellipse(0, 18, 28, 10, 0x000000, 0.3);
-    const body   = this.add.rectangle(0, 4, 22, 26, isFemale ? 0xe879f9 : 0x60a5fa);
+    const body   = this.add.rectangle(0, 4, 22, 26, bodyColor);
     const head   = this.add.circle(0, -16, 13, isFemale ? 0xfcd34d : 0xfbbf24);
     const eyes   = this.add.rectangle(0, -16, 10, 4, 0x1a1a2e);
-    // 머리 장식
-    const hat = isFemale
-      ? this.add.triangle(0, -32, -8, 0, 8, 0, 0, -14, 0xff69b4)
-      : this.add.rectangle(0, -30, 18, 6, 0x2563eb);
-    this.player.add([shadow, body, head, eyes, hat]);
+    this.player.add([shadow, body, head, eyes]);
+
+    // 모자 — 구매한 꾸미기 아이템 우선, 없으면 기본
+    if (equip.hat) {
+      const hatItem = PETS_DATA.cosmetics.find(c => c.id === equip.hat);
+      if (hatItem) {
+        const hatEmoji = this.add.text(0, -34, hatItem.emoji, { fontSize: '22px' }).setOrigin(0.5);
+        this.player.add(hatEmoji);
+      }
+    } else {
+      const hat = isFemale
+        ? this.add.triangle(0, -32, -8, 0, 8, 0, 0, -14, 0xff69b4)
+        : this.add.rectangle(0, -30, 18, 6, 0x2563eb);
+      this.player.add(hat);
+    }
 
     // 캐릭터 위에 이름 표시
     this.playerLabel = this.add.text(startX, startY - 36,
@@ -475,6 +524,26 @@ class MapScene extends Phaser.Scene {
       });
     });
 
+    // 수의사 (마을 지역)
+    if (objs.vet && !objs.vet.used) {
+      const vet = this.add.text(objs.vet.x, objs.vet.y, '🧑‍⚕️', { fontSize: '40px' }).setOrigin(0.5).setDepth(5);
+      const heartGlow = this.add.text(objs.vet.x, objs.vet.y - 32, '💚', { fontSize: '20px' }).setOrigin(0.5).setDepth(6);
+      this.tweens.add({ targets: heartGlow, y: objs.vet.y - 42, alpha: 0.4, duration: 900, yoyo: true, repeat: -1 });
+      this.add.text(objs.vet.x, objs.vet.y + 28, '수의사', { fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#4ade80', fontStyle: 'bold', stroke: '#000', strokeThickness: 3 }).setOrigin(0.5).setDepth(6);
+      vet.setInteractive({ useHandCursor: true });
+      vet.on('pointerdown', () => this.showVetMenu());
+    }
+
+    // 상점 (마을 지역)
+    if (objs.shop) {
+      const shop = this.add.text(objs.shop.x, objs.shop.y, '🏪', { fontSize: '42px' }).setOrigin(0.5).setDepth(5);
+      const coinGlow = this.add.text(objs.shop.x, objs.shop.y - 32, '🪙', { fontSize: '20px' }).setOrigin(0.5).setDepth(6);
+      this.tweens.add({ targets: coinGlow, y: objs.shop.y - 42, alpha: 0.4, duration: 900, yoyo: true, repeat: -1 });
+      this.add.text(objs.shop.x, objs.shop.y + 28, '상점', { fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#fbbf24', fontStyle: 'bold', stroke: '#000', strokeThickness: 3 }).setOrigin(0.5).setDepth(6);
+      shop.setInteractive({ useHandCursor: true });
+      shop.on('pointerdown', () => this.scene.start('ShopScene', { saveData: this.saveData }));
+    }
+
     objs.wildPets.forEach(wildData => {
       if (wildData.defeated) return;
       const pet = wildData.pet;
@@ -548,6 +617,64 @@ class MapScene extends Phaser.Scene {
       portal.setInteractive({ useHandCursor: true });
       portal.on('pointerdown', () => this.showZoneSelect());
     });
+  }
+
+  showVetMenu() {
+    const { width, height } = this.scale;
+    const alivePets = this.saveData.bag.filter(p => p.alive);
+
+    const overlay = this.add.rectangle(width/2, height/2, width, height, 0x000000, 0.7).setScrollFactor(0).setDepth(40).setOrigin(0.5);
+    const panel = this.add.rectangle(width/2, height/2, 360, 480, 0x0f2a1f).setScrollFactor(0).setDepth(41).setOrigin(0.5);
+    panel.setStrokeStyle(2, 0x4ade80);
+    const title = this.add.text(width/2, height/2 - 205, '🧑‍⚕️ 수의사', { fontSize: '20px', fontFamily: 'Malgun Gothic', color: '#4ade80', fontStyle: 'bold' }).setScrollFactor(0).setDepth(42).setOrigin(0.5);
+    const sub = this.add.text(width/2, height/2 - 178, '체력을 모두 채울 펫을 선택하세요', { fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#86efac' }).setScrollFactor(0).setDepth(42).setOrigin(0.5);
+
+    const allObjs = [overlay, panel, title, sub];
+
+    if (alivePets.length === 0) {
+      const noMsg = this.add.text(width/2, height/2, '치료할 펫이 없어요!', { fontSize: '16px', fontFamily: 'Malgun Gothic', color: '#fb923c' }).setScrollFactor(0).setDepth(42).setOrigin(0.5);
+      allObjs.push(noMsg);
+    } else {
+      alivePets.slice(0, 8).forEach((pet, i) => {
+        const by = height/2 - 150 + i * 42;
+        const needsHeal = pet.hp < pet.maxHp;
+        const btn = this.add.rectangle(width/2, by, 300, 38, needsHeal ? 0x14532d : 0x1f2937).setScrollFactor(0).setDepth(42).setOrigin(0.5);
+        btn.setStrokeStyle(1, needsHeal ? 0x4ade80 : 0x374151);
+        const txt = this.add.text(width/2, by, `${pet.name}  Lv.${pet.level}  HP ${pet.hp}/${pet.maxHp}`, {
+          fontSize: '14px', fontFamily: 'Malgun Gothic', color: needsHeal ? '#e9d5ff' : '#6b7280',
+        }).setScrollFactor(0).setDepth(43).setOrigin(0.5);
+        allObjs.push(btn, txt);
+
+        if (needsHeal) {
+          btn.setInteractive({ useHandCursor: true });
+          btn.on('pointerdown', () => {
+            pet.hp = pet.maxHp;
+            this.saveData.mapObjects.vet.used = true;
+            Save.save(this.saveData);
+            allObjs.forEach(o => o.destroy());
+            this.showHealEffect(pet.name);
+            this.time.delayedCall(1500, () => this.scene.restart({ saveData: this.saveData }));
+          });
+        }
+      });
+    }
+
+    const closeBtn = this.add.rectangle(width/2, height/2 + 205, 160, 40, 0x374151).setScrollFactor(0).setDepth(42).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    const closeText = this.add.text(width/2, height/2 + 205, '✕ 닫기', { fontSize: '15px', fontFamily: 'Malgun Gothic', color: '#9ca3af' }).setScrollFactor(0).setDepth(43).setOrigin(0.5);
+    allObjs.push(closeBtn, closeText);
+    closeBtn.on('pointerdown', () => allObjs.forEach(o => o.destroy()));
+  }
+
+  showHealEffect(petName) {
+    const { width, height } = this.scale;
+    const t1 = this.add.text(width/2, height/2 - 20, '💚 치료 완료!', { fontSize: '28px', fontFamily: 'Malgun Gothic', color: '#4ade80', fontStyle: 'bold' }).setScrollFactor(0).setDepth(50).setOrigin(0.5);
+    const t2 = this.add.text(width/2, height/2 + 20, `${petName}의 체력을 모두 회복했어요!`, { fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#86efac' }).setScrollFactor(0).setDepth(50).setOrigin(0.5);
+    for (let i = 0; i < 8; i++) {
+      this.time.delayedCall(i * 100, () => {
+        const h = this.add.text(Phaser.Math.Between(width*0.3, width*0.7), height/2, '💚', { fontSize: '20px' }).setScrollFactor(0).setDepth(50);
+        this.tweens.add({ targets: h, y: h.y - 80, alpha: 0, duration: 900, onComplete: () => h.destroy() });
+      });
+    }
   }
 
   showZoneSelect() {
@@ -789,6 +916,11 @@ class MapScene extends Phaser.Scene {
     const zone   = PETS_DATA.zones.find(z=>z.id===zoneId);
     this.add.text(width*0.22, height-44, `${zone.name}`, { fontSize:'12px', fontFamily:'Malgun Gothic', color:'#e9d5ff' }).setScrollFactor(0).setDepth(22).setOrigin(0.5);
     this.add.text(width*0.22, height-24, `🥚${remainEggs}  ⚔️${remainWild}`, { fontSize:'12px', fontFamily:'Malgun Gothic', color:'#c4b5fd' }).setScrollFactor(0).setDepth(22).setOrigin(0.5);
+
+    // 코인 표시 (상단 좌측, 미니맵과 안 겹치게)
+    const coinBg = this.add.rectangle(54, 60, 90, 28, 0x000000, 0.5).setScrollFactor(0).setDepth(20).setOrigin(0.5);
+    coinBg.setStrokeStyle(1, 0xfbbf24);
+    this.add.text(54, 60, `🪙 ${this.saveData.coins}`, { fontSize:'14px', fontFamily:'Malgun Gothic', color:'#fde047', fontStyle:'bold' }).setScrollFactor(0).setDepth(21).setOrigin(0.5);
   }
 }
 
@@ -1321,17 +1453,26 @@ class BagScene extends Phaser.Scene {
 
     this.saveData.bag.forEach((pet, i) => {
       const col = i % 3, row = Math.floor(i / 3);
-      const x = 80 + col * 140, y = 105 + row * 100;
+      const x = 80 + col * 140, y = 110 + row * 108;
       const isActive = pet.isActive;
-      const bg = this.add.rectangle(x, y, 120, 82, isActive ? 0x5b21b6 : pet.alive ? 0x2d1b69 : 0x1f1f2e)
+      const bg = this.add.rectangle(x, y, 122, 92, isActive ? 0x5b21b6 : pet.alive ? 0x2d1b69 : 0x1f1f2e)
         .setOrigin(0.5).setInteractive({ useHandCursor: true });
       bg.setStrokeStyle(2, isActive ? 0xe879f9 : pet.alive ? 0x4c1d95 : 0x374151);
 
       const gradeColor = { legend:'#fbbf24', rare:'#60a5fa', normal:'#9ca3af' };
-      this.add.text(x, y - 26, pet.alive ? '●' : '💀', { fontSize: '16px', color: gradeColor[pet.grade] || '#9ca3af' }).setOrigin(0.5);
-      this.add.text(x, y - 8,  pet.name.length > 6 ? pet.name.slice(0,6)+'...' : pet.name, { fontSize: '12px', fontFamily: 'Malgun Gothic', color: pet.alive ? '#e9d5ff' : '#6b7280' }).setOrigin(0.5);
-      this.add.text(x, y + 10, `Lv.${pet.level}  ATK${pet.atk}`, { fontSize: '11px', fontFamily: 'Malgun Gothic', color: '#9ca3af' }).setOrigin(0.5);
-      this.add.text(x, y + 26, `HP ${pet.hp}/${pet.maxHp}`, { fontSize: '10px', fontFamily: 'Malgun Gothic', color: '#6b7280' }).setOrigin(0.5);
+      this.add.text(x, y - 32, pet.alive ? '●' : '💀', { fontSize: '14px', color: gradeColor[pet.grade] || '#9ca3af' }).setOrigin(0.5);
+      this.add.text(x, y - 16, pet.name.length > 6 ? pet.name.slice(0,6)+'...' : pet.name, { fontSize: '12px', fontFamily: 'Malgun Gothic', color: pet.alive ? '#e9d5ff' : '#6b7280' }).setOrigin(0.5);
+      this.add.text(x, y, `Lv.${pet.level}  ATK${pet.atk}`, { fontSize: '11px', fontFamily: 'Malgun Gothic', color: '#9ca3af' }).setOrigin(0.5);
+      this.add.text(x, y + 16, `HP ${pet.hp}/${pet.maxHp}`, { fontSize: '10px', fontFamily: 'Malgun Gothic', color: '#6b7280' }).setOrigin(0.5);
+
+      // 경험치 바
+      const barW = 100, barH = 6, barY = y + 32;
+      this.add.rectangle(x, barY, barW, barH, 0x1a1a2e).setOrigin(0.5);
+      const xpPct = Math.max(0, Math.min(pet.xp / pet.xpToNext, 1));
+      if (xpPct > 0) {
+        this.add.rectangle(x - barW/2 + (barW * xpPct)/2, barY, barW * xpPct, barH, 0xfbbf24).setOrigin(0.5);
+      }
+      this.add.text(x, barY + 9, `XP ${pet.xp}/${pet.xpToNext}`, { fontSize: '8px', fontFamily: 'Malgun Gothic', color: '#a78bfa' }).setOrigin(0.5);
 
       // 짧게 누르기: 동행 설정 / 소환
       bg.on('pointerdown', () => {
@@ -1511,6 +1652,196 @@ class TypeChartScene extends Phaser.Scene {
   }
 }
 
+// ── 씬: 상점 ─────────────────────────────────────────────────────────────────
+class ShopScene extends Phaser.Scene {
+  constructor() { super('ShopScene'); }
+
+  init(data) { this.saveData = data.saveData || Save.load(); }
+
+  create() {
+    const { width, height } = this.scale;
+    this.add.rectangle(0, 0, width, height, 0x2a1f0f).setOrigin(0);
+    this.add.text(width / 2, 30, '🏪 상점', { fontSize: '22px', fontFamily: 'Malgun Gothic', color: '#fbbf24' }).setOrigin(0.5);
+    this.add.text(width / 2, 56, `보유 코인: 🪙 ${this.saveData.coins}`, { fontSize: '15px', fontFamily: 'Malgun Gothic', color: '#fde047', fontStyle: 'bold' }).setOrigin(0.5);
+
+    // 두 개의 메뉴 버튼
+    const sellBtn = this.add.rectangle(width / 2, height * 0.3, 280, 70, 0x713f12).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    sellBtn.setStrokeStyle(2, 0xfbbf24);
+    this.add.text(width / 2, height * 0.3 - 12, '💰 펫 팔기', { fontSize: '18px', fontFamily: 'Malgun Gothic', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
+    this.add.text(width / 2, height * 0.3 + 14, '필요없는 펫을 코인으로 바꿔요', { fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#fde68a' }).setOrigin(0.5);
+    sellBtn.on('pointerdown', () => this.showSellMenu());
+
+    const dressBtn = this.add.rectangle(width / 2, height * 0.45, 280, 70, 0x4c1d95).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    dressBtn.setStrokeStyle(2, 0xa855f7);
+    this.add.text(width / 2, height * 0.45 - 12, '✨ 캐릭터 꾸미기', { fontSize: '18px', fontFamily: 'Malgun Gothic', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
+    this.add.text(width / 2, height * 0.45 + 14, '코인으로 모자와 옷을 사요', { fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#ddd6fe' }).setOrigin(0.5);
+    dressBtn.on('pointerdown', () => this.scene.start('CosmeticScene', { saveData: this.saveData }));
+
+    // 판매 가격 안내
+    this.add.text(width / 2, height * 0.62, '펫 판매 가격', { fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#fbbf24' }).setOrigin(0.5);
+    const prices = PETS_DATA.sellPrices;
+    let py = height * 0.67;
+    [1,2,3,4,5].forEach(lv => {
+      this.add.text(width / 2, py, `Lv.${lv} → 🪙 ${prices[String(lv)]} 코인`, { fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#fde68a' }).setOrigin(0.5);
+      py += 24;
+    });
+
+    const backBtn = this.add.rectangle(width / 2, height - 36, 200, 44, 0x4c1d95).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    this.add.text(width / 2, height - 36, '← 모험으로', { fontSize: '16px', fontFamily: 'Malgun Gothic', color: '#fff' }).setOrigin(0.5);
+    backBtn.on('pointerdown', () => { Save.save(this.saveData); this.scene.start('MapScene', { saveData: this.saveData }); });
+  }
+
+  showSellMenu() {
+    const { width, height } = this.scale;
+    const sellable = this.saveData.bag.filter(p => !p.isActive); // 동행 펫은 못 팔게
+
+    const overlay = this.add.rectangle(width/2, height/2, width, height, 0x000000, 0.75).setDepth(40).setOrigin(0.5);
+    const panel = this.add.rectangle(width/2, height/2, 370, 500, 0x2a1f0f).setDepth(41).setOrigin(0.5);
+    panel.setStrokeStyle(2, 0xfbbf24);
+    const title = this.add.text(width/2, height/2 - 220, '💰 펫 팔기', { fontSize: '20px', fontFamily: 'Malgun Gothic', color: '#fbbf24' }).setDepth(42).setOrigin(0.5);
+    const sub = this.add.text(width/2, height/2 - 195, '팔 펫을 선택하세요 (동행 펫 제외)', { fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#fde68a' }).setDepth(42).setOrigin(0.5);
+    const allObjs = [overlay, panel, title, sub];
+
+    if (sellable.length === 0) {
+      const msg = this.add.text(width/2, height/2, '팔 수 있는 펫이 없어요!', { fontSize: '15px', fontFamily: 'Malgun Gothic', color: '#fb923c' }).setDepth(42).setOrigin(0.5);
+      allObjs.push(msg);
+    } else {
+      sellable.slice(0, 9).forEach((pet, i) => {
+        const by = height/2 - 160 + i * 40;
+        const price = PETS_DATA.sellPrices[String(Math.min(pet.level, 5))];
+        const btn = this.add.rectangle(width/2, by, 320, 36, 0x713f12).setDepth(42).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        btn.setStrokeStyle(1, 0xca8a04);
+        const txt = this.add.text(width/2, by, `${pet.name} Lv.${pet.level}  →  🪙 ${price}`, { fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#fde68a' }).setDepth(43).setOrigin(0.5);
+        allObjs.push(btn, txt);
+        btn.on('pointerdown', () => {
+          this.saveData.coins += price;
+          this.saveData.bag = this.saveData.bag.filter(p => p !== pet);
+          Save.save(this.saveData);
+          allObjs.forEach(o => o.destroy());
+          this.scene.restart({ saveData: this.saveData });
+        });
+      });
+    }
+
+    const closeBtn = this.add.rectangle(width/2, height/2 + 220, 150, 38, 0x374151).setDepth(42).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    const closeText = this.add.text(width/2, height/2 + 220, '✕ 닫기', { fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#9ca3af' }).setDepth(43).setOrigin(0.5);
+    allObjs.push(closeBtn, closeText);
+    closeBtn.on('pointerdown', () => allObjs.forEach(o => o.destroy()));
+  }
+}
+
+// ── 씬: 캐릭터 꾸미기 ─────────────────────────────────────────────────────────
+class CosmeticScene extends Phaser.Scene {
+  constructor() { super('CosmeticScene'); }
+
+  init(data) { this.saveData = data.saveData || Save.load(); }
+
+  create() {
+    const { width, height } = this.scale;
+    this.add.rectangle(0, 0, width, height, 0x1a0a3e).setOrigin(0);
+    this.add.text(width / 2, 26, '✨ 캐릭터 꾸미기', { fontSize: '20px', fontFamily: 'Malgun Gothic', color: '#e9d5ff' }).setOrigin(0.5);
+    this.coinText = this.add.text(width / 2, 50, `🪙 ${this.saveData.coins} 코인`, { fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#fde047' }).setOrigin(0.5);
+
+    // 캐릭터 미리보기
+    this.drawPreview(width / 2, 110);
+
+    // 아이템 목록
+    const cosmetics = PETS_DATA.cosmetics;
+    const startY = 175;
+    cosmetics.forEach((item, i) => {
+      const col = i % 3, row = Math.floor(i / 3);
+      const x = 80 + col * 140, y = startY + row * 70;
+      this.drawItemCard(x, y, item);
+    });
+
+    const backBtn = this.add.rectangle(width / 2, height - 32, 200, 42, 0x4c1d95).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    this.add.text(width / 2, height - 32, '← 상점으로', { fontSize: '15px', fontFamily: 'Malgun Gothic', color: '#fff' }).setOrigin(0.5);
+    backBtn.on('pointerdown', () => { Save.save(this.saveData); this.scene.start('ShopScene', { saveData: this.saveData }); });
+  }
+
+  drawPreview(x, y) {
+    if (this.preview) this.preview.destroy();
+    this.preview = this.add.container(x, y);
+    const isFemale = this.saveData.character === 'f';
+    const equip = this.saveData.cosmetics.equipped;
+
+    // 옷 색상 (구매한 color)
+    let bodyColor = isFemale ? 0xe879f9 : 0x60a5fa;
+    if (equip.color) {
+      const colorItem = PETS_DATA.cosmetics.find(c => c.id === equip.color);
+      if (colorItem) bodyColor = parseInt(colorItem.color);
+    }
+
+    const shadow = this.add.ellipse(0, 34, 40, 12, 0x000000, 0.3);
+    const body   = this.add.rectangle(0, 8, 30, 36, bodyColor);
+    const head   = this.add.circle(0, -22, 18, isFemale ? 0xfcd34d : 0xfbbf24);
+    const eyeL   = this.add.circle(-6, -22, 3, 0x1a1a2e);
+    const eyeR   = this.add.circle(6, -22, 3, 0x1a1a2e);
+    this.preview.add([shadow, body, head, eyeL, eyeR]);
+
+    // 모자 (구매한 hat)
+    if (equip.hat) {
+      const hatItem = PETS_DATA.cosmetics.find(c => c.id === equip.hat);
+      if (hatItem) {
+        const hat = this.add.text(0, -44, hatItem.emoji, { fontSize: '28px' }).setOrigin(0.5);
+        this.preview.add(hat);
+      }
+    }
+  }
+
+  drawItemCard(x, y, item) {
+    const owned = this.saveData.cosmetics.owned.includes(item.id);
+    const equipped = this.saveData.cosmetics.equipped[item.type] === item.id;
+    const canAfford = this.saveData.coins >= item.price;
+
+    const bg = this.add.rectangle(x, y, 128, 62, equipped ? 0x5b21b6 : 0x2d1b69).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    bg.setStrokeStyle(2, equipped ? 0xe879f9 : owned ? 0x4ade80 : 0x4c1d95);
+
+    // 아이콘
+    if (item.type === 'hat') {
+      this.add.text(x - 42, y, item.emoji, { fontSize: '24px' }).setOrigin(0.5);
+    } else {
+      this.add.rectangle(x - 42, y, 22, 22, parseInt(item.color)).setOrigin(0.5);
+    }
+
+    this.add.text(x + 8, y - 14, item.name, { fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#e9d5ff' }).setOrigin(0.5);
+
+    if (equipped) {
+      this.add.text(x + 8, y + 8, '착용중', { fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#e879f9' }).setOrigin(0.5);
+    } else if (owned) {
+      this.add.text(x + 8, y + 8, '착용하기', { fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#4ade80' }).setOrigin(0.5);
+    } else {
+      this.add.text(x + 8, y + 8, `🪙 ${item.price}`, { fontSize: '12px', fontFamily: 'Malgun Gothic', color: canAfford ? '#fde047' : '#6b7280' }).setOrigin(0.5);
+    }
+
+    bg.on('pointerdown', () => {
+      if (equipped) {
+        // 착용 해제
+        this.saveData.cosmetics.equipped[item.type] = null;
+      } else if (owned) {
+        // 착용
+        this.saveData.cosmetics.equipped[item.type] = item.id;
+      } else if (canAfford) {
+        // 구매 + 착용
+        this.saveData.coins -= item.price;
+        this.saveData.cosmetics.owned.push(item.id);
+        this.saveData.cosmetics.equipped[item.type] = item.id;
+      } else {
+        this.showMsg('코인이 부족해요!');
+        return;
+      }
+      Save.save(this.saveData);
+      this.scene.restart({ saveData: this.saveData });
+    });
+  }
+
+  showMsg(msg) {
+    const { width, height } = this.scale;
+    const t = this.add.text(width/2, height/2, msg, { fontSize: '16px', fontFamily: 'Malgun Gothic', color: '#fb923c', stroke: '#000', strokeThickness: 3 }).setOrigin(0.5).setDepth(60);
+    this.time.delayedCall(1300, () => t.destroy());
+  }
+}
+
 // ── 씬: 월드맵 ────────────────────────────────────────────────────────────────
 class WorldMapScene extends Phaser.Scene {
   constructor() { super('WorldMapScene'); }
@@ -1566,7 +1897,8 @@ async function init() {
       TitleScene, GradeScene, CharScene,
       MapScene, QuizScene, HatchScene, ResultScene,
       BattleScene, PetSwapScene,
-      BagScene, CollectionScene, TypeChartScene, WorldMapScene,
+      BagScene, CollectionScene, TypeChartScene,
+      ShopScene, CosmeticScene, WorldMapScene,
     ],
     scale: {
       mode: Phaser.Scale.FIT,
