@@ -26,6 +26,66 @@ async function loadPetsData() {
   QUIZ_DATA = await qres.json();
 }
 
+// ── 사운드 매니저 ─────────────────────────────────────────────────────────────
+// 음원 파일이 없어도 게임은 정상 작동 (조용히 skip)
+const SOUND_KEYS = {
+  click:  'assets/sounds/click.mp3',
+  hatch:  'assets/sounds/hatch.mp3',
+  attack: 'assets/sounds/attack.mp3',
+  win:    'assets/sounds/win.mp3',
+  get:    'assets/sounds/get.mp3',
+  coin:   'assets/sounds/coin.mp3',
+  bgm:    'assets/sounds/bgm.mp3',
+};
+
+const Sound = {
+  bgmInstance: null,
+
+  // 각 씬 preload()에서 호출 — 음원을 로드 큐에 등록
+  queue(scene) {
+    Object.entries(SOUND_KEYS).forEach(([key, path]) => {
+      if (!scene.cache.audio.exists(key)) {
+        scene.load.audio(key, path);
+      }
+    });
+  },
+
+  // 효과음 재생 (음소거 설정·파일 유무 자동 체크)
+  play(scene, key, volume = 0.5) {
+    try {
+      if (Save.load().muted) return;
+      if (scene.cache.audio.exists(key)) {
+        scene.sound.play(key, { volume });
+      }
+    } catch (e) { /* 음원 없으면 무시 */ }
+  },
+
+  // 배경음악 재생 (이미 재생 중이면 유지)
+  playBGM(scene, volume = 0.25) {
+    try {
+      if (Save.load().muted) return;
+      if (this.bgmInstance && this.bgmInstance.isPlaying) return;
+      if (scene.cache.audio.exists('bgm')) {
+        this.bgmInstance = scene.sound.add('bgm', { volume, loop: true });
+        this.bgmInstance.play();
+      }
+    } catch (e) { /* 무시 */ }
+  },
+
+  stopBGM() {
+    try { if (this.bgmInstance) { this.bgmInstance.stop(); this.bgmInstance = null; } }
+    catch (e) { /* 무시 */ }
+  },
+
+  toggleMute() {
+    const data = Save.load();
+    data.muted = !data.muted;
+    Save.save(data);
+    if (data.muted) this.stopBGM();
+    return data.muted;
+  },
+};
+
 // ── 유틸 ─────────────────────────────────────────────────────────────────────
 const Utils = {
   randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; },
@@ -184,11 +244,13 @@ const Save = {
       cosmetics: { owned: [], equipped: { hat: null, shoes: null } },
       mapProgress: { zone: 1, x: 0 },
       mapObjects: null,
+      muted: false,
     };
   },
   // 기존 저장 데이터에 새 필드 보강
   migrate(data) {
     if (data.coins === undefined) data.coins = 0;
+    if (data.muted === undefined) data.muted = false;
     if (!data.cosmetics) data.cosmetics = { owned: [], equipped: { hat: null, shoes: null } };
     if (data.cosmetics.equipped.shoes === undefined) data.cosmetics.equipped.shoes = null;
     return data;
@@ -210,9 +272,16 @@ const Save = {
 class TitleScene extends Phaser.Scene {
   constructor() { super('TitleScene'); }
 
+  preload() {
+    Sound.queue(this);   // 모든 효과음·BGM 전역 로드 (1회)
+  }
+
   create() {
     const { width, height } = this.scale;
     this.add.rectangle(0, 0, width, height, 0x1a0a3e).setOrigin(0);
+
+    // 첫 사용자 상호작용 후 BGM 시작 (브라우저 자동재생 정책)
+    this.input.once('pointerdown', () => Sound.playBGM(this));
 
     for (let i = 0; i < 40; i++) {
       const x = Phaser.Math.Between(0, width);
@@ -250,13 +319,22 @@ class TitleScene extends Phaser.Scene {
     this.makeBtn(width / 2, height * 0.88, '도감', 0x312e81, () => {
       this.scene.start('CollectionScene');
     });
+
+    // 음소거 토글 버튼 (우측 상단)
+    this.muteBtn = this.add.text(width - 30, 30, Save.load().muted ? '🔇' : '🔊', { fontSize: '28px' })
+      .setOrigin(0.5).setInteractive({ useHandCursor: true });
+    this.muteBtn.on('pointerdown', () => {
+      const muted = Sound.toggleMute();
+      this.muteBtn.setText(muted ? '🔇' : '🔊');
+      if (!muted) Sound.playBGM(this);
+    });
   }
 
   makeBtn(x, y, label, color, cb) {
     const bg = this.add.rectangle(x, y, 220, 46, color, 1).setOrigin(0.5).setInteractive({ useHandCursor: true });
     bg.setStrokeStyle(2, 0xa855f7);
     this.add.text(x, y, label, { fontSize: '18px', fontFamily: 'Malgun Gothic', color: '#ffffff' }).setOrigin(0.5);
-    bg.on('pointerdown', cb);
+    bg.on('pointerdown', () => { Sound.play(this, 'click', 0.4); Sound.playBGM(this); cb(); });
     bg.on('pointerover', () => bg.setScale(1.05));
     bg.on('pointerout',  () => bg.setScale(1));
   }
@@ -513,7 +591,7 @@ class MapScene extends Phaser.Scene {
 
     if (activePet) {
       this.petFollow = this.add.container(startX - 48, startY + 6).setDepth(9);
-      const petShadow = this.add.ellipse(0, 18, 26, 9, 0x000000, 0.3);
+      const petShadow = this.add.ellipse(0, 14, 26, 9, 0x000000, 0.3);
       const petLabel  = this.add.text(0, 28, `${activePet.name.slice(0, 5)} Lv.${activePet.level}`,
         { fontSize: '10px', fontFamily: 'Malgun Gothic', color: '#e9d5ff', stroke: '#000', strokeThickness: 3 }
       ).setOrigin(0.5);
@@ -522,12 +600,19 @@ class MapScene extends Phaser.Scene {
       if (this.textures.exists(petTexKey)) {
         // ── 이미지 동행 펫 ──
         const petImg = this.add.image(0, 0, petTexKey);
-        // 원본 비율 유지하며 가로 38px로 맞춤
         const src = this.textures.get(petTexKey).getSourceImage();
-        const scale = 38 / src.width;
+        // 레벨별 동행 펫 높이: 1=70, 2=80, 3=90, 4=100, 5이상=120
+        const petHeights = { 1: 70, 2: 80, 3: 90, 4: 100 };
+        const targetH = petHeights[activePet.level] || 120;
+        const scale = targetH / src.height;
         petImg.setScale(scale);
-        petImg.y = -src.height * scale / 2 + 14;  // 발이 그림자에 닿게
+        petImg.y = -targetH / 2 + 16;  // 발이 그림자에 닿게
+        // 펫이 커졌으니 그림자도 키우고, 캐릭터와 안 겹치게 간격 넓힘
+        petShadow.width = targetH * 0.42;
+        petShadow.height = targetH * 0.15;
+        this.petFollow.x = startX - 56;
         this.petFollow.add([petShadow, petImg, petLabel]);
+        petLabel.y = 22;
         this.tweens.add({ targets: petImg, y: petImg.y - 4, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       } else {
         // ── 도형 fallback ──
@@ -1221,6 +1306,7 @@ class HatchScene extends Phaser.Scene {
 
   tap() {
     this.tapCount++;
+    Sound.play(this, 'click', 0.3);   // 두드림 효과음
     const pct = Math.min(this.tapCount / this.maxTaps, 1);
     this.bar.width = (this.scale.width - 80) * pct;
     this.tapCountText.setText(String(this.tapCount));
@@ -1228,6 +1314,7 @@ class HatchScene extends Phaser.Scene {
 
     if (this.tapCount >= this.maxTaps) {
       this.eggText.disableInteractive();
+      Sound.play(this, 'hatch', 0.6);   // 부화 효과음
       this.time.delayedCall(300, () => this.hatch());
     }
   }
@@ -1264,6 +1351,9 @@ class ResultScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
     this.add.rectangle(0, 0, width, height, 0x1a0a3e).setOrigin(0);
+
+    // 결과 효과음
+    Sound.play(this, this.result.type === 'pet' ? 'get' : 'coin', 0.6);
 
     if (this.result.type === 'pet') {
       const pet = this.result.pet;
@@ -1461,6 +1551,8 @@ class BattleScene extends Phaser.Scene {
     const isSkill = action === 'skill' && this.skillCooldown === 0;
     const { damage, label } = Utils.calcDamage(this.myPet, this.wildPet, isSkill);
 
+    Sound.play(this, 'attack', 0.5);   // 공격 효과음
+
     if (isSkill) this.skillCooldown = 3;
     else if (this.skillCooldown > 0) this.skillCooldown--;
 
@@ -1508,6 +1600,7 @@ class BattleScene extends Phaser.Scene {
   }
 
   battleWin() {
+    Sound.play(this, 'win', 0.6);   // 승리 효과음
     if (!this.saveData.collection.includes(this.wildPet.id)) this.saveData.collection.push(this.wildPet.id);
     if (this.saveData.bag.length < 20) {
       this.saveData.bag.push(this.wildPet);
@@ -2209,6 +2302,7 @@ class CosmeticScene extends Phaser.Scene {
           const c=PETS_DATA.cosmetics.find(x=>x.id===id); return c&&c.type===item.type;
         }).length;
         if (typeOwned >= 10) { this.showMsg(`${item.type==='hat'?'모자':'신발'} 보관 공간 부족! (최대 10개)`); return; }
+        Sound.play(this, 'coin', 0.5);   // 구매 효과음
         this.saveData.coins -= item.price;
         this.saveData.cosmetics.owned.push(item.id);
         this.saveData.cosmetics.equipped[item.type] = item.id;
