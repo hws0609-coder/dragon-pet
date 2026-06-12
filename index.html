@@ -158,7 +158,7 @@ const Save = {
       bag: [], activePetId: null,
       collection: [],
       items: { heal: 0, revive: 0 },
-      coins: 0,
+      coins: 40,
       cosmetics: { owned: [], equipped: { hat: null, color: null } },
       mapProgress: { zone: 1, x: 0 },
       mapObjects: null,
@@ -340,6 +340,10 @@ class MapScene extends Phaser.Scene {
     // 베이스 캐릭터 이미지 로드 (없으면 도형 fallback 자동 적용)
     if (!this.textures.exists('base-boy'))  this.load.image('base-boy',  'assets/characters/base-boy.png');
     if (!this.textures.exists('base-girl')) this.load.image('base-girl', 'assets/characters/base-girl.png');
+    // 모자 이미지 로드 (hat-1~5, 없는 파일은 자동 skip)
+    for (let n = 1; n <= 5; n++) {
+      if (!this.textures.exists(`hat-${n}`)) this.load.image(`hat-${n}`, `assets/characters/hat-${n}.png`);
+    }
     // 이미지 로드 실패해도 게임 진행
     this.load.on('loaderror', () => { this.bgLoadFailed = true; });
   }
@@ -412,15 +416,23 @@ class MapScene extends Phaser.Scene {
     if (hasCharImg) {
       // ── 이미지 캐릭터 ──────────────────────────────────────────
       const charImg = this.add.image(0, 0, charImgKey);
-      charImg.setDisplaySize(44, 86);  // 비율 1:1.96 유지 (조정 가능)
+      charImg.setDisplaySize(52, 86);  // 너비 52: 홀쭉함 개선 (높이 유지)
       charImg.setOrigin(0.5, 0.5);
       this.player.add(charImg);
-      // 모자 이모지: 이미지 상단(y=-43) 위 7px
+      // 모자: 이미지 있으면 이미지, 없으면 이모지
       if (equip.hat) {
         const hatItem = PETS_DATA.cosmetics.find(c => c.id === equip.hat);
         if (hatItem) {
-          const hatEmoji = this.add.text(0, -50, hatItem.emoji, { fontSize: '22px' }).setOrigin(0.5);
-          this.player.add(hatEmoji);
+          if (hatItem.img && this.textures.exists(hatItem.img)) {
+            // 이미지 모자: origin(0.5,1) → 아래쪽 기준 정렬
+            const hatImg = this.add.image(0, -38, hatItem.img);
+            hatImg.setDisplaySize(36, 24);   // 원본 비율(W:H=1:0.68) 유지
+            hatImg.setOrigin(0.5, 1);
+            this.player.add(hatImg);
+          } else {
+            const hatEmoji = this.add.text(0, -50, hatItem.emoji, { fontSize: '22px' }).setOrigin(0.5);
+            this.player.add(hatEmoji);
+          }
         }
       }
     } else {
@@ -1765,6 +1777,9 @@ class CosmeticScene extends Phaser.Scene {
     // MapScene에서 이미 로드됐으면 자동 skip
     if (!this.textures.exists('base-boy'))  this.load.image('base-boy',  'assets/characters/base-boy.png');
     if (!this.textures.exists('base-girl')) this.load.image('base-girl', 'assets/characters/base-girl.png');
+    for (let n = 1; n <= 5; n++) {
+      if (!this.textures.exists(`hat-${n}`)) this.load.image(`hat-${n}`, `assets/characters/hat-${n}.png`);
+    }
   }
 
   create() {
@@ -1805,15 +1820,22 @@ class CosmeticScene extends Phaser.Scene {
     if (hasCharImg) {
       // ── 이미지 미리보기 ────────────────────────────────────────
       const charImg = this.add.image(0, 0, charImgKey);
-      charImg.setDisplaySize(60, 117);  // 비율 1:1.96 유지 (조정 가능)
+      charImg.setDisplaySize(70, 115);  // 너비 70: 홀쭉함 개선
       charImg.setOrigin(0.5, 0.5);
       this.preview.add(charImg);
-      // 모자 이모지: 이미지 상단(y=-58) 위 9px
+      // 모자: 이미지 있으면 이미지, 없으면 이모지
       if (equip.hat) {
         const hatItem = PETS_DATA.cosmetics.find(c => c.id === equip.hat);
         if (hatItem) {
-          const hat = this.add.text(0, -67, hatItem.emoji, { fontSize: '28px' }).setOrigin(0.5);
-          this.preview.add(hat);
+          if (hatItem.img && this.textures.exists(hatItem.img)) {
+            const hat = this.add.image(0, -52, hatItem.img);
+            hat.setDisplaySize(46, 31);   // 원본 비율 유지
+            hat.setOrigin(0.5, 1);
+            this.preview.add(hat);
+          } else {
+            const hat = this.add.text(0, -67, hatItem.emoji, { fontSize: '28px' }).setOrigin(0.5);
+            this.preview.add(hat);
+          }
         }
       }
     } else {
