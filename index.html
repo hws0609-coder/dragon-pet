@@ -281,6 +281,7 @@ const Save = {
       grade: null, character: null,
       bag: [], activePetId: null,
       collection: [],
+      maxLevels: {},
       items: { heal: 0, revive: 0 },
       coins: 40,
       cosmetics: { owned: [], equipped: { hat: null, shoes: null } },
@@ -295,6 +296,7 @@ const Save = {
     if (data.coins === undefined) data.coins = 0;
     if (data.muted === undefined) data.muted = false;
     if (!data.wrongQuiz) data.wrongQuiz = [];
+    if (!data.maxLevels) data.maxLevels = {};
     if (!data.cosmetics) data.cosmetics = { owned: [], equipped: { hat: null, shoes: null } };
     if (data.cosmetics.equipped.shoes === undefined) data.cosmetics.equipped.shoes = null;
     return data;
@@ -307,6 +309,17 @@ const Save = {
     catch { return this.defaultData(); }
   },
   save(data) {
+    // 가방 펫들의 최고 도달 레벨 기록 (도감 표시용)
+    try {
+      if (!data.maxLevels) data.maxLevels = {};
+      if (Array.isArray(data.bag)) {
+        data.bag.forEach(p => {
+          if (!data.maxLevels[p.id] || p.level > data.maxLevels[p.id]) {
+            data.maxLevels[p.id] = p.level;
+          }
+        });
+      }
+    } catch {}
     try { localStorage.setItem(this.key, JSON.stringify(data)); } catch {}
   },
   clear() { localStorage.removeItem(this.key); },
@@ -2298,6 +2311,13 @@ class CollectionScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
     this.add.rectangle(0, 0, width, height, 0x1a0a3e).setOrigin(0);
+    // 현재 가방 펫들의 최고 레벨 보정 (기존 세이브 호환)
+    if (!this.saveData.maxLevels) this.saveData.maxLevels = {};
+    (this.saveData.bag || []).forEach(p => {
+      if (!this.saveData.maxLevels[p.id] || p.level > this.saveData.maxLevels[p.id]) {
+        this.saveData.maxLevels[p.id] = p.level;
+      }
+    });
     this.add.text(width / 2, 36, `도감  ${this.saveData.collection.length}/${PETS_DATA.pets.length}마리`, { fontSize: '22px', fontFamily: 'Malgun Gothic', color: '#e9d5ff' }).setOrigin(0.5);
 
     PETS_DATA.pets.forEach((pet, i) => {
@@ -2320,6 +2340,11 @@ class CollectionScene extends Phaser.Scene {
       this.add.text(x, y + 18, owned ? (pet.name.length > 5 ? pet.name.slice(0,5)+'.' : pet.name) : '???', {
         fontSize: '11px', fontFamily: 'Malgun Gothic', color: owned ? '#e9d5ff' : '#4b5563',
       }).setOrigin(0.5);
+      // 획득한 펫은 클릭 시 레벨별 팝업
+      if (owned) {
+        bg.setInteractive({ useHandCursor: true });
+        bg.on('pointerdown', () => this.showPetLevels(pet));
+      }
     });
 
     const backBtn = this.add.rectangle(width / 2 - 65, height - 36, 120, 44, 0x4c1d95).setOrigin(0.5).setInteractive({ useHandCursor: true });
@@ -2329,6 +2354,83 @@ class CollectionScene extends Phaser.Scene {
     const typeBtn = this.add.rectangle(width / 2 + 65, height - 36, 120, 44, 0x0f6e56).setOrigin(0.5).setInteractive({ useHandCursor: true });
     this.add.text(width / 2 + 65, height - 36, '속성 도감 ⚡', { fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#fff' }).setOrigin(0.5);
     typeBtn.on('pointerdown', () => this.scene.start('TypeChartScene', { saveData: this.saveData }));
+  }
+
+  showPetLevels(pet) {
+    const { width, height } = this.scale;
+    // 도달한 최고 진화 단계 (1~5). 기록 없으면 최소 1
+    const maxLv = (this.saveData.maxLevels && this.saveData.maxLevels[pet.id]) || 1;
+    const maxStage = Utils.evoStage(maxLv);
+
+    const overlay = this.add.rectangle(width/2, height/2, width, height, 0x000000, 0.85).setDepth(50).setOrigin(0.5).setInteractive();
+    const panel = this.add.rectangle(width/2, height/2, 420, 560, 0x1a0a3e).setDepth(51).setOrigin(0.5);
+    const gradeBorder = { legend: 0xfbbf24, rare: 0x60a5fa, normal: 0xa855f7 };
+    panel.setStrokeStyle(3, gradeBorder[pet.grade] || 0xa855f7);
+    const allObjs = [overlay, panel];
+
+    const gradeLabel = { legend: '⭐⭐⭐ 전설', rare: '⭐⭐ 희귀', normal: '⭐ 일반' };
+    const gradeColor = { legend: '#fbbf24', rare: '#60a5fa', normal: '#d1d5db' };
+    allObjs.push(this.add.text(width/2, height/2-250, pet.name, { fontSize: '24px', fontFamily: 'Malgun Gothic', color: '#fff', fontStyle: 'bold' }).setDepth(52).setOrigin(0.5));
+    allObjs.push(this.add.text(width/2, height/2-222, `[${pet.type}]  ${gradeLabel[pet.grade]}`, { fontSize: '13px', fontFamily: 'Malgun Gothic', color: gradeColor[pet.grade] }).setDepth(52).setOrigin(0.5));
+    allObjs.push(this.add.text(width/2, height/2-200, `최고 도달 Lv.${maxLv}  (${maxStage}단계까지 공개)`, { fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#a78bfa' }).setDepth(52).setOrigin(0.5));
+
+    // 메인 큰 이미지 (현재 선택 단계)
+    let curStage = maxStage;
+    const mainImg = this.add.image(width/2, height/2-70, '').setDepth(52);
+    const stageLabel = this.add.text(width/2, height/2+40, '', { fontSize: '18px', fontFamily: 'Malgun Gothic', color: '#fde047', fontStyle: 'bold' }).setDepth(52).setOrigin(0.5);
+    allObjs.push(mainImg, stageLabel);
+
+    const showStage = (stage) => {
+      const key = `petimg-${pet.id}-lv${stage}`;
+      if (this.textures.exists(key)) {
+        mainImg.setTexture(key);
+        const src = this.textures.get(key).getSourceImage();
+        mainImg.setScale(190 / src.height);
+        mainImg.setVisible(true);
+      } else {
+        mainImg.setVisible(false);
+      }
+      stageLabel.setText(stage >= 5 ? 'Lv.5 (최종 진화)' : `Lv.${stage} 단계`);
+    };
+    showStage(curStage);
+
+    // 하단 단계 선택 썸네일 (1 ~ maxStage)
+    const thumbY = height/2 + 100;
+    const totalW = maxStage * 64;
+    const startX = width/2 - totalW/2 + 32;
+    const thumbBgs = [];
+    for (let s = 1; s <= maxStage; s++) {
+      const tx = startX + (s-1) * 64;
+      const tBg = this.add.rectangle(tx, thumbY, 56, 56, s === curStage ? 0x5b21b6 : 0x2d1b69).setDepth(52).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      tBg.setStrokeStyle(2, s === curStage ? 0xe879f9 : 0x4c1d95);
+      tBg._stage = s;
+      thumbBgs.push(tBg);
+      const tKey = `petimg-${pet.id}-lv${s}`;
+      if (this.textures.exists(tKey)) {
+        const ti = this.add.image(tx, thumbY-4, tKey).setDepth(53);
+        ti.setScale(40 / this.textures.get(tKey).getSourceImage().height);
+        allObjs.push(ti);
+      }
+      const tLabel = this.add.text(tx, thumbY+22, `${s}`, { fontSize: '10px', fontFamily: 'Malgun Gothic', color: '#c4b5fd' }).setDepth(53).setOrigin(0.5);
+      allObjs.push(tBg, tLabel);
+      tBg.on('pointerdown', () => {
+        curStage = s;
+        showStage(s);
+        thumbBgs.forEach(b => {
+          const active = (b._stage === curStage);
+          b.setFillStyle(active ? 0x5b21b6 : 0x2d1b69);
+          b.setStrokeStyle(2, active ? 0xe879f9 : 0x4c1d95);
+        });
+      });
+    }
+
+    // 닫기
+    const cBtn = this.add.rectangle(width/2, height/2+200, 160, 44, 0x4c1d95).setDepth(52).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    this.add.text(width/2, height/2+200, '✕ 닫기', { fontSize: '15px', fontFamily: 'Malgun Gothic', color: '#fff' }).setDepth(53).setOrigin(0.5);
+    allObjs.push(cBtn);
+    const closeAll = () => allObjs.forEach(o => o.destroy());
+    cBtn.on('pointerdown', closeAll);
+    overlay.on('pointerdown', closeAll);
   }
 }
 
