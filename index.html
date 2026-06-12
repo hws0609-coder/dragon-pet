@@ -1283,6 +1283,54 @@ class MapScene extends Phaser.Scene {
         this.add.text(54, 92, `${curShoe.emoji}${bars}`, { fontSize: '12px', color: '#93c5fd' }).setScrollFactor(0).setDepth(21).setOrigin(0.5);
       }
     }
+
+    // ── 동행 펫 패널 (좌측 하단 HUD 위) ──
+    this.createActivePetPanel();
+  }
+
+  createActivePetPanel() {
+    const { width, height } = this.scale;
+    const pet = this.saveData.bag.find(p => p.isActive && p.alive) || this.saveData.bag.find(p => p.alive);
+    if (!pet) return;
+
+    const panelW = 200, panelH = 52;
+    const px = width - panelW - 8;   // 우측
+    const py = 92;                    // 미니맵(상단) 아래
+
+    // 패널 배경
+    const panel = this.add.rectangle(px, py, panelW, panelH, 0x0f0728, 0.9).setScrollFactor(0).setDepth(20).setOrigin(0);
+    panel.setStrokeStyle(1, 0x7c3aed);
+
+    // 펫 썸네일
+    const texKey = Utils.petTexKey(pet.id, pet.level);
+    const imgCx = px + 28, imgCy = py + panelH/2;
+    if (this.textures.exists(texKey)) {
+      const img = this.add.image(imgCx, imgCy, texKey).setScrollFactor(0).setDepth(21);
+      const src = this.textures.get(texKey).getSourceImage();
+      img.setScale(44 / src.height);
+    } else {
+      this.add.text(imgCx, imgCy, '🐾', { fontSize: '28px' }).setScrollFactor(0).setDepth(21).setOrigin(0.5);
+    }
+
+    // 이름 + 레벨
+    const tx = px + 54;
+    this.add.text(tx, py + 6, `${pet.name.length>6?pet.name.slice(0,6):pet.name}`, { fontSize:'12px', fontFamily:'Malgun Gothic', color:'#e9d5ff', fontStyle:'bold' }).setScrollFactor(0).setDepth(21).setOrigin(0,0.5);
+    this.add.text(px + panelW - 8, py + 6, `Lv.${pet.level}`, { fontSize:'11px', fontFamily:'Malgun Gothic', color:'#fbbf24' }).setScrollFactor(0).setDepth(21).setOrigin(1,0.5);
+
+    // HP 바
+    const barW = panelW - 54 - 12, barX = tx;
+    const hpY = py + 24;
+    this.add.rectangle(barX, hpY, barW, 8, 0x374151).setScrollFactor(0).setDepth(21).setOrigin(0,0.5);
+    const hpPct = Math.max(0, Math.min(pet.hp / pet.maxHp, 1));
+    if (hpPct > 0) this.add.rectangle(barX, hpY, barW * hpPct, 8, 0xef4444).setScrollFactor(0).setDepth(22).setOrigin(0,0.5);
+    this.add.text(barX + barW/2, hpY, `HP ${pet.hp}/${pet.maxHp}`, { fontSize:'8px', fontFamily:'Malgun Gothic', color:'#fff' }).setScrollFactor(0).setDepth(23).setOrigin(0.5);
+
+    // XP 바
+    const xpY = py + 40;
+    this.add.rectangle(barX, xpY, barW, 8, 0x1a1a2e).setScrollFactor(0).setDepth(21).setOrigin(0,0.5);
+    const xpPct = Math.max(0, Math.min(pet.xp / pet.xpToNext, 1));
+    if (xpPct > 0) this.add.rectangle(barX, xpY, barW * xpPct, 8, 0xfbbf24).setScrollFactor(0).setDepth(22).setOrigin(0,0.5);
+    this.add.text(barX + barW/2, xpY, `XP ${pet.xp}/${pet.xpToNext}`, { fontSize:'8px', fontFamily:'Malgun Gothic', color:'#1a0a3e' }).setScrollFactor(0).setDepth(23).setOrigin(0.5);
   }
 }
 
