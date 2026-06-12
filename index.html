@@ -159,7 +159,7 @@ const Save = {
       collection: [],
       items: { heal: 0, revive: 0 },
       coins: 40,
-      cosmetics: { owned: [], equipped: { hat: null, color: null } },
+      cosmetics: { owned: [], equipped: { hat: null, shoes: null } },
       mapProgress: { zone: 1, x: 0 },
       mapObjects: null,
     };
@@ -167,7 +167,8 @@ const Save = {
   // 기존 저장 데이터에 새 필드 보강
   migrate(data) {
     if (data.coins === undefined) data.coins = 0;
-    if (!data.cosmetics) data.cosmetics = { owned: [], equipped: { hat: null, color: null } };
+    if (!data.cosmetics) data.cosmetics = { owned: [], equipped: { hat: null, shoes: null } };
+    if (data.cosmetics.equipped.shoes === undefined) data.cosmetics.equipped.shoes = null;
     return data;
   },
   load() {
@@ -397,16 +398,10 @@ class MapScene extends Phaser.Scene {
     const isFemale = this.saveData.character === 'f';
 
     // 캐릭터 컨테이너 (이미지 우선 / 도형 fallback)
-    const equip = this.saveData.cosmetics ? this.saveData.cosmetics.equipped : { hat: null, color: null };
-    const charImgKey = isFemale ? 'base-girl' : 'base-boy';
-    const hasCharImg = this.textures.exists(charImgKey);
+    const equip = this.saveData.cosmetics ? this.saveData.cosmetics.equipped : { hat: null, shoes: null };
 
     // 도형 fallback 전용 색상 (이미지 있으면 사용 안 함)
     let bodyColor = isFemale ? 0xe879f9 : 0x60a5fa;
-    if (!hasCharImg && equip.color) {
-      const colorItem = PETS_DATA.cosmetics.find(c => c.id === equip.color);
-      if (colorItem) bodyColor = parseInt(colorItem.color);
-    }
 
     this.player = this.add.container(startX, startY).setDepth(10);
     // 그림자: 이미지 모드 y=47 (높이86/2+4), 도형 모드 y=24
@@ -414,6 +409,14 @@ class MapScene extends Phaser.Scene {
     this.player.add(shadow);
 
     if (hasCharImg) {
+      // ── 신발/탈것 이모지: 캐릭터 이미지보다 먼저 추가 → 발 아래에 보임 ──
+      if (equip.shoes) {
+        const shoeItem = PETS_DATA.cosmetics.find(c => c.id === equip.shoes);
+        if (shoeItem) {
+          const shoeEmoji = this.add.text(0, 50, shoeItem.emoji, { fontSize: '26px' }).setOrigin(0.5);
+          this.player.add(shoeEmoji);
+        }
+      }
       // ── 이미지 캐릭터 ──────────────────────────────────────────
       const charImg = this.add.image(0, 0, charImgKey);
       charImg.setDisplaySize(52, 86);  // 너비 52: 홀쭉함 개선 (높이 유지)
@@ -424,10 +427,8 @@ class MapScene extends Phaser.Scene {
         const hatItem = PETS_DATA.cosmetics.find(c => c.id === equip.hat);
         if (hatItem) {
           if (hatItem.img && this.textures.exists(hatItem.img)) {
-            // 이미지 모자: origin(0.5,1) → 아래쪽 기준 정렬
-            // y값이 클수록 아래로 내려옴 (-15 = 머리 위에 살짝 걸침)
             const hatImg = this.add.image(0, -15, hatItem.img);
-            hatImg.setDisplaySize(36, 24);   // 원본 비율(W:H=1:0.68) 유지
+            hatImg.setDisplaySize(36, 24);
             hatImg.setOrigin(0.5, 1);
             this.player.add(hatImg);
           } else {
@@ -438,6 +439,13 @@ class MapScene extends Phaser.Scene {
       }
     } else {
       // ── 도형 캐릭터 (이미지 없을 때 자동 fallback) ─────────────
+      if (equip.shoes) {
+        const shoeItem = PETS_DATA.cosmetics.find(c => c.id === equip.shoes);
+        if (shoeItem) {
+          const shoeEmoji = this.add.text(0, 26, shoeItem.emoji, { fontSize: '22px' }).setOrigin(0.5);
+          this.player.add(shoeEmoji);
+        }
+      }
       const body = this.add.rectangle(0, 4, 22, 26, bodyColor);
       const head = this.add.circle(0, -16, 13, isFemale ? 0xfcd34d : 0xfbbf24);
       const eyes = this.add.rectangle(0, -16, 10, 4, 0x1a1a2e);
@@ -515,7 +523,10 @@ class MapScene extends Phaser.Scene {
 
     // ── 이동 상태 ──
     this.moveDir = { x: 0, y: 0 };
-    this.SPEED = 3;
+    // 탈것에 따른 이동 속도 (기본 3, 장착 시 해당 speed 적용)
+    const shoeId = this.saveData.cosmetics?.equipped?.shoes;
+    const shoeSpeedItem = shoeId ? PETS_DATA.cosmetics.find(c => c.id === shoeId) : null;
+    this.SPEED = shoeSpeedItem?.speed ?? 3;
   }
 
   drawMapDecoration(theme) {
@@ -955,10 +966,22 @@ class MapScene extends Phaser.Scene {
     this.add.text(width*0.22, height-44, `${zone.name}`, { fontSize:'12px', fontFamily:'Malgun Gothic', color:'#e9d5ff' }).setScrollFactor(0).setDepth(22).setOrigin(0.5);
     this.add.text(width*0.22, height-24, `🥚${remainEggs}  ⚔️${remainWild}`, { fontSize:'12px', fontFamily:'Malgun Gothic', color:'#c4b5fd' }).setScrollFactor(0).setDepth(22).setOrigin(0.5);
 
-    // 코인 표시 (상단 좌측, 미니맵과 안 겹치게)
+    // 코인 표시 (상단 좌측)
     const coinBg = this.add.rectangle(54, 60, 90, 28, 0x000000, 0.5).setScrollFactor(0).setDepth(20).setOrigin(0.5);
     coinBg.setStrokeStyle(1, 0xfbbf24);
     this.add.text(54, 60, `🪙 ${this.saveData.coins}`, { fontSize:'14px', fontFamily:'Malgun Gothic', color:'#fde047', fontStyle:'bold' }).setScrollFactor(0).setDepth(21).setOrigin(0.5);
+
+    // 속도 표시 (탈것 장착 시)
+    const curShoeId = this.saveData.cosmetics?.equipped?.shoes;
+    if (curShoeId) {
+      const curShoe = PETS_DATA.cosmetics.find(c => c.id === curShoeId);
+      if (curShoe?.speed) {
+        const speedBg = this.add.rectangle(54, 92, 90, 24, 0x000000, 0.45).setScrollFactor(0).setDepth(20).setOrigin(0.5);
+        speedBg.setStrokeStyle(1, 0x60a5fa);
+        const bars = '▶'.repeat(Math.min(Math.round(curShoe.speed / 2), 5));
+        this.add.text(54, 92, `${curShoe.emoji}${bars}`, { fontSize: '12px', color: '#93c5fd' }).setScrollFactor(0).setDepth(21).setOrigin(0.5);
+      }
+    }
   }
 }
 
@@ -1176,7 +1199,7 @@ class HatchScene extends Phaser.Scene {
     const result = Utils.hatchResult();
     if (result.type === 'pet') {
       if (!this.saveData.collection.includes(result.pet.id)) this.saveData.collection.push(result.pet.id);
-      if (this.saveData.bag.length < 30) {
+      if (this.saveData.bag.length < 20) {
         this.saveData.bag.push(result.pet);
         Save.save(this.saveData);
         this.scene.start('ResultScene', { saveData: this.saveData, result });
@@ -1290,12 +1313,12 @@ class BattleScene extends Phaser.Scene {
     this.add.text(width * 0.25, 72,  `야생 ${this.wildPet.name}${legendMark(this.wildPet)}`,  { fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#fb923c' }).setOrigin(0.5);
     this.add.text(width * 0.25, 92, `Lv.${this.wildPet.level}  [${this.wildPet.type}]`, { fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#9ca3af' }).setOrigin(0.5);
     this.add.text(width * 0.25, 145, '🐾', { fontSize: '56px' }).setOrigin(0.5);
-    this.drawHpBar(width * 0.25, 185, this.wildPet.hp, this.wildPet.maxHp, 0xe11d48);
+    this.drawHpBar(width * 0.25, 185, this.wildPet.hp, this.wildPet.maxHp, this.wildPet.atk, 0xe11d48);
 
     this.add.text(width * 0.75, 72,  `내 ${this.myPet.name}${legendMark(this.myPet)}`,     { fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#60a5fa' }).setOrigin(0.5);
     this.add.text(width * 0.75, 92, `Lv.${this.myPet.level}  [${this.myPet.type}]`, { fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#9ca3af' }).setOrigin(0.5);
     this.add.text(width * 0.75, 145, '🐉', { fontSize: '56px' }).setOrigin(0.5);
-    this.drawHpBar(width * 0.75, 185, this.myPet.hp, this.myPet.maxHp, 0x2563eb);
+    this.drawHpBar(width * 0.75, 185, this.myPet.hp, this.myPet.maxHp, this.myPet.atk, 0x2563eb);
 
     // 속성 상성 표시
     const adv = Utils.typeMultiplier(this.myPet, this.wildPet);
@@ -1312,33 +1335,41 @@ class BattleScene extends Phaser.Scene {
     if (this.turn === 'player') this.drawActionButtons();
   }
 
-  drawHpBar(x, y, hp, maxHp, color) {
+  drawHpBar(x, y, hp, maxHp, atk, color) {
     const w = 120, h = 10;
     this.add.rectangle(x, y, w, h, 0x374151).setOrigin(0.5);
     const pct = Math.max(hp / maxHp, 0);
     if (pct > 0) this.add.rectangle(x - w / 2 + (w * pct) / 2, y, w * pct, h, color).setOrigin(0.5);
-    this.add.text(x, y + 14, `HP ${Math.max(hp,0)} / ${maxHp}`, { fontSize: '11px', fontFamily: 'Malgun Gothic', color: '#9ca3af' }).setOrigin(0.5);
+    this.add.text(x - 24, y + 14, `HP ${Math.max(hp,0)}/${maxHp}`, { fontSize: '11px', fontFamily: 'Malgun Gothic', color: '#9ca3af' }).setOrigin(0.5);
+    this.add.text(x + 46, y + 14, `ATK ${atk}`, { fontSize: '11px', fontFamily: 'Malgun Gothic', color: '#fbbf24' }).setOrigin(0.5);
   }
 
   drawActionButtons() {
     const { width, height } = this.scale;
-    const actions = [
-      { label: '⚔️ 공격',   key: 'attack',  color: 0x7c3aed, y: height * 0.52 },
-      { label: '🛡️ 방어',   key: 'defend',  color: 0x1d4ed8, y: height * 0.62 },
-      { label: `💥 필살기${this.skillCooldown > 0 ? ` (${this.skillCooldown}턴)` : ''}`, key: 'skill', color: this.skillCooldown > 0 ? 0x374151 : 0x9d174d, y: height * 0.72 },
-      { label: '🏃 도망',   key: 'run',     color: 0x374151, y: height * 0.82 },
+    const c1=width*0.28, c2=width*0.72, bW=200, bH=48;
+    const rows=[
+      [{label:'⚔️ 공격',  key:'attack', color:0x7c3aed},{label:'🛡️ 방어', key:'defend',color:0x1d4ed8}],
+      [{label:`💥 필살기${this.skillCooldown>0?` (${this.skillCooldown}턴)`:''}`,key:'skill',color:this.skillCooldown>0?0x374151:0x9d174d},{label:'🔄 펫 교체',key:'swap',color:0x065f46}],
+      [{label:'🏃 도망',  key:'run',   color:0x374151},{label:'📊 상생표',key:'chart',color:0x312e81}],
     ];
-
-    actions.forEach(({ label, key, color, y }) => {
-      const btn = this.add.rectangle(width / 2, y, 260, 46, color).setOrigin(0.5);
-      if (key === 'skill' && this.skillCooldown > 0) {
-        this.add.text(width / 2, y, label, { fontSize: '16px', fontFamily: 'Malgun Gothic', color: '#6b7280' }).setOrigin(0.5);
-        return;
-      }
-      btn.setInteractive({ useHandCursor: true });
-      btn.setStrokeStyle(1, 0xa855f7);
-      this.add.text(width / 2, y, label, { fontSize: '16px', fontFamily: 'Malgun Gothic', color: '#ffffff' }).setOrigin(0.5);
-      btn.on('pointerdown', () => this.playerAction(key));
+    rows.forEach(([left,right],ri)=>{
+      const y=height*0.50+ri*height*0.11;
+      [left,right].forEach((a,ci)=>{
+        const x=ci===0?c1:c2;
+        const btn=this.add.rectangle(x,y,bW,bH,a.color).setOrigin(0.5);
+        if(a.key==='skill'&&this.skillCooldown>0){
+          this.add.text(x,y,a.label,{fontSize:'15px',fontFamily:'Malgun Gothic',color:'#6b7280'}).setOrigin(0.5);
+          return;
+        }
+        btn.setInteractive({useHandCursor:true});
+        btn.setStrokeStyle(1,0xa855f7);
+        this.add.text(x,y,a.label,{fontSize:'15px',fontFamily:'Malgun Gothic',color:'#ffffff'}).setOrigin(0.5);
+        btn.on('pointerdown',()=>{
+          if(a.key==='chart'){ this.showTypeChartOverlay(); return; }
+          if(a.key==='swap'){  this.showPetSwapInBattle(); return; }
+          this.playerAction(a.key);
+        });
+      });
     });
   }
 
@@ -1409,7 +1440,7 @@ class BattleScene extends Phaser.Scene {
 
   battleWin() {
     if (!this.saveData.collection.includes(this.wildPet.id)) this.saveData.collection.push(this.wildPet.id);
-    if (this.saveData.bag.length < 30) {
+    if (this.saveData.bag.length < 20) {
       this.saveData.bag.push(this.wildPet);
       Save.save(this.saveData);
       this.scene.start('ResultScene', { saveData: this.saveData, result: { type: 'pet', pet: this.wildPet } });
@@ -1428,6 +1459,63 @@ class BattleScene extends Phaser.Scene {
     }
     Save.save(this.saveData);
     this.scene.start('MapScene', { saveData: this.saveData });
+  }
+
+  showPetSwapInBattle() {
+    const { width, height } = this.scale;
+    const alive = this.saveData.bag.filter(p => p.alive && p !== this.myPet);
+    if (alive.length === 0) { this.showDamageLabel('교체할 펫이 없어요!', '#fb923c'); return; }
+    const overlay=this.add.rectangle(width/2,height/2,width,height,0x000000,0.7).setDepth(30).setOrigin(0.5);
+    const panel=this.add.rectangle(width/2,height/2,360,400,0x0f0728).setDepth(31).setOrigin(0.5);
+    panel.setStrokeStyle(2,0x7c3aed);
+    const title=this.add.text(width/2,height/2-175,'🔄 펫 교체 (교체 후 적 턴)',{fontSize:'16px',fontFamily:'Malgun Gothic',color:'#e9d5ff'}).setDepth(32).setOrigin(0.5);
+    const allObjs=[overlay,panel,title];
+    alive.slice(0,6).forEach((pet,i)=>{
+      const by=height/2-130+i*54;
+      const btn=this.add.rectangle(width/2,by,300,46,0x2d1b69).setDepth(32).setOrigin(0.5).setInteractive({useHandCursor:true});
+      btn.setStrokeStyle(1,0x7c3aed);
+      const txt=this.add.text(width/2,by,`${pet.name} Lv.${pet.level}  HP ${pet.hp}/${pet.maxHp}  ATK ${pet.atk}`,{fontSize:'12px',fontFamily:'Malgun Gothic',color:'#e9d5ff'}).setDepth(33).setOrigin(0.5);
+      allObjs.push(btn,txt);
+      btn.on('pointerdown',()=>{
+        this.saveData.bag.forEach(p=>p.isActive=false);
+        pet.isActive=true; this.myPet=pet;
+        allObjs.forEach(o=>o.destroy());
+        this.turn='enemy';
+        this.time.delayedCall(400,()=>this.enemyTurn());
+      });
+    });
+    const cBtn=this.add.rectangle(width/2,height/2+175,140,36,0x374151).setDepth(32).setOrigin(0.5).setInteractive({useHandCursor:true});
+    this.add.text(width/2,height/2+175,'✕ 취소',{fontSize:'14px',fontFamily:'Malgun Gothic',color:'#9ca3af'}).setDepth(33).setOrigin(0.5);
+    allObjs.push(cBtn);
+    cBtn.on('pointerdown',()=>allObjs.forEach(o=>o.destroy()));
+  }
+
+  showTypeChartOverlay() {
+    const { width, height } = this.scale;
+    const overlay=this.add.rectangle(width/2,height/2,width,height,0x000000,0.85).setDepth(40).setOrigin(0.5);
+    const panel=this.add.rectangle(width/2,height/2,width-10,height-10,0x0f0728).setDepth(41).setOrigin(0.5);
+    panel.setStrokeStyle(1,0x7c3aed);
+    const title=this.add.text(width/2,18,'📊 속성 상성표',{fontSize:'17px',fontFamily:'Malgun Gothic',color:'#e9d5ff'}).setDepth(42).setOrigin(0.5);
+    const sub=this.add.text(width/2,40,'효과적 ×1.5  |  불리 ×0.75  |  전설 면역',{fontSize:'10px',fontFamily:'Malgun Gothic',color:'#a78bfa'}).setDepth(42).setOrigin(0.5);
+    const allObjs=[overlay,panel,title,sub];
+    const chart=PETS_DATA.typeChart;
+    const emoji={'불꽃':'🔥','물':'💧','풀':'🌿','전기':'⚡','얼음':'❄️','땅':'🏔️','바람':'🌪️','어둠':'🌑','에스퍼':'🔮','페어리':'🧚','빛':'✨','노말':'⭐'};
+    const colors={'불꽃':'#f97316','물':'#3b82f6','풀':'#22c55e','전기':'#eab308','얼음':'#67e8f9','땅':'#a16207','바람':'#86efac','어둠':'#7c3aed','에스퍼':'#d8b4fe','페어리':'#f9a8d4','빛':'#fde047','노말':'#9ca3af'};
+    let y=62;
+    Object.keys(chart).forEach(type=>{
+      const strong=chart[type];
+      const box=this.add.rectangle(58,y,108,26,0x1e1145).setDepth(42).setOrigin(0.5);
+      const tTxt=this.add.text(58,y,`${emoji[type]||''}${type}`,{fontSize:'12px',fontFamily:'Malgun Gothic',color:colors[type]||'#fff'}).setDepth(43).setOrigin(0.5);
+      const arr=this.add.text(118,y,'▶',{fontSize:'11px',color:'#4ade80'}).setDepth(43).setOrigin(0.5);
+      const vTxt=strong.length>0?strong.map(t=>`${emoji[t]||''}${t}`).join('  '):'없음';
+      const vt=this.add.text(130,y,vTxt,{fontSize:'12px',fontFamily:'Malgun Gothic',color:'#4ade80'}).setDepth(43).setOrigin(0,0.5);
+      allObjs.push(box,tTxt,arr,vt);
+      y+=30;
+    });
+    const cBtn=this.add.rectangle(width/2,height-22,140,32,0x374151).setDepth(42).setOrigin(0.5).setInteractive({useHandCursor:true});
+    this.add.text(width/2,height-22,'✕ 닫기',{fontSize:'13px',fontFamily:'Malgun Gothic',color:'#9ca3af'}).setDepth(43).setOrigin(0.5);
+    allObjs.push(cBtn);
+    cBtn.on('pointerdown',()=>allObjs.forEach(o=>o.destroy()));
   }
 }
 
@@ -1479,84 +1567,140 @@ class BagScene extends Phaser.Scene {
     this.add.rectangle(0, 0, width, height, 0x1a0a3e).setOrigin(0);
 
     if (this.releaseMode && this.newPet) {
-      // 가방 꽉 찼을 때 — 버릴 펫 선택 안내
-      this.add.text(width / 2, 28, '가방이 꽉 찼어요!', { fontSize: '20px', fontFamily: 'Malgun Gothic', color: '#fb923c', fontStyle: 'bold' }).setOrigin(0.5);
-      this.add.text(width / 2, 56, `새 펫: ${this.newPet.name} (Lv.${this.newPet.level})`, { fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#fbbf24' }).setOrigin(0.5);
-      this.add.text(width / 2, 78, '버릴 펫을 선택하세요 (길게 누르기)', { fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#a78bfa' }).setOrigin(0.5);
-    } else {
-      this.add.text(width / 2, 28, `가방  ${this.saveData.bag.length}/30`, { fontSize: '22px', fontFamily: 'Malgun Gothic', color: '#e9d5ff' }).setOrigin(0.5);
-      this.add.text(width / 2, 56, `아이템: 체력회복 ${this.saveData.items.heal}개  소환 ${this.saveData.items.revive}개`, { fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#a78bfa' }).setOrigin(0.5);
-      this.add.text(width / 2, 76, '펫 클릭: 동행 설정  |  길게 누르기: 버리기', { fontSize: '11px', fontFamily: 'Malgun Gothic', color: '#6b7280' }).setOrigin(0.5);
+      this.add.text(width/2, 28, '가방이 꽉 찼어요!', {fontSize:'20px',fontFamily:'Malgun Gothic',color:'#fb923c',fontStyle:'bold'}).setOrigin(0.5);
+      this.add.text(width/2, 56, `새 펫: ${this.newPet.name} (Lv.${this.newPet.level})`, {fontSize:'14px',fontFamily:'Malgun Gothic',color:'#fbbf24'}).setOrigin(0.5);
+      this.add.text(width/2, 78, '버릴 펫을 선택하세요 (길게 누르기)', {fontSize:'13px',fontFamily:'Malgun Gothic',color:'#a78bfa'}).setOrigin(0.5);
+      this.renderPetCards(95, []);
+      const skipBtn = this.add.rectangle(width/2, height-36, 220, 44, 0x374151).setOrigin(0.5).setInteractive({useHandCursor:true});
+      this.add.text(width/2, height-36, '새 펫 포기하기', {fontSize:'15px',fontFamily:'Malgun Gothic',color:'#9ca3af'}).setOrigin(0.5);
+      skipBtn.on('pointerdown', () => {
+        if (!this.saveData.collection.includes(this.newPet.id)) this.saveData.collection.push(this.newPet.id);
+        Save.save(this.saveData); this.scene.start('MapScene', {saveData:this.saveData});
+      });
+      return;
     }
 
+    // ── 4개 탭 ──
+    const tabDefs = [
+      { label:`🐾 펫 ${this.saveData.bag.length}/20` },
+      { label:`💊 아이템` },
+      { label:`🎩 모자` },
+      { label:`👟 신발` },
+    ];
+    const TW = Math.floor((width-16)/4);
+    const tabBgs=[], tabTxts=[];
+    tabDefs.forEach((t,i)=>{
+      const x=8+TW/2+i*TW;
+      const bg=this.add.rectangle(x,34,TW-4,28,i===0?0x5b21b6:0x1e1145).setOrigin(0.5).setInteractive({useHandCursor:true});
+      bg.setStrokeStyle(1,i===0?0xe879f9:0x4c1d95);
+      const tx=this.add.text(x,34,t.label,{fontSize:'11px',fontFamily:'Malgun Gothic',color:i===0?'#fff':'#a78bfa'}).setOrigin(0.5);
+      tabBgs.push(bg); tabTxts.push(tx);
+    });
+    const helpTxt=this.add.text(width/2,57,'펫 클릭: 동행  |  길게 누르기: 버리기',{fontSize:'10px',fontFamily:'Malgun Gothic',color:'#6b7280'}).setOrigin(0.5);
+
+    this.tabObjs=[];
+    const switchTab=(idx)=>{
+      this.tabObjs.forEach(o=>o.destroy()); this.tabObjs=[];
+      tabBgs.forEach((b,i)=>{ b.setFillStyle(i===idx?0x5b21b6:0x1e1145); b.setStrokeStyle(1,i===idx?0xe879f9:0x4c1d95); });
+      tabTxts.forEach((t,i)=>t.setColor(i===idx?'#fff':'#a78bfa'));
+      helpTxt.setVisible(idx===0);
+      if      (idx===0) this.renderPetCards(68, this.tabObjs);
+      else if (idx===1) this.renderConsumableCards(68, this.tabObjs);
+      else if (idx===2) this.renderCosmeticCards('hat',   68, this.tabObjs);
+      else              this.renderCosmeticCards('shoes', 68, this.tabObjs);
+    };
+    switchTab(0);
+    tabBgs.forEach((b,i)=>b.on('pointerdown',()=>switchTab(i)));
+
+    const backBtn=this.add.rectangle(width/2,height-36,200,44,0x4c1d95).setOrigin(0.5).setInteractive({useHandCursor:true});
+    this.add.text(width/2,height-36,'← 모험으로',{fontSize:'16px',fontFamily:'Malgun Gothic',color:'#fff'}).setOrigin(0.5);
+    backBtn.on('pointerdown',()=>{ Save.save(this.saveData); this.scene.start('MapScene',{saveData:this.saveData}); });
+  }
+
+  renderPetCards(startY, objs) {
     this.saveData.bag.forEach((pet, i) => {
-      const col = i % 3, row = Math.floor(i / 3);
-      const x = 80 + col * 140, y = 110 + row * 108;
-      const isActive = pet.isActive;
-      const bg = this.add.rectangle(x, y, 122, 92, isActive ? 0x5b21b6 : pet.alive ? 0x2d1b69 : 0x1f1f2e)
-        .setOrigin(0.5).setInteractive({ useHandCursor: true });
-      bg.setStrokeStyle(2, isActive ? 0xe879f9 : pet.alive ? 0x4c1d95 : 0x374151);
-
-      const gradeColor = { legend:'#fbbf24', rare:'#60a5fa', normal:'#9ca3af' };
-      this.add.text(x, y - 32, pet.alive ? '●' : '💀', { fontSize: '14px', color: gradeColor[pet.grade] || '#9ca3af' }).setOrigin(0.5);
-      this.add.text(x, y - 16, pet.name.length > 6 ? pet.name.slice(0,6)+'...' : pet.name, { fontSize: '12px', fontFamily: 'Malgun Gothic', color: pet.alive ? '#e9d5ff' : '#6b7280' }).setOrigin(0.5);
-      this.add.text(x, y, `Lv.${pet.level}  ATK${pet.atk}`, { fontSize: '11px', fontFamily: 'Malgun Gothic', color: '#9ca3af' }).setOrigin(0.5);
-      this.add.text(x, y + 16, `HP ${pet.hp}/${pet.maxHp}`, { fontSize: '10px', fontFamily: 'Malgun Gothic', color: '#6b7280' }).setOrigin(0.5);
-
-      // 경험치 바
-      const barW = 100, barH = 6, barY = y + 32;
-      this.add.rectangle(x, barY, barW, barH, 0x1a1a2e).setOrigin(0.5);
-      const xpPct = Math.max(0, Math.min(pet.xp / pet.xpToNext, 1));
-      if (xpPct > 0) {
-        this.add.rectangle(x - barW/2 + (barW * xpPct)/2, barY, barW * xpPct, barH, 0xfbbf24).setOrigin(0.5);
-      }
-      this.add.text(x, barY + 9, `XP ${pet.xp}/${pet.xpToNext}`, { fontSize: '8px', fontFamily: 'Malgun Gothic', color: '#a78bfa' }).setOrigin(0.5);
-
-      // 짧게 누르기: 동행 설정 / 소환
-      bg.on('pointerdown', () => {
-        if (this.releaseMode) return; // 버리기 모드에선 짧은 탭 무시
-        if (!pet.alive) {
-          if (this.saveData.items.revive > 0) {
-            this.saveData.items.revive--;
-            pet.alive = true; pet.hp = pet.maxHp;
-            Save.save(this.saveData);
-            this.scene.restart({ saveData: this.saveData });
-          } else {
-            this.showMsg('소환 아이템이 없어요!');
-          }
+      const col=i%3, row=Math.floor(i/3);
+      const x=80+col*140, y=startY+row*108;
+      const isActive=pet.isActive;
+      const bg=this.add.rectangle(x,y,122,92,isActive?0x5b21b6:pet.alive?0x2d1b69:0x1f1f2e).setOrigin(0.5).setInteractive({useHandCursor:true});
+      bg.setStrokeStyle(2,isActive?0xe879f9:pet.alive?0x4c1d95:0x374151);
+      const gc={legend:'#fbbf24',rare:'#60a5fa',normal:'#9ca3af'};
+      const d =this.add.text(x,y-32,pet.alive?'●':'💀',{fontSize:'14px',color:gc[pet.grade]||'#9ca3af'}).setOrigin(0.5);
+      const nT=this.add.text(x,y-16,pet.name.length>6?pet.name.slice(0,6)+'...':pet.name,{fontSize:'12px',fontFamily:'Malgun Gothic',color:pet.alive?'#e9d5ff':'#6b7280'}).setOrigin(0.5);
+      const aT=this.add.text(x,y,`Lv.${pet.level}  ATK${pet.atk}`,{fontSize:'11px',fontFamily:'Malgun Gothic',color:'#9ca3af'}).setOrigin(0.5);
+      const hT=this.add.text(x,y+16,`HP ${pet.hp}/${pet.maxHp}`,{fontSize:'10px',fontFamily:'Malgun Gothic',color:'#6b7280'}).setOrigin(0.5);
+      const bW=100,bH=6,bY=y+32;
+      const bBg=this.add.rectangle(x,bY,bW,bH,0x1a1a2e).setOrigin(0.5);
+      const xPct=Math.max(0,Math.min(pet.xp/pet.xpToNext,1));
+      const bFg=xPct>0?this.add.rectangle(x-bW/2+(bW*xPct)/2,bY,bW*xPct,bH,0xfbbf24).setOrigin(0.5):null;
+      const xT=this.add.text(x,bY+9,`XP ${pet.xp}/${pet.xpToNext}`,{fontSize:'8px',fontFamily:'Malgun Gothic',color:'#a78bfa'}).setOrigin(0.5);
+      objs.push(bg,d,nT,aT,hT,bBg,xT); if(bFg) objs.push(bFg);
+      bg.on('pointerdown',()=>{
+        if(this.releaseMode) return;
+        if(!pet.alive){
+          if(this.saveData.items.revive>0){this.saveData.items.revive--;pet.alive=true;pet.hp=pet.maxHp;Save.save(this.saveData);this.scene.restart({saveData:this.saveData});}
+          else this.showMsg('소환 아이템이 없어요!');
           return;
         }
-        this.saveData.bag.forEach(p => p.isActive = false);
-        pet.isActive = true;
-        this.saveData.activePetId = pet.id;
-        Save.save(this.saveData);
-        this.scene.restart({ saveData: this.saveData });
+        this.saveData.bag.forEach(p=>p.isActive=false); pet.isActive=true; this.saveData.activePetId=pet.id;
+        Save.save(this.saveData); this.scene.restart({saveData:this.saveData});
       });
-
-      // 길게 누르기: 버리기
-      let holdTimer = null;
-      bg.on('pointerdown', () => {
-        holdTimer = this.time.delayedCall(600, () => this.confirmRelease(pet));
-      });
-      bg.on('pointerup',   () => { if (holdTimer) { holdTimer.remove(); holdTimer = null; } });
-      bg.on('pointerout',  () => { if (holdTimer) { holdTimer.remove(); holdTimer = null; } });
+      let ht=null;
+      bg.on('pointerdown',()=>{ht=this.time.delayedCall(600,()=>this.confirmRelease(pet));});
+      bg.on('pointerup', ()=>{if(ht){ht.remove();ht=null;}});
+      bg.on('pointerout',()=>{if(ht){ht.remove();ht=null;}});
     });
+  }
 
-    // 가방 꽉 찼을 때 새 펫 포기 버튼
-    if (this.releaseMode && this.newPet) {
-      const skipBtn = this.add.rectangle(width / 2, height - 36, 220, 44, 0x374151).setOrigin(0.5).setInteractive({ useHandCursor: true });
-      this.add.text(width / 2, height - 36, '새 펫 포기하기', { fontSize: '15px', fontFamily: 'Malgun Gothic', color: '#9ca3af' }).setOrigin(0.5);
-      skipBtn.on('pointerdown', () => {
-        // 도감에만 등록
-        if (!this.saveData.collection.includes(this.newPet.id)) this.saveData.collection.push(this.newPet.id);
-        Save.save(this.saveData);
-        this.scene.start('MapScene', { saveData: this.saveData });
-      });
-    } else {
-      const backBtn = this.add.rectangle(width / 2, height - 36, 200, 44, 0x4c1d95).setOrigin(0.5).setInteractive({ useHandCursor: true });
-      this.add.text(width / 2, height - 36, '← 모험으로', { fontSize: '16px', fontFamily: 'Malgun Gothic', color: '#fff' }).setOrigin(0.5);
-      backBtn.on('pointerdown', () => { Save.save(this.saveData); this.scene.start('MapScene', { saveData: this.saveData }); });
+  renderConsumableCards(startY, objs) {
+    const { width } = this.scale;
+    const defs=[
+      {key:'heal',   emoji:'💊',name:'체력 회복', desc:'HP +20 회복'},
+      {key:'revive', emoji:'⭐',name:'소환 아이템',desc:'쓰러진 펫을 살림'},
+    ];
+    defs.forEach((def,i)=>{
+      const count=this.saveData.items[def.key];
+      const x=width/4+i*width/2, y=startY+80;
+      const bg=this.add.rectangle(x,y,200,130,count>0?0x14532d:0x1f2937).setOrigin(0.5);
+      bg.setStrokeStyle(2,count>0?0x4ade80:0x374151);
+      const eT=this.add.text(x,y-40,def.emoji,{fontSize:'40px'}).setOrigin(0.5);
+      const nT=this.add.text(x,y+8, def.name,{fontSize:'13px',fontFamily:'Malgun Gothic',color:'#e9d5ff'}).setOrigin(0.5);
+      const dT=this.add.text(x,y+26,def.desc,{fontSize:'11px',fontFamily:'Malgun Gothic',color:'#9ca3af'}).setOrigin(0.5);
+      const cT=this.add.text(x,y+46,`${count}개 / 10개`,{fontSize:'14px',fontFamily:'Malgun Gothic',color:count>0?'#4ade80':'#6b7280',fontStyle:'bold'}).setOrigin(0.5);
+      objs.push(bg,eT,nT,dT,cT);
+    });
+  }
+
+  renderCosmeticCards(type, startY, objs) {
+    const { width, height } = this.scale;
+    const ownedIds=this.saveData.cosmetics.owned.filter(id=>{
+      const c=PETS_DATA.cosmetics.find(x=>x.id===id);
+      return c && c.type===type;
+    });
+    const label=type==='hat'?'모자':'신발';
+    if(ownedIds.length===0){
+      objs.push(this.add.text(width/2,height/2-40,`보유 ${label}이 없어요\n상점 꾸미기에서 구매해 보세요!`,
+        {fontSize:'14px',fontFamily:'Malgun Gothic',color:'#6b7280',align:'center'}).setOrigin(0.5));
+      return;
     }
+    const cntT=this.add.text(width/2,startY+8,`${ownedIds.length} / 10개`,{fontSize:'12px',fontFamily:'Malgun Gothic',color:'#a78bfa'}).setOrigin(0.5);
+    objs.push(cntT);
+    ownedIds.forEach((itemId,i)=>{
+      const item=PETS_DATA.cosmetics.find(c=>c.id===itemId); if(!item) return;
+      const equipped=this.saveData.cosmetics.equipped[item.type]===item.id;
+      const col=i%4, row=Math.floor(i/4);
+      const x=70+col*130, y=startY+30+row*72;
+      const bg=this.add.rectangle(x,y,118,62,equipped?0x5b21b6:0x2d1b69).setOrigin(0.5).setInteractive({useHandCursor:true});
+      bg.setStrokeStyle(2,equipped?0xe879f9:0x4c1d95);
+      const eT=this.add.text(x-36,y,item.emoji,{fontSize:'22px'}).setOrigin(0.5);
+      const nT=this.add.text(x+16,y-13,item.name,{fontSize:'11px',fontFamily:'Malgun Gothic',color:'#e9d5ff'}).setOrigin(0.5);
+      const sT=this.add.text(x+16,y+8,equipped?'✓ 착용중':'착용가능',{fontSize:'10px',fontFamily:'Malgun Gothic',color:equipped?'#e879f9':'#4ade80'}).setOrigin(0.5);
+      objs.push(bg,eT,nT,sT);
+      bg.on('pointerdown',()=>{
+        this.saveData.cosmetics.equipped[item.type]=equipped?null:item.id;
+        Save.save(this.saveData); this.scene.restart({saveData:this.saveData});
+      });
+    });
   }
 
   confirmRelease(pet) {
@@ -1699,72 +1843,120 @@ class ShopScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
     this.add.rectangle(0, 0, width, height, 0x2a1f0f).setOrigin(0);
-    this.add.text(width / 2, 30, '🏪 상점', { fontSize: '22px', fontFamily: 'Malgun Gothic', color: '#fbbf24' }).setOrigin(0.5);
-    this.add.text(width / 2, 56, `보유 코인: 🪙 ${this.saveData.coins}`, { fontSize: '15px', fontFamily: 'Malgun Gothic', color: '#fde047', fontStyle: 'bold' }).setOrigin(0.5);
+    this.add.text(width/2, 28, '🏪 상점', {fontSize:'22px',fontFamily:'Malgun Gothic',color:'#fbbf24'}).setOrigin(0.5);
+    this.add.text(width/2, 52, `보유 코인: 🪙 ${this.saveData.coins}`, {fontSize:'15px',fontFamily:'Malgun Gothic',color:'#fde047',fontStyle:'bold'}).setOrigin(0.5);
 
-    // 두 개의 메뉴 버튼
-    const sellBtn = this.add.rectangle(width / 2, height * 0.3, 280, 70, 0x713f12).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    sellBtn.setStrokeStyle(2, 0xfbbf24);
-    this.add.text(width / 2, height * 0.3 - 12, '💰 펫 팔기', { fontSize: '18px', fontFamily: 'Malgun Gothic', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
-    this.add.text(width / 2, height * 0.3 + 14, '필요없는 펫을 코인으로 바꿔요', { fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#fde68a' }).setOrigin(0.5);
-    sellBtn.on('pointerdown', () => this.showSellMenu());
-
-    const dressBtn = this.add.rectangle(width / 2, height * 0.45, 280, 70, 0x4c1d95).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    dressBtn.setStrokeStyle(2, 0xa855f7);
-    this.add.text(width / 2, height * 0.45 - 12, '✨ 캐릭터 꾸미기', { fontSize: '18px', fontFamily: 'Malgun Gothic', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
-    this.add.text(width / 2, height * 0.45 + 14, '코인으로 모자와 옷을 사요', { fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#ddd6fe' }).setOrigin(0.5);
-    dressBtn.on('pointerdown', () => this.scene.start('CosmeticScene', { saveData: this.saveData }));
-
-    // 판매 가격 안내
-    this.add.text(width / 2, height * 0.62, '펫 판매 가격', { fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#fbbf24' }).setOrigin(0.5);
-    const prices = PETS_DATA.sellPrices;
-    let py = height * 0.67;
-    [1,2,3,4,5].forEach(lv => {
-      this.add.text(width / 2, py, `Lv.${lv} → 🪙 ${prices[String(lv)]} 코인`, { fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#fde68a' }).setOrigin(0.5);
-      py += 24;
+    const btns=[
+      {label:'💰 펫 팔기',      sub:'필요없는 펫을 코인으로',      color:0x713f12,border:0xfbbf24,fn:()=>this.showSellMenu()},
+      {label:'💊 아이템 팔기',  sub:'체력회복·소환 아이템 판매',   color:0x14532d,border:0x4ade80,fn:()=>this.showConsumableSellMenu()},
+      {label:'🎩 모자 팔기',    sub:'구매가의 50%에 팔아요',        color:0x312e81,border:0xa855f7,fn:()=>this.showCosmeticSellMenu('hat')},
+      {label:'👟 신발 팔기',    sub:'구매가의 50%에 팔아요',        color:0x1e3a5f,border:0x60a5fa,fn:()=>this.showCosmeticSellMenu('shoes')},
+      {label:'✨ 캐릭터 꾸미기',sub:'코인으로 모자와 신발을 사요', color:0x4c1d95,border:0xa855f7,fn:()=>this.scene.start('CosmeticScene',{saveData:this.saveData})},
+    ];
+    btns.forEach((b,i)=>{
+      const y=110+i*70;
+      const bg=this.add.rectangle(width/2,y,320,58,b.color).setOrigin(0.5).setInteractive({useHandCursor:true});
+      bg.setStrokeStyle(2,b.border);
+      this.add.text(width/2,y-12,b.label,{fontSize:'17px',fontFamily:'Malgun Gothic',color:'#fff',fontStyle:'bold'}).setOrigin(0.5);
+      this.add.text(width/2,y+12,b.sub,{fontSize:'11px',fontFamily:'Malgun Gothic',color:'#ddd6fe'}).setOrigin(0.5);
+      bg.on('pointerdown',b.fn);
+      bg.on('pointerover',()=>bg.setAlpha(0.8)); bg.on('pointerout',()=>bg.setAlpha(1));
     });
 
-    const backBtn = this.add.rectangle(width / 2, height - 36, 200, 44, 0x4c1d95).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    this.add.text(width / 2, height - 36, '← 모험으로', { fontSize: '16px', fontFamily: 'Malgun Gothic', color: '#fff' }).setOrigin(0.5);
-    backBtn.on('pointerdown', () => { Save.save(this.saveData); this.scene.start('MapScene', { saveData: this.saveData }); });
+    this.add.text(width/2,480,'펫 판매 가격',{fontSize:'13px',fontFamily:'Malgun Gothic',color:'#fbbf24'}).setOrigin(0.5);
+    const prices=PETS_DATA.sellPrices; let py=502;
+    [1,2,3,4,5].forEach(lv=>{
+      this.add.text(width/2,py,`Lv.${lv} → 🪙 ${prices[String(lv)]} 코인`,{fontSize:'12px',fontFamily:'Malgun Gothic',color:'#fde68a'}).setOrigin(0.5);
+      py+=22;
+    });
+
+    const backBtn=this.add.rectangle(width/2,height-36,200,44,0x4c1d95).setOrigin(0.5).setInteractive({useHandCursor:true});
+    this.add.text(width/2,height-36,'← 모험으로',{fontSize:'16px',fontFamily:'Malgun Gothic',color:'#fff'}).setOrigin(0.5);
+    backBtn.on('pointerdown',()=>{ Save.save(this.saveData); this.scene.start('MapScene',{saveData:this.saveData}); });
   }
 
   showSellMenu() {
     const { width, height } = this.scale;
-    const sellable = this.saveData.bag.filter(p => !p.isActive); // 동행 펫은 못 팔게
-
-    const overlay = this.add.rectangle(width/2, height/2, width, height, 0x000000, 0.75).setDepth(40).setOrigin(0.5);
-    const panel = this.add.rectangle(width/2, height/2, 370, 500, 0x2a1f0f).setDepth(41).setOrigin(0.5);
-    panel.setStrokeStyle(2, 0xfbbf24);
-    const title = this.add.text(width/2, height/2 - 220, '💰 펫 팔기', { fontSize: '20px', fontFamily: 'Malgun Gothic', color: '#fbbf24' }).setDepth(42).setOrigin(0.5);
-    const sub = this.add.text(width/2, height/2 - 195, '팔 펫을 선택하세요 (동행 펫 제외)', { fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#fde68a' }).setDepth(42).setOrigin(0.5);
-    const allObjs = [overlay, panel, title, sub];
-
-    if (sellable.length === 0) {
-      const msg = this.add.text(width/2, height/2, '팔 수 있는 펫이 없어요!', { fontSize: '15px', fontFamily: 'Malgun Gothic', color: '#fb923c' }).setDepth(42).setOrigin(0.5);
-      allObjs.push(msg);
+    const sellable = this.saveData.bag.filter(p => !p.isActive);
+    const overlay=this.add.rectangle(width/2,height/2,width,height,0x000000,0.75).setDepth(40).setOrigin(0.5);
+    const panel=this.add.rectangle(width/2,height/2,370,500,0x2a1f0f).setDepth(41).setOrigin(0.5);
+    panel.setStrokeStyle(2,0xfbbf24);
+    const title=this.add.text(width/2,height/2-220,'💰 펫 팔기',{fontSize:'20px',fontFamily:'Malgun Gothic',color:'#fbbf24'}).setDepth(42).setOrigin(0.5);
+    const sub=this.add.text(width/2,height/2-195,'팔 펫을 선택하세요 (동행 펫 제외)',{fontSize:'12px',fontFamily:'Malgun Gothic',color:'#fde68a'}).setDepth(42).setOrigin(0.5);
+    const allObjs=[overlay,panel,title,sub];
+    if(sellable.length===0){
+      allObjs.push(this.add.text(width/2,height/2,'팔 수 있는 펫이 없어요!',{fontSize:'15px',fontFamily:'Malgun Gothic',color:'#fb923c'}).setDepth(42).setOrigin(0.5));
     } else {
-      sellable.slice(0, 9).forEach((pet, i) => {
-        const by = height/2 - 160 + i * 40;
-        const price = PETS_DATA.sellPrices[String(Math.min(pet.level, 5))];
-        const btn = this.add.rectangle(width/2, by, 320, 36, 0x713f12).setDepth(42).setOrigin(0.5).setInteractive({ useHandCursor: true });
-        btn.setStrokeStyle(1, 0xca8a04);
-        const txt = this.add.text(width/2, by, `${pet.name} Lv.${pet.level}  →  🪙 ${price}`, { fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#fde68a' }).setDepth(43).setOrigin(0.5);
-        allObjs.push(btn, txt);
-        btn.on('pointerdown', () => {
-          this.saveData.coins += price;
-          this.saveData.bag = this.saveData.bag.filter(p => p !== pet);
-          Save.save(this.saveData);
-          allObjs.forEach(o => o.destroy());
-          this.scene.restart({ saveData: this.saveData });
-        });
+      sellable.slice(0,9).forEach((pet,i)=>{
+        const by=height/2-160+i*40;
+        const price=PETS_DATA.sellPrices[String(Math.min(pet.level,5))];
+        const btn=this.add.rectangle(width/2,by,320,36,0x713f12).setDepth(42).setOrigin(0.5).setInteractive({useHandCursor:true});
+        btn.setStrokeStyle(1,0xca8a04);
+        const txt=this.add.text(width/2,by,`${pet.name} Lv.${pet.level}  →  🪙 ${price}`,{fontSize:'13px',fontFamily:'Malgun Gothic',color:'#fde68a'}).setDepth(43).setOrigin(0.5);
+        allObjs.push(btn,txt);
+        btn.on('pointerdown',()=>{ this.saveData.coins+=price; this.saveData.bag=this.saveData.bag.filter(p=>p!==pet); Save.save(this.saveData); allObjs.forEach(o=>o.destroy()); this.scene.restart({saveData:this.saveData}); });
       });
     }
+    const cBtn=this.add.rectangle(width/2,height/2+220,150,38,0x374151).setDepth(42).setOrigin(0.5).setInteractive({useHandCursor:true});
+    this.add.text(width/2,height/2+220,'✕ 닫기',{fontSize:'14px',fontFamily:'Malgun Gothic',color:'#9ca3af'}).setDepth(43).setOrigin(0.5);
+    allObjs.push(cBtn);
+    cBtn.on('pointerdown',()=>allObjs.forEach(o=>o.destroy()));
+  }
 
-    const closeBtn = this.add.rectangle(width/2, height/2 + 220, 150, 38, 0x374151).setDepth(42).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    const closeText = this.add.text(width/2, height/2 + 220, '✕ 닫기', { fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#9ca3af' }).setDepth(43).setOrigin(0.5);
-    allObjs.push(closeBtn, closeText);
-    closeBtn.on('pointerdown', () => allObjs.forEach(o => o.destroy()));
+  showConsumableSellMenu() {
+    const { width, height } = this.scale;
+    const overlay=this.add.rectangle(width/2,height/2,width,height,0x000000,0.75).setDepth(40).setOrigin(0.5);
+    const panel=this.add.rectangle(width/2,height/2,380,300,0x0f2a1f).setDepth(41).setOrigin(0.5);
+    panel.setStrokeStyle(2,0x4ade80);
+    const title=this.add.text(width/2,height/2-128,'💊 아이템 팔기',{fontSize:'20px',fontFamily:'Malgun Gothic',color:'#4ade80'}).setDepth(42).setOrigin(0.5);
+    const allObjs=[overlay,panel,title];
+    const defs=[
+      {key:'heal',   emoji:'💊',name:'체력 회복',price:PETS_DATA.items.heal.sellPrice||5},
+      {key:'revive', emoji:'⭐',name:'소환 아이템',price:PETS_DATA.items.revive.sellPrice||15},
+    ];
+    defs.forEach((def,i)=>{
+      const count=this.saveData.items[def.key];
+      const y=height/2-60+i*80;
+      const bg=this.add.rectangle(width/2,y,320,64,count>0?0x14532d:0x1f2937).setDepth(42).setOrigin(0.5);
+      bg.setStrokeStyle(1,count>0?0x4ade80:0x374151);
+      const txt=this.add.text(width/2,y-10,`${def.emoji} ${def.name}  ${count}개 보유`,{fontSize:'14px',fontFamily:'Malgun Gothic',color:count>0?'#e9d5ff':'#6b7280'}).setDepth(43).setOrigin(0.5);
+      const sub=this.add.text(width/2,y+12,count>0?`전체 판매 → 🪙 ${def.price*count}`:'보유 없음',{fontSize:'12px',fontFamily:'Malgun Gothic',color:count>0?'#86efac':'#4b5563'}).setDepth(43).setOrigin(0.5);
+      allObjs.push(bg,txt,sub);
+      if(count>0){ bg.setInteractive({useHandCursor:true}); bg.on('pointerdown',()=>{ this.saveData.coins+=def.price*count; this.saveData.items[def.key]=0; Save.save(this.saveData); allObjs.forEach(o=>o.destroy()); this.scene.restart({saveData:this.saveData}); }); }
+    });
+    const cBtn=this.add.rectangle(width/2,height/2+128,150,38,0x374151).setDepth(42).setOrigin(0.5).setInteractive({useHandCursor:true});
+    this.add.text(width/2,height/2+128,'✕ 닫기',{fontSize:'14px',fontFamily:'Malgun Gothic',color:'#9ca3af'}).setDepth(43).setOrigin(0.5);
+    allObjs.push(cBtn);
+    cBtn.on('pointerdown',()=>allObjs.forEach(o=>o.destroy()));
+  }
+
+  showCosmeticSellMenu(type) {
+    const { width, height } = this.scale;
+    const ownedIds=this.saveData.cosmetics.owned.filter(id=>{ const c=PETS_DATA.cosmetics.find(x=>x.id===id); return c&&c.type===type; });
+    const label=type==='hat'?'🎩 모자':'👟 신발';
+    const overlay=this.add.rectangle(width/2,height/2,width,height,0x000000,0.75).setDepth(40).setOrigin(0.5);
+    const panel=this.add.rectangle(width/2,height/2,400,520,0x0f1a2e).setDepth(41).setOrigin(0.5);
+    panel.setStrokeStyle(2,0x60a5fa);
+    const title=this.add.text(width/2,height/2-235,`${label} 팔기`,{fontSize:'20px',fontFamily:'Malgun Gothic',color:'#60a5fa'}).setDepth(42).setOrigin(0.5);
+    const sub=this.add.text(width/2,height/2-210,'구매가의 50%에 팔립니다',{fontSize:'12px',fontFamily:'Malgun Gothic',color:'#93c5fd'}).setDepth(42).setOrigin(0.5);
+    const allObjs=[overlay,panel,title,sub];
+    if(ownedIds.length===0){
+      allObjs.push(this.add.text(width/2,height/2,`판매할 ${label.slice(3)}이 없어요!`,{fontSize:'15px',fontFamily:'Malgun Gothic',color:'#fb923c'}).setDepth(42).setOrigin(0.5));
+    } else {
+      ownedIds.slice(0,10).forEach((itemId,i)=>{
+        const item=PETS_DATA.cosmetics.find(c=>c.id===itemId); if(!item) return;
+        const sp=Math.floor(item.price/2);
+        const by=height/2-170+i*40;
+        const btn=this.add.rectangle(width/2,by,340,36,0x1e3a5f).setDepth(42).setOrigin(0.5).setInteractive({useHandCursor:true});
+        btn.setStrokeStyle(1,0x60a5fa);
+        allObjs.push(btn, this.add.text(width/2,by,`${item.emoji} ${item.name}  →  🪙 ${sp}`,{fontSize:'13px',fontFamily:'Malgun Gothic',color:'#93c5fd'}).setDepth(43).setOrigin(0.5));
+        btn.on('pointerdown',()=>{ this.saveData.coins+=sp; this.saveData.cosmetics.owned=this.saveData.cosmetics.owned.filter(id=>id!==itemId); if(this.saveData.cosmetics.equipped[item.type]===itemId) this.saveData.cosmetics.equipped[item.type]=null; Save.save(this.saveData); allObjs.forEach(o=>o.destroy()); this.scene.restart({saveData:this.saveData}); });
+      });
+    }
+    const cBtn=this.add.rectangle(width/2,height/2+232,150,38,0x374151).setDepth(42).setOrigin(0.5).setInteractive({useHandCursor:true});
+    this.add.text(width/2,height/2+232,'✕ 닫기',{fontSize:'14px',fontFamily:'Malgun Gothic',color:'#9ca3af'}).setDepth(43).setOrigin(0.5);
+    allObjs.push(cBtn);
+    cBtn.on('pointerdown',()=>allObjs.forEach(o=>o.destroy()));
   }
 }
 
@@ -1792,14 +1984,42 @@ class CosmeticScene extends Phaser.Scene {
     // 캐릭터 미리보기
     this.drawPreview(width / 2, 110);
 
-    // 아이템 목록
-    const cosmetics = PETS_DATA.cosmetics;
-    const startY = 175;
-    cosmetics.forEach((item, i) => {
-      const col = i % 3, row = Math.floor(i / 3);
-      const x = 80 + col * 140, y = startY + row * 70;
-      this.drawItemCard(x, y, item);
-    });
+    // 탭 버튼 (모자 / 신발)
+    this.currentTab = 'hat';
+    const tabHat  = this.add.rectangle(width/2 - 70, 145, 120, 34, 0x5b21b6).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    tabHat.setStrokeStyle(2, 0xe879f9);
+    const tabHatTxt  = this.add.text(width/2 - 70, 145, '🎩 모자', { fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#fff' }).setOrigin(0.5);
+    const tabShoe = this.add.rectangle(width/2 + 70, 145, 120, 34, 0x1e1145).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    tabShoe.setStrokeStyle(2, 0x4c1d95);
+    const tabShoeTxt = this.add.text(width/2 + 70, 145, '🐾 신발', { fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#a78bfa' }).setOrigin(0.5);
+
+    // 아이템 목록 (탭별 표시)
+    const allItems = PETS_DATA.cosmetics;
+    this.itemObjs = [];
+
+    const renderItems = (tab) => {
+      this.itemObjs.forEach(o => o.destroy());
+      this.itemObjs = [];
+      const filtered = allItems.filter(c => c.type === tab);
+      const startY = 185;
+      filtered.forEach((item, i) => {
+        const col = i % 4, row = Math.floor(i / 4);
+        const x = 78 + col * 138, y = startY + row * 72;
+        this.drawItemCard(x, y, item, this.itemObjs);
+      });
+      // 탭 강조
+      tabHat.setFillStyle(tab === 'hat'  ? 0x5b21b6 : 0x1e1145);
+      tabHat.setStrokeStyle(2, tab === 'hat'  ? 0xe879f9 : 0x4c1d95);
+      tabHatTxt.setColor(tab === 'hat'  ? '#fff' : '#a78bfa');
+      tabShoe.setFillStyle(tab === 'shoes' ? 0x5b21b6 : 0x1e1145);
+      tabShoe.setStrokeStyle(2, tab === 'shoes' ? 0xe879f9 : 0x4c1d95);
+      tabShoeTxt.setColor(tab === 'shoes' ? '#fff' : '#a78bfa');
+    };
+
+    renderItems('hat');
+
+    tabHat.on('pointerdown',  () => { this.currentTab = 'hat';   renderItems('hat'); });
+    tabShoe.on('pointerdown', () => { this.currentTab = 'shoes'; renderItems('shoes'); });
 
     const backBtn = this.add.rectangle(width / 2, height - 32, 200, 42, 0x4c1d95).setOrigin(0.5).setInteractive({ useHandCursor: true });
     this.add.text(width / 2, height - 32, '← 상점으로', { fontSize: '15px', fontFamily: 'Malgun Gothic', color: '#fff' }).setOrigin(0.5);
@@ -1819,6 +2039,14 @@ class CosmeticScene extends Phaser.Scene {
     this.preview.add(shadow);
 
     if (hasCharImg) {
+      // ── 신발/탈것: 캐릭터 이미지보다 먼저 추가 → 발 아래에 보임 ──
+      if (equip.shoes) {
+        const shoeItem = PETS_DATA.cosmetics.find(c => c.id === equip.shoes);
+        if (shoeItem) {
+          const shoeEmoji = this.add.text(0, 65, shoeItem.emoji, { fontSize: '32px' }).setOrigin(0.5);
+          this.preview.add(shoeEmoji);
+        }
+      }
       // ── 이미지 미리보기 ────────────────────────────────────────
       const charImg = this.add.image(0, 0, charImgKey);
       charImg.setDisplaySize(70, 115);  // 너비 70: 홀쭉함 개선
@@ -1830,7 +2058,7 @@ class CosmeticScene extends Phaser.Scene {
         if (hatItem) {
           if (hatItem.img && this.textures.exists(hatItem.img)) {
             const hat = this.add.image(0, -20, hatItem.img);
-            hat.setDisplaySize(46, 31);   // 원본 비율 유지
+            hat.setDisplaySize(46, 31);
             hat.setOrigin(0.5, 1);
             this.preview.add(hat);
           } else {
@@ -1841,12 +2069,14 @@ class CosmeticScene extends Phaser.Scene {
       }
     } else {
       // ── 도형 미리보기 (이미지 없을 때 자동 fallback) ─────────────
-      let bodyColor = isFemale ? 0xe879f9 : 0x60a5fa;
-      if (equip.color) {
-        const colorItem = PETS_DATA.cosmetics.find(c => c.id === equip.color);
-        if (colorItem) bodyColor = parseInt(colorItem.color);
+      if (equip.shoes) {
+        const shoeItem = PETS_DATA.cosmetics.find(c => c.id === equip.shoes);
+        if (shoeItem) {
+          const shoeEmoji = this.add.text(0, 42, shoeItem.emoji, { fontSize: '26px' }).setOrigin(0.5);
+          this.preview.add(shoeEmoji);
+        }
       }
-      const body = this.add.rectangle(0, 8, 30, 36, bodyColor);
+      const body = this.add.rectangle(0, 8, 30, 36, 0x60a5fa);
       const head = this.add.circle(0, -22, 18, isFemale ? 0xfcd34d : 0xfbbf24);
       const eyeL = this.add.circle(-6, -22, 3, 0x1a1a2e);
       const eyeR = this.add.circle(6, -22, 3, 0x1a1a2e);
@@ -1861,40 +2091,35 @@ class CosmeticScene extends Phaser.Scene {
     }
   }
 
-  drawItemCard(x, y, item) {
+  drawItemCard(x, y, item, objs = []) {
     const owned = this.saveData.cosmetics.owned.includes(item.id);
     const equipped = this.saveData.cosmetics.equipped[item.type] === item.id;
     const canAfford = this.saveData.coins >= item.price;
 
-    const bg = this.add.rectangle(x, y, 128, 62, equipped ? 0x5b21b6 : 0x2d1b69).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    const bg = this.add.rectangle(x, y, 120, 62, equipped ? 0x5b21b6 : 0x2d1b69).setOrigin(0.5).setInteractive({ useHandCursor: true });
     bg.setStrokeStyle(2, equipped ? 0xe879f9 : owned ? 0x4ade80 : 0x4c1d95);
-
-    // 아이콘
-    if (item.type === 'hat') {
-      this.add.text(x - 42, y, item.emoji, { fontSize: '24px' }).setOrigin(0.5);
-    } else {
-      this.add.rectangle(x - 42, y, 22, 22, parseInt(item.color)).setOrigin(0.5);
-    }
-
-    this.add.text(x + 8, y - 14, item.name, { fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#e9d5ff' }).setOrigin(0.5);
-
+    const icon = this.add.text(x - 36, y, item.emoji, { fontSize: '22px' }).setOrigin(0.5);
+    const nameT = this.add.text(x + 16, y - 13, item.name, { fontSize: '11px', fontFamily: 'Malgun Gothic', color: '#e9d5ff' }).setOrigin(0.5);
+    let stateT;
     if (equipped) {
-      this.add.text(x + 8, y + 8, '착용중', { fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#e879f9' }).setOrigin(0.5);
+      stateT = this.add.text(x + 16, y + 8, '착용중', { fontSize: '11px', fontFamily: 'Malgun Gothic', color: '#e879f9' }).setOrigin(0.5);
     } else if (owned) {
-      this.add.text(x + 8, y + 8, '착용하기', { fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#4ade80' }).setOrigin(0.5);
+      stateT = this.add.text(x + 16, y + 8, '착용하기', { fontSize: '11px', fontFamily: 'Malgun Gothic', color: '#4ade80' }).setOrigin(0.5);
     } else {
-      this.add.text(x + 8, y + 8, `🪙 ${item.price}`, { fontSize: '12px', fontFamily: 'Malgun Gothic', color: canAfford ? '#fde047' : '#6b7280' }).setOrigin(0.5);
+      stateT = this.add.text(x + 16, y + 8, `🪙 ${item.price}`, { fontSize: '11px', fontFamily: 'Malgun Gothic', color: canAfford ? '#fde047' : '#6b7280' }).setOrigin(0.5);
     }
+    objs.push(bg, icon, nameT, stateT);
 
     bg.on('pointerdown', () => {
       if (equipped) {
-        // 착용 해제
         this.saveData.cosmetics.equipped[item.type] = null;
       } else if (owned) {
-        // 착용
         this.saveData.cosmetics.equipped[item.type] = item.id;
       } else if (canAfford) {
-        // 구매 + 착용
+        const typeOwned = this.saveData.cosmetics.owned.filter(id=>{
+          const c=PETS_DATA.cosmetics.find(x=>x.id===id); return c&&c.type===item.type;
+        }).length;
+        if (typeOwned >= 10) { this.showMsg(`${item.type==='hat'?'모자':'신발'} 보관 공간 부족! (최대 10개)`); return; }
         this.saveData.coins -= item.price;
         this.saveData.cosmetics.owned.push(item.id);
         this.saveData.cosmetics.equipped[item.type] = item.id;
