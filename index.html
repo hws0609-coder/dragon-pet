@@ -2756,16 +2756,17 @@ class CosmeticScene extends Phaser.Scene {
     this.coinText = this.add.text(width / 2, 50, `🪙 ${this.saveData.coins} 코인`, { fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#fde047' }).setOrigin(0.5);
 
     // 캐릭터 미리보기
-    this.drawPreview(width / 2, 110);
+    this.drawPreview(width / 2, 100);
 
-    // 탭 버튼 (모자 / 신발)
+    // 탭 버튼 (모자 / 신발) — 미리보기 아래로 내림
     this.currentTab = 'hat';
-    const tabHat  = this.add.rectangle(width/2 - 70, 145, 120, 34, 0x5b21b6).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    const tabY = 185;
+    const tabHat  = this.add.rectangle(width/2 - 75, tabY, 130, 36, 0x5b21b6).setOrigin(0.5).setInteractive({ useHandCursor: true });
     tabHat.setStrokeStyle(2, 0xe879f9);
-    const tabHatTxt  = this.add.text(width/2 - 70, 145, '🎩 모자', { fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#fff' }).setOrigin(0.5);
-    const tabShoe = this.add.rectangle(width/2 + 70, 145, 120, 34, 0x1e1145).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    const tabHatTxt  = this.add.text(width/2 - 75, tabY, '🎩 모자', { fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#fff' }).setOrigin(0.5);
+    const tabShoe = this.add.rectangle(width/2 + 75, tabY, 130, 36, 0x1e1145).setOrigin(0.5).setInteractive({ useHandCursor: true });
     tabShoe.setStrokeStyle(2, 0x4c1d95);
-    const tabShoeTxt = this.add.text(width/2 + 70, 145, '🐾 신발', { fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#a78bfa' }).setOrigin(0.5);
+    const tabShoeTxt = this.add.text(width/2 + 75, tabY, '👟 신발', { fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#a78bfa' }).setOrigin(0.5);
 
     // 아이템 목록 (탭별 표시)
     const allItems = PETS_DATA.cosmetics;
@@ -2775,7 +2776,7 @@ class CosmeticScene extends Phaser.Scene {
       this.itemObjs.forEach(o => o.destroy());
       this.itemObjs = [];
       const filtered = allItems.filter(c => c.type === tab);
-      const startY = 185;
+      const startY = 235;
       filtered.forEach((item, i) => {
         const col = i % 4, row = Math.floor(i / 4);
         const x = 78 + col * 138, y = startY + row * 72;
@@ -2823,7 +2824,7 @@ class CosmeticScene extends Phaser.Scene {
       }
       // ── 이미지 미리보기 ────────────────────────────────────────
       const charImg = this.add.image(0, 0, charImgKey);
-      charImg.setDisplaySize(70, 115);  // 너비 70: 홀쭉함 개선
+      charImg.setDisplaySize(60, 98);  // 탭과 겹치지 않게 약간 축소
       charImg.setOrigin(0.5, 0.5);
       this.preview.add(charImg);
       // 모자: 이미지 있으면 이미지, 없으면 이모지
