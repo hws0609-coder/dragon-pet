@@ -1573,6 +1573,7 @@ class BattleScene extends Phaser.Scene {
     this.myPet     = this.saveData.bag.find(p => p.isActive && p.alive) || this.saveData.bag.find(p => p.alive);
     this.turn      = 'player';
     this.skillCooldown = 0;
+    this.actionLocked = false;
   }
 
   preload() {
@@ -1684,6 +1685,11 @@ class BattleScene extends Phaser.Scene {
   }
 
   playerAction(action) {
+    // 0.5초 쿨다운: 연타는 가능하되 0.5초마다 한 번씩만 입력됨
+    if (this.actionLocked) return;
+    this.actionLocked = true;
+    this.time.delayedCall(500, () => { this.actionLocked = false; });
+
     this.defending = false;
 
     if (action === 'run') {
