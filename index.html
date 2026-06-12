@@ -285,8 +285,8 @@ const Utils = {
     const zone = PETS_DATA.zones.find(z => z.id === zoneId);
     const result = [];
     for (let i = 0; i < 2; i++) {
-      // 보스 펫: 1% 확률, 레벨 4~5의 강한 펫
-      const isBoss = Math.random() < 0.01;
+      // 보스 펫: 5% 확률, 레벨 4~5의 강한 펫
+      const isBoss = Math.random() < 0.05;
       if (isBoss) {
         // 보스는 전설 우선, 없으면 야생풀에서
         const bossId = zone.legendPet || zone.wildPool[Math.floor(Math.random() * zone.wildPool.length)];
@@ -883,15 +883,26 @@ class MapScene extends Phaser.Scene {
       const pet = wildData.pet;
       const isLegend = pet.isLegend;
       const isBoss = pet.isBoss;
-      const icon = isBoss ? '👑' : isLegend ? '✨' : '⚔️';
-      const sprite = this.add.text(wildData.x, wildData.y, icon, { fontSize: isBoss ? '48px' : isLegend ? '44px' : '34px' }).setOrigin(0.5).setDepth(5);
+
+      // 보스는 실제 펫 이미지, 그 외엔 이모지
+      let sprite;
+      const bossTexKey = isBoss ? Utils.petTexKey(pet.id, pet.level) : null;
+      if (isBoss && bossTexKey && this.textures.exists(bossTexKey)) {
+        sprite = this.add.image(wildData.x, wildData.y, bossTexKey).setDepth(5);
+        // 보스 크기: 세로 90px 기준
+        const src = this.textures.get(bossTexKey).getSourceImage();
+        sprite.setScale(90 / src.height);
+      } else {
+        const icon = isBoss ? '👑' : isLegend ? '✨' : '⚔️';
+        sprite = this.add.text(wildData.x, wildData.y, icon, { fontSize: isBoss ? '48px' : isLegend ? '44px' : '34px' }).setOrigin(0.5).setDepth(5);
+      }
 
       if (isBoss) {
-        // 보스: 붉은 오라 + 흔들림 + 라벨
-        this.tweens.add({ targets: sprite, scale: 1.3, angle: 8, duration: 500, yoyo: true, repeat: -1 });
-        const ring = this.add.circle(wildData.x, wildData.y, 36, 0xef4444, 0.25).setDepth(4);
-        this.tweens.add({ targets: ring, alpha: 0.55, scale: 1.5, duration: 700, yoyo: true, repeat: -1 });
-        this.add.text(wildData.x, wildData.y - 40, '⚡보스⚡', { fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#ef4444', fontStyle: 'bold', stroke: '#000', strokeThickness: 3 }).setOrigin(0.5).setDepth(6);
+        // 보스: 붉은 오라 + 살짝 흔들림 + 라벨 (이미지는 과하지 않게)
+        this.tweens.add({ targets: sprite, angle: 5, duration: 600, yoyo: true, repeat: -1 });
+        const ring = this.add.circle(wildData.x, wildData.y, 44, 0xef4444, 0.22).setDepth(4);
+        this.tweens.add({ targets: ring, alpha: 0.5, scale: 1.4, duration: 700, yoyo: true, repeat: -1 });
+        this.add.text(wildData.x, wildData.y - 56, '⚡보스⚡', { fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#ef4444', fontStyle: 'bold', stroke: '#000', strokeThickness: 4 }).setOrigin(0.5).setDepth(6);
       } else if (isLegend) {
         this.tweens.add({ targets: sprite, scale: 1.25, duration: 600, yoyo: true, repeat: -1 });
         const ring = this.add.circle(wildData.x, wildData.y, 30, 0xFFD700, 0.2).setDepth(4);
