@@ -1764,11 +1764,18 @@ class BattleScene extends Phaser.Scene {
       this.wildPet.name = this.wildPet.name.replace('👑 보스 ', '');
       delete this.wildPet.isBoss;
     }
+    // 전투 승리 보상: 동행 펫 경험치 +20
+    let evoInfo = null;
+    const fighter = this.myPet;
+    if (fighter) {
+      const r = Utils.applyXp(fighter, 20);
+      if (r.evolved) evoInfo = { petId: fighter.id, name: fighter.name, level: fighter.level };
+    }
     if (!this.saveData.collection.includes(this.wildPet.id)) this.saveData.collection.push(this.wildPet.id);
     if (this.saveData.bag.length < 20) {
       this.saveData.bag.push(this.wildPet);
       Save.save(this.saveData);
-      this.scene.start('ResultScene', { saveData: this.saveData, result: { type: 'pet', pet: this.wildPet } });
+      this.scene.start('ResultScene', { saveData: this.saveData, result: { type: 'pet', pet: this.wildPet }, evoInfo });
     } else {
       // 가방 꽉 참 → 버리기 모드
       Save.save(this.saveData);
@@ -1970,7 +1977,7 @@ class BagScene extends Phaser.Scene {
     const panel=this.add.rectangle(width/2,height/2,380,460,0x1a0a3e).setDepth(51).setOrigin(0.5);
     panel.setStrokeStyle(2,0xa855f7);
     const title=this.add.text(width/2,height/2-200,'⚡ 펫 강화',{fontSize:'20px',fontFamily:'Malgun Gothic',color:'#c4b5fd'}).setDepth(52).setOrigin(0.5);
-    const sub=this.add.text(width/2,height/2-174,'같은 펫 2마리 → 1마리 + 경험치\n성공 확률 50% (실패해도 재료 소모)',{fontSize:'11px',fontFamily:'Malgun Gothic',color:'#a78bfa',align:'center'}).setDepth(52).setOrigin(0.5);
+    const sub=this.add.text(width/2,height/2-174,'같은 펫 2마리 → 1마리 + 경험치\n성공 확률 70% (실패해도 재료 소모)',{fontSize:'11px',fontFamily:'Malgun Gothic',color:'#a78bfa',align:'center'}).setDepth(52).setOrigin(0.5);
     const allObjs=[overlay,panel,title,sub];
 
     if(fusable.length===0){
@@ -2004,7 +2011,7 @@ class BagScene extends Phaser.Scene {
     const matIdx = this.saveData.bag.indexOf(material);
     this.saveData.bag.splice(matIdx, 1);
 
-    const success = Math.random() < 0.5;
+    const success = Math.random() < 0.7;
     if (success) {
       const xpGain = Utils.randInt(20, 30);
       const r = Utils.applyXp(keep, xpGain);
