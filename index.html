@@ -71,27 +71,40 @@ const Sound = {
   },
 
   // 배경음악 재생. key를 지정하면 해당 트랙, 없으면 'bgm'(기본)
-  // 지역 BGM 파일이 없으면 기본 bgm으로 대체, 그것도 없으면 조용히 skip
+  // 트랙이 아직 로드 안 됐으면 로드 후 재생
   playBGM(scene, keyOrVolume, volume = 0.25) {
     try {
       if (Save.load().muted) return;
-      // 인자 호환: playBGM(scene) / playBGM(scene, 0.3) / playBGM(scene, 'bgm3')
       let key = 'bgm';
       if (typeof keyOrVolume === 'string') key = keyOrVolume;
       else if (typeof keyOrVolume === 'number') volume = keyOrVolume;
 
-      // 지정 트랙이 없으면 기본 bgm으로 대체
-      if (!scene.cache.audio.exists(key)) key = 'bgm';
-      if (!scene.cache.audio.exists(key)) return;  // 기본도 없으면 skip
+      const startTrack = (k) => {
+        if (Save.load().muted) return;
+        if (this.bgmInstance && this.bgmInstance.isPlaying && this.currentBgmKey === k) return;
+        this.stopBGM();
+        this.bgmInstance = scene.sound.add(k, { volume, loop: true });
+        this.bgmInstance.play();
+        this.currentBgmKey = k;
+      };
 
-      // 같은 트랙이 이미 재생 중이면 유지
-      if (this.bgmInstance && this.bgmInstance.isPlaying && this.currentBgmKey === key) return;
+      // 1) 이미 로드돼 있으면 바로 재생
+      if (scene.cache.audio.exists(key)) { startTrack(key); return; }
 
-      // 다른 트랙으로 바뀌면 기존 정지 후 새로 재생
-      this.stopBGM();
-      this.bgmInstance = scene.sound.add(key, { volume, loop: true });
-      this.bgmInstance.play();
-      this.currentBgmKey = key;
+      // 2) 아직 로드 안 됐으면 → 동적으로 로드 후 재생
+      const path = SOUND_KEYS[key];
+      if (path) {
+        scene.load.audio(key, path);
+        scene.load.once('complete', () => {
+          if (scene.cache.audio.exists(key)) startTrack(key);
+          else if (scene.cache.audio.exists('bgm')) startTrack('bgm'); // 파일 없으면 기본
+        });
+        scene.load.start();
+        return;
+      }
+
+      // 3) 경로조차 없으면 기본 bgm 시도
+      if (scene.cache.audio.exists('bgm')) startTrack('bgm');
     } catch (e) { /* 무시 */ }
   },
 
