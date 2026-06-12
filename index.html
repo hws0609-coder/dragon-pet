@@ -337,7 +337,10 @@ class MapScene extends Phaser.Scene {
     if (!this.textures.exists(key)) {
       this.load.image(key, `assets/maps/${key}.png`);
     }
-    // 이미지 로드 실패해도 게임 진행 (색 배경 fallback)
+    // 베이스 캐릭터 이미지 로드 (없으면 도형 fallback 자동 적용)
+    if (!this.textures.exists('base-boy'))  this.load.image('base-boy',  'assets/characters/base-boy.png');
+    if (!this.textures.exists('base-girl')) this.load.image('base-girl', 'assets/characters/base-girl.png');
+    // 이미지 로드 실패해도 게임 진행
     this.load.on('loaderror', () => { this.bgLoadFailed = true; });
   }
 
@@ -389,37 +392,59 @@ class MapScene extends Phaser.Scene {
     const startY = this.saveData.mapProgress.py || this.MAP_H / 2;
     const isFemale = this.saveData.character === 'f';
 
-    // 캐릭터 컨테이너 (그래픽 기반)
+    // 캐릭터 컨테이너 (이미지 우선 / 도형 fallback)
     const equip = this.saveData.cosmetics ? this.saveData.cosmetics.equipped : { hat: null, color: null };
+    const charImgKey = isFemale ? 'base-girl' : 'base-boy';
+    const hasCharImg = this.textures.exists(charImgKey);
+
+    // 도형 fallback 전용 색상 (이미지 있으면 사용 안 함)
     let bodyColor = isFemale ? 0xe879f9 : 0x60a5fa;
-    if (equip.color) {
+    if (!hasCharImg && equip.color) {
       const colorItem = PETS_DATA.cosmetics.find(c => c.id === equip.color);
       if (colorItem) bodyColor = parseInt(colorItem.color);
     }
 
     this.player = this.add.container(startX, startY).setDepth(10);
-    const shadow = this.add.ellipse(0, 18, 28, 10, 0x000000, 0.3);
-    const body   = this.add.rectangle(0, 4, 22, 26, bodyColor);
-    const head   = this.add.circle(0, -16, 13, isFemale ? 0xfcd34d : 0xfbbf24);
-    const eyes   = this.add.rectangle(0, -16, 10, 4, 0x1a1a2e);
-    this.player.add([shadow, body, head, eyes]);
+    // 그림자: 이미지 모드 y=47 (높이86/2+4), 도형 모드 y=24
+    const shadow = this.add.ellipse(0, hasCharImg ? 47 : 24, 30, 10, 0x000000, 0.3);
+    this.player.add(shadow);
 
-    // 모자 — 구매한 꾸미기 아이템 우선, 없으면 기본
-    if (equip.hat) {
-      const hatItem = PETS_DATA.cosmetics.find(c => c.id === equip.hat);
-      if (hatItem) {
-        const hatEmoji = this.add.text(0, -34, hatItem.emoji, { fontSize: '22px' }).setOrigin(0.5);
-        this.player.add(hatEmoji);
+    if (hasCharImg) {
+      // ── 이미지 캐릭터 ──────────────────────────────────────────
+      const charImg = this.add.image(0, 0, charImgKey);
+      charImg.setDisplaySize(44, 86);  // 비율 1:1.96 유지 (조정 가능)
+      charImg.setOrigin(0.5, 0.5);
+      this.player.add(charImg);
+      // 모자 이모지: 이미지 상단(y=-43) 위 7px
+      if (equip.hat) {
+        const hatItem = PETS_DATA.cosmetics.find(c => c.id === equip.hat);
+        if (hatItem) {
+          const hatEmoji = this.add.text(0, -50, hatItem.emoji, { fontSize: '22px' }).setOrigin(0.5);
+          this.player.add(hatEmoji);
+        }
       }
     } else {
-      const hat = isFemale
-        ? this.add.triangle(0, -32, -8, 0, 8, 0, 0, -14, 0xff69b4)
-        : this.add.rectangle(0, -30, 18, 6, 0x2563eb);
-      this.player.add(hat);
+      // ── 도형 캐릭터 (이미지 없을 때 자동 fallback) ─────────────
+      const body = this.add.rectangle(0, 4, 22, 26, bodyColor);
+      const head = this.add.circle(0, -16, 13, isFemale ? 0xfcd34d : 0xfbbf24);
+      const eyes = this.add.rectangle(0, -16, 10, 4, 0x1a1a2e);
+      this.player.add([body, head, eyes]);
+      if (equip.hat) {
+        const hatItem = PETS_DATA.cosmetics.find(c => c.id === equip.hat);
+        if (hatItem) {
+          const hatEmoji = this.add.text(0, -34, hatItem.emoji, { fontSize: '22px' }).setOrigin(0.5);
+          this.player.add(hatEmoji);
+        }
+      } else {
+        const hat = isFemale
+          ? this.add.triangle(0, -32, -8, 0, 8, 0, 0, -14, 0xff69b4)
+          : this.add.rectangle(0, -30, 18, 6, 0x2563eb);
+        this.player.add(hat);
+      }
     }
 
-    // 캐릭터 위에 이름 표시
-    this.playerLabel = this.add.text(startX, startY - 36,
+    // 캐릭터 위에 이름 표시 (이미지 상단 y=-43 기준 위 13px = -56)
+    this.playerLabel = this.add.text(startX, startY - 56,
       isFemale ? '여자아이' : '남자아이',
       { fontSize: '11px', fontFamily: 'Malgun Gothic', color: '#ffffff',
         stroke: '#000000', strokeThickness: 3 }
@@ -817,7 +842,7 @@ class MapScene extends Phaser.Scene {
       // 이름 라벨 따라오기
       if (this.playerLabel) {
         this.playerLabel.x = this.player.x;
-        this.playerLabel.y = this.player.y - 36;
+        this.playerLabel.y = this.player.y - 56;
       }
       // 위치 저장 (매 60프레임)
       if (this.game.getFrame() % 60 === 0) {
@@ -1736,6 +1761,12 @@ class CosmeticScene extends Phaser.Scene {
 
   init(data) { this.saveData = data.saveData || Save.load(); }
 
+  preload() {
+    // MapScene에서 이미 로드됐으면 자동 skip
+    if (!this.textures.exists('base-boy'))  this.load.image('base-boy',  'assets/characters/base-boy.png');
+    if (!this.textures.exists('base-girl')) this.load.image('base-girl', 'assets/characters/base-girl.png');
+  }
+
   create() {
     const { width, height } = this.scale;
     this.add.rectangle(0, 0, width, height, 0x1a0a3e).setOrigin(0);
@@ -1764,27 +1795,45 @@ class CosmeticScene extends Phaser.Scene {
     this.preview = this.add.container(x, y);
     const isFemale = this.saveData.character === 'f';
     const equip = this.saveData.cosmetics.equipped;
+    const charImgKey = isFemale ? 'base-girl' : 'base-boy';
+    const hasCharImg = this.textures.exists(charImgKey);
 
-    // 옷 색상 (구매한 color)
-    let bodyColor = isFemale ? 0xe879f9 : 0x60a5fa;
-    if (equip.color) {
-      const colorItem = PETS_DATA.cosmetics.find(c => c.id === equip.color);
-      if (colorItem) bodyColor = parseInt(colorItem.color);
-    }
+    // 그림자: 이미지 모드 y=63 (높이117/2+5), 도형 모드 y=34
+    const shadow = this.add.ellipse(0, hasCharImg ? 63 : 34, 44, 14, 0x000000, 0.3);
+    this.preview.add(shadow);
 
-    const shadow = this.add.ellipse(0, 34, 40, 12, 0x000000, 0.3);
-    const body   = this.add.rectangle(0, 8, 30, 36, bodyColor);
-    const head   = this.add.circle(0, -22, 18, isFemale ? 0xfcd34d : 0xfbbf24);
-    const eyeL   = this.add.circle(-6, -22, 3, 0x1a1a2e);
-    const eyeR   = this.add.circle(6, -22, 3, 0x1a1a2e);
-    this.preview.add([shadow, body, head, eyeL, eyeR]);
-
-    // 모자 (구매한 hat)
-    if (equip.hat) {
-      const hatItem = PETS_DATA.cosmetics.find(c => c.id === equip.hat);
-      if (hatItem) {
-        const hat = this.add.text(0, -44, hatItem.emoji, { fontSize: '28px' }).setOrigin(0.5);
-        this.preview.add(hat);
+    if (hasCharImg) {
+      // ── 이미지 미리보기 ────────────────────────────────────────
+      const charImg = this.add.image(0, 0, charImgKey);
+      charImg.setDisplaySize(60, 117);  // 비율 1:1.96 유지 (조정 가능)
+      charImg.setOrigin(0.5, 0.5);
+      this.preview.add(charImg);
+      // 모자 이모지: 이미지 상단(y=-58) 위 9px
+      if (equip.hat) {
+        const hatItem = PETS_DATA.cosmetics.find(c => c.id === equip.hat);
+        if (hatItem) {
+          const hat = this.add.text(0, -67, hatItem.emoji, { fontSize: '28px' }).setOrigin(0.5);
+          this.preview.add(hat);
+        }
+      }
+    } else {
+      // ── 도형 미리보기 (이미지 없을 때 자동 fallback) ─────────────
+      let bodyColor = isFemale ? 0xe879f9 : 0x60a5fa;
+      if (equip.color) {
+        const colorItem = PETS_DATA.cosmetics.find(c => c.id === equip.color);
+        if (colorItem) bodyColor = parseInt(colorItem.color);
+      }
+      const body = this.add.rectangle(0, 8, 30, 36, bodyColor);
+      const head = this.add.circle(0, -22, 18, isFemale ? 0xfcd34d : 0xfbbf24);
+      const eyeL = this.add.circle(-6, -22, 3, 0x1a1a2e);
+      const eyeR = this.add.circle(6, -22, 3, 0x1a1a2e);
+      this.preview.add([body, head, eyeL, eyeR]);
+      if (equip.hat) {
+        const hatItem = PETS_DATA.cosmetics.find(c => c.id === equip.hat);
+        if (hatItem) {
+          const hat = this.add.text(0, -44, hatItem.emoji, { fontSize: '28px' }).setOrigin(0.5);
+          this.preview.add(hat);
+        }
       }
     }
   }
