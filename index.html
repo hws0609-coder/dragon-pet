@@ -399,6 +399,8 @@ class MapScene extends Phaser.Scene {
 
     // 캐릭터 컨테이너 (이미지 우선 / 도형 fallback)
     const equip = this.saveData.cosmetics ? this.saveData.cosmetics.equipped : { hat: null, shoes: null };
+    const charImgKey = isFemale ? 'base-girl' : 'base-boy';
+    const hasCharImg = this.textures.exists(charImgKey);
 
     // 도형 fallback 전용 색상 (이미지 있으면 사용 안 함)
     let bodyColor = isFemale ? 0xe879f9 : 0x60a5fa;
