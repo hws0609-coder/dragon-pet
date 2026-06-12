@@ -350,6 +350,27 @@
     "heal":   { "id": "heal",   "name": "체력 회복", "effect": "hp+20", "img": "assets/items/heal.png"   },
     "revive": { "id": "revive", "name": "소환",      "effect": "revive","img": "assets/items/revive.png" }
   },
+  "sellPrices": {
+    "1": 10,
+    "2": 20,
+    "3": 40,
+    "4": 80,
+    "5": 200
+  },
+  "cosmetics": [
+    { "id": "hat_crown",   "name": "왕관",       "type": "hat",   "price": 100, "emoji": "👑" },
+    { "id": "hat_party",   "name": "파티모자",   "type": "hat",   "price": 60,  "emoji": "🎉" },
+    { "id": "hat_wizard",  "name": "마법사모자", "type": "hat",   "price": 80,  "emoji": "🧙" },
+    { "id": "hat_cap",     "name": "야구모자",   "type": "hat",   "price": 40,  "emoji": "🧢" },
+    { "id": "hat_flower",  "name": "꽃",         "type": "hat",   "price": 30,  "emoji": "🌸" },
+    { "id": "hat_star",    "name": "별",         "type": "hat",   "price": 50,  "emoji": "⭐" },
+    { "id": "color_red",   "name": "빨강 옷",    "type": "color", "price": 30,  "color": "0xef4444" },
+    { "id": "color_blue",  "name": "파랑 옷",    "type": "color", "price": 30,  "color": "0x3b82f6" },
+    { "id": "color_green", "name": "초록 옷",    "type": "color", "price": 30,  "color": "0x22c55e" },
+    { "id": "color_gold",  "name": "황금 옷",    "type": "color", "price": 150, "color": "0xfbbf24" },
+    { "id": "color_pink",  "name": "분홍 옷",    "type": "color", "price": 40,  "color": "0xec4899" },
+    { "id": "color_purple","name": "보라 옷",    "type": "color", "price": 40,  "color": "0xa855f7" }
+  ],
   "zones": [
     { "id": 1, "name": "얼음 지역", "theme": "ice",     "wildPool": ["ice-horse","ice-penguin","water-turtle","water-frog"],                          "legendPet": null              },
     { "id": 2, "name": "숲 지역",   "theme": "forest",  "wildPool": ["grass-hedgehog","fairy-rabbit","rainbow-butterfly"],                            "legendPet": "leaf-dragon"     },
