@@ -10,9 +10,14 @@
         "lv3": "assets/pets/fire-dragon-lv3.png",
         "lv5": "assets/pets/fire-dragon-lv5.png"
       },
-      "baseAtk": { "min": 1, "max": 10 },
+      "baseAtk": {
+        "min": 1,
+        "max": 10
+      },
       "baseHp": 20,
-      "wildZones": [3],
+      "wildZones": [
+        3
+      ],
       "isLegend": true
     },
     {
@@ -25,9 +30,14 @@
         "lv3": "assets/pets/thunder-dragon-lv3.png",
         "lv5": "assets/pets/thunder-dragon-lv5.png"
       },
-      "baseAtk": { "min": 1, "max": 10 },
+      "baseAtk": {
+        "min": 1,
+        "max": 10
+      },
       "baseHp": 20,
-      "wildZones": [7],
+      "wildZones": [
+        7
+      ],
       "isLegend": true
     },
     {
@@ -40,9 +50,14 @@
         "lv3": "assets/pets/leaf-dragon-lv3.png",
         "lv5": "assets/pets/leaf-dragon-lv5.png"
       },
-      "baseAtk": { "min": 1, "max": 10 },
+      "baseAtk": {
+        "min": 1,
+        "max": 10
+      },
       "baseHp": 20,
-      "wildZones": [2],
+      "wildZones": [
+        2
+      ],
       "isLegend": true
     },
     {
@@ -55,9 +70,14 @@
         "lv3": "assets/pets/aurora-dragon-lv3.png",
         "lv5": "assets/pets/aurora-dragon-lv5.png"
       },
-      "baseAtk": { "min": 1, "max": 10 },
+      "baseAtk": {
+        "min": 1,
+        "max": 10
+      },
       "baseHp": 20,
-      "wildZones": [9],
+      "wildZones": [
+        9
+      ],
       "isLegend": true
     },
     {
@@ -70,9 +90,14 @@
         "lv3": "assets/pets/ice-horse-lv3.png",
         "lv5": "assets/pets/ice-horse-lv5.png"
       },
-      "baseAtk": { "min": 1, "max": 10 },
+      "baseAtk": {
+        "min": 1,
+        "max": 10
+      },
       "baseHp": 20,
-      "wildZones": [1],
+      "wildZones": [
+        1
+      ],
       "isLegend": false
     },
     {
@@ -85,9 +110,14 @@
         "lv3": "assets/pets/water-turtle-lv3.png",
         "lv5": "assets/pets/water-turtle-lv5.png"
       },
-      "baseAtk": { "min": 1, "max": 10 },
+      "baseAtk": {
+        "min": 1,
+        "max": 10
+      },
       "baseHp": 20,
-      "wildZones": [1],
+      "wildZones": [
+        1
+      ],
       "isLegend": false
     },
     {
@@ -100,9 +130,14 @@
         "lv3": "assets/pets/dark-cat-lv3.png",
         "lv5": "assets/pets/dark-cat-lv5.png"
       },
-      "baseAtk": { "min": 1, "max": 10 },
+      "baseAtk": {
+        "min": 1,
+        "max": 10
+      },
       "baseHp": 20,
-      "wildZones": [4],
+      "wildZones": [
+        4
+      ],
       "isLegend": false
     },
     {
@@ -115,9 +150,14 @@
         "lv3": "assets/pets/cloud-sheep-lv3.png",
         "lv5": "assets/pets/cloud-sheep-lv5.png"
       },
-      "baseAtk": { "min": 1, "max": 10 },
+      "baseAtk": {
+        "min": 1,
+        "max": 10
+      },
       "baseHp": 20,
-      "wildZones": [7],
+      "wildZones": [
+        7
+      ],
       "isLegend": false
     },
     {
@@ -130,9 +170,14 @@
         "lv3": "assets/pets/lava-lizard-lv3.png",
         "lv5": "assets/pets/lava-lizard-lv5.png"
       },
-      "baseAtk": { "min": 1, "max": 10 },
+      "baseAtk": {
+        "min": 1,
+        "max": 10
+      },
       "baseHp": 20,
-      "wildZones": [3],
+      "wildZones": [
+        3
+      ],
       "isLegend": false
     },
     {
@@ -145,9 +190,15 @@
         "lv3": "assets/pets/star-fox-lv3.png",
         "lv5": "assets/pets/star-fox-lv5.png"
       },
-      "baseAtk": { "min": 1, "max": 10 },
+      "baseAtk": {
+        "min": 1,
+        "max": 10
+      },
       "baseHp": 20,
-      "wildZones": [6, 7],
+      "wildZones": [
+        6,
+        7
+      ],
       "isLegend": false
     },
     {
@@ -160,9 +211,15 @@
         "lv3": "assets/pets/fairy-rabbit-lv3.png",
         "lv5": "assets/pets/fairy-rabbit-lv5.png"
       },
-      "baseAtk": { "min": 1, "max": 10 },
+      "baseAtk": {
+        "min": 1,
+        "max": 10
+      },
       "baseHp": 20,
-      "wildZones": [2, 5],
+      "wildZones": [
+        2,
+        5
+      ],
       "isLegend": false
     },
     {
@@ -175,9 +232,15 @@
         "lv3": "assets/pets/esper-owl-lv3.png",
         "lv5": "assets/pets/esper-owl-lv5.png"
       },
-      "baseAtk": { "min": 1, "max": 10 },
+      "baseAtk": {
+        "min": 1,
+        "max": 10
+      },
       "baseHp": 20,
-      "wildZones": [4, 7],
+      "wildZones": [
+        4,
+        7
+      ],
       "isLegend": false
     },
     {
@@ -190,9 +253,14 @@
         "lv3": "assets/pets/normal-dog-lv3.png",
         "lv5": "assets/pets/normal-dog-lv5.png"
       },
-      "baseAtk": { "min": 1, "max": 10 },
+      "baseAtk": {
+        "min": 1,
+        "max": 10
+      },
       "baseHp": 20,
-      "wildZones": [5],
+      "wildZones": [
+        5
+      ],
       "isLegend": false
     },
     {
@@ -205,9 +273,14 @@
         "lv3": "assets/pets/ice-penguin-lv3.png",
         "lv5": "assets/pets/ice-penguin-lv5.png"
       },
-      "baseAtk": { "min": 1, "max": 10 },
+      "baseAtk": {
+        "min": 1,
+        "max": 10
+      },
       "baseHp": 20,
-      "wildZones": [1],
+      "wildZones": [
+        1
+      ],
       "isLegend": false
     },
     {
@@ -220,9 +293,15 @@
         "lv3": "assets/pets/grass-hedgehog-lv3.png",
         "lv5": "assets/pets/grass-hedgehog-lv5.png"
       },
-      "baseAtk": { "min": 1, "max": 10 },
+      "baseAtk": {
+        "min": 1,
+        "max": 10
+      },
       "baseHp": 20,
-      "wildZones": [2, 6],
+      "wildZones": [
+        2,
+        6
+      ],
       "isLegend": false
     },
     {
@@ -235,9 +314,14 @@
         "lv3": "assets/pets/sand-camel-lv3.png",
         "lv5": "assets/pets/sand-camel-lv5.png"
       },
-      "baseAtk": { "min": 1, "max": 10 },
+      "baseAtk": {
+        "min": 1,
+        "max": 10
+      },
       "baseHp": 20,
-      "wildZones": [6],
+      "wildZones": [
+        6
+      ],
       "isLegend": false
     },
     {
@@ -250,9 +334,14 @@
         "lv3": "assets/pets/cave-bat-lv3.png",
         "lv5": "assets/pets/cave-bat-lv5.png"
       },
-      "baseAtk": { "min": 1, "max": 10 },
+      "baseAtk": {
+        "min": 1,
+        "max": 10
+      },
       "baseHp": 20,
-      "wildZones": [4],
+      "wildZones": [
+        4
+      ],
       "isLegend": false
     },
     {
@@ -265,9 +354,16 @@
         "lv3": "assets/pets/rainbow-butterfly-lv3.png",
         "lv5": "assets/pets/rainbow-butterfly-lv5.png"
       },
-      "baseAtk": { "min": 1, "max": 10 },
+      "baseAtk": {
+        "min": 1,
+        "max": 10
+      },
       "baseHp": 20,
-      "wildZones": [2, 7, 8],
+      "wildZones": [
+        2,
+        7,
+        8
+      ],
       "isLegend": false
     },
     {
@@ -280,9 +376,16 @@
         "lv3": "assets/pets/thunder-hamster-lv3.png",
         "lv5": "assets/pets/thunder-hamster-lv5.png"
       },
-      "baseAtk": { "min": 1, "max": 10 },
+      "baseAtk": {
+        "min": 1,
+        "max": 10
+      },
       "baseHp": 20,
-      "wildZones": [3, 5, 6],
+      "wildZones": [
+        3,
+        5,
+        6
+      ],
       "isLegend": false
     },
     {
@@ -295,18 +398,49 @@
         "lv3": "assets/pets/water-frog-lv3.png",
         "lv5": "assets/pets/water-frog-lv5.png"
       },
-      "baseAtk": { "min": 1, "max": 10 },
+      "baseAtk": {
+        "min": 1,
+        "max": 10
+      },
       "baseHp": 20,
-      "wildZones": [1, 5],
+      "wildZones": [
+        1,
+        5
+      ],
       "isLegend": false
     }
   ],
   "levels": {
-    "1": { "xpToNext": 100, "atkMin": 1,  "atkMax": 10, "hp": 20  },
-    "2": { "xpToNext": 200, "atkMin": 11, "atkMax": 20, "hp": 55  },
-    "3": { "xpToNext": 300, "atkMin": 21, "atkMax": 30, "hp": 85  },
-    "4": { "xpToNext": 400, "atkMin": 31, "atkMax": 40, "hp": 120 },
-    "5": { "xpToNext": 500, "atkMin": 41, "atkMax": 50, "hp": 160 }
+    "1": {
+      "xpToNext": 100,
+      "atkMin": 1,
+      "atkMax": 10,
+      "hp": 20
+    },
+    "2": {
+      "xpToNext": 200,
+      "atkMin": 11,
+      "atkMax": 20,
+      "hp": 55
+    },
+    "3": {
+      "xpToNext": 300,
+      "atkMin": 21,
+      "atkMax": 30,
+      "hp": 85
+    },
+    "4": {
+      "xpToNext": 400,
+      "atkMin": 31,
+      "atkMax": 40,
+      "hp": 120
+    },
+    "5": {
+      "xpToNext": 500,
+      "atkMin": 41,
+      "atkMax": 50,
+      "hp": 160
+    }
   },
   "levelRule": {
     "maxFixed": 5,
@@ -315,18 +449,50 @@
     "xpPerLevelAfter5": 500
   },
   "typeChart": {
-    "불꽃":   ["풀", "얼음"],
-    "물":     ["불꽃", "땅"],
-    "풀":     ["물", "땅"],
-    "전기":   ["물", "바람"],
-    "얼음":   ["풀", "바람"],
-    "땅":     ["불꽃", "전기"],
-    "바람":   ["풀", "땅"],
-    "어둠":   ["에스퍼", "페어리"],
-    "에스퍼": ["바람", "독"],
-    "페어리": ["어둠", "에스퍼"],
-    "빛":     ["어둠"],
-    "노말":   []
+    "불꽃": [
+      "풀",
+      "얼음"
+    ],
+    "물": [
+      "불꽃",
+      "땅"
+    ],
+    "풀": [
+      "물",
+      "땅"
+    ],
+    "전기": [
+      "물",
+      "바람"
+    ],
+    "얼음": [
+      "풀",
+      "바람"
+    ],
+    "땅": [
+      "불꽃",
+      "전기"
+    ],
+    "바람": [
+      "풀",
+      "땅"
+    ],
+    "어둠": [
+      "에스퍼",
+      "페어리"
+    ],
+    "에스퍼": [
+      "바람",
+      "독"
+    ],
+    "페어리": [
+      "어둠",
+      "에스퍼"
+    ],
+    "빛": [
+      "어둠"
+    ],
+    "노말": []
   },
   "battleRule": {
     "skillMultiplier": 1.5,
@@ -337,9 +503,9 @@
     "skillCooldown": 3
   },
   "gachaProb": {
-    "normal":  0.80,
-    "rare":    0.15,
-    "legend":  0.05
+    "normal": 0.8,
+    "rare": 0.15,
+    "legend": 0.05
   },
   "wildProb": {
     "legendChance": 0.05,
@@ -347,8 +513,18 @@
     "wildLevelMax": 3
   },
   "items": {
-    "heal":   { "id": "heal",   "name": "체력 회복", "effect": "hp+20", "img": "assets/items/heal.png"   },
-    "revive": { "id": "revive", "name": "소환",      "effect": "revive","img": "assets/items/revive.png" }
+    "heal": {
+      "id": "heal",
+      "name": "체력 회복",
+      "effect": "hp+20",
+      "img": "assets/items/heal.png"
+    },
+    "revive": {
+      "id": "revive",
+      "name": "소환",
+      "effect": "revive",
+      "img": "assets/items/revive.png"
+    }
   },
   "sellPrices": {
     "1": 10,
@@ -358,28 +534,208 @@
     "5": 200
   },
   "cosmetics": [
-    { "id": "hat_crown",   "name": "왕관",       "type": "hat",   "price": 100, "emoji": "👑" },
-    { "id": "hat_party",   "name": "파티모자",   "type": "hat",   "price": 60,  "emoji": "🎉" },
-    { "id": "hat_wizard",  "name": "마법사모자", "type": "hat",   "price": 80,  "emoji": "🧙" },
-    { "id": "hat_cap",     "name": "야구모자",   "type": "hat",   "price": 40,  "emoji": "🧢" },
-    { "id": "hat_flower",  "name": "꽃",         "type": "hat",   "price": 30,  "emoji": "🌸" },
-    { "id": "hat_star",    "name": "별",         "type": "hat",   "price": 50,  "emoji": "⭐" },
-    { "id": "color_red",   "name": "빨강 옷",    "type": "color", "price": 30,  "color": "0xef4444" },
-    { "id": "color_blue",  "name": "파랑 옷",    "type": "color", "price": 30,  "color": "0x3b82f6" },
-    { "id": "color_green", "name": "초록 옷",    "type": "color", "price": 30,  "color": "0x22c55e" },
-    { "id": "color_gold",  "name": "황금 옷",    "type": "color", "price": 150, "color": "0xfbbf24" },
-    { "id": "color_pink",  "name": "분홍 옷",    "type": "color", "price": 40,  "color": "0xec4899" },
-    { "id": "color_purple","name": "보라 옷",    "type": "color", "price": 40,  "color": "0xa855f7" }
+    {
+      "id": "hat_crown",
+      "name": "왕관",
+      "type": "hat",
+      "price": 100,
+      "emoji": "👑"
+    },
+    {
+      "id": "hat_party",
+      "name": "파티모자",
+      "type": "hat",
+      "price": 60,
+      "emoji": "🎉"
+    },
+    {
+      "id": "hat_wizard",
+      "name": "마법사모자",
+      "type": "hat",
+      "price": 80,
+      "emoji": "🧙"
+    },
+    {
+      "id": "hat_cap",
+      "name": "야구모자",
+      "type": "hat",
+      "price": 40,
+      "emoji": "🧢",
+      "img": "hat-1"
+    },
+    {
+      "id": "hat_flower",
+      "name": "꽃",
+      "type": "hat",
+      "price": 30,
+      "emoji": "🌸"
+    },
+    {
+      "id": "hat_star",
+      "name": "별",
+      "type": "hat",
+      "price": 50,
+      "emoji": "⭐"
+    },
+    {
+      "id": "color_red",
+      "name": "빨강 옷",
+      "type": "color",
+      "price": 30,
+      "color": "0xef4444"
+    },
+    {
+      "id": "color_blue",
+      "name": "파랑 옷",
+      "type": "color",
+      "price": 30,
+      "color": "0x3b82f6"
+    },
+    {
+      "id": "color_green",
+      "name": "초록 옷",
+      "type": "color",
+      "price": 30,
+      "color": "0x22c55e"
+    },
+    {
+      "id": "color_gold",
+      "name": "황금 옷",
+      "type": "color",
+      "price": 150,
+      "color": "0xfbbf24"
+    },
+    {
+      "id": "color_pink",
+      "name": "분홍 옷",
+      "type": "color",
+      "price": 40,
+      "color": "0xec4899"
+    },
+    {
+      "id": "color_purple",
+      "name": "보라 옷",
+      "type": "color",
+      "price": 40,
+      "color": "0xa855f7"
+    }
   ],
   "zones": [
-    { "id": 1, "name": "얼음 지역", "theme": "ice",     "wildPool": ["ice-horse","ice-penguin","water-turtle","water-frog"],                          "legendPet": null              },
-    { "id": 2, "name": "숲 지역",   "theme": "forest",  "wildPool": ["grass-hedgehog","fairy-rabbit","rainbow-butterfly"],                            "legendPet": "leaf-dragon"     },
-    { "id": 3, "name": "불 지역",   "theme": "fire",    "wildPool": ["lava-lizard","thunder-hamster"],                                                "legendPet": "fire-dragon"     },
-    { "id": 4, "name": "동굴 지역", "theme": "cave",    "wildPool": ["dark-cat","cave-bat","esper-owl"],                                              "legendPet": null              },
-    { "id": 5, "name": "마을 지역", "theme": "village", "wildPool": ["normal-dog","fairy-rabbit","thunder-hamster","water-frog"],                     "legendPet": null              },
-    { "id": 6, "name": "사막 지역", "theme": "desert",  "wildPool": ["sand-camel","star-fox","thunder-hamster","grass-hedgehog"],                     "legendPet": null              },
-    { "id": 7, "name": "구름 지역", "theme": "cloud",   "wildPool": ["cloud-sheep","star-fox","esper-owl","rainbow-butterfly"],                       "legendPet": "thunder-dragon"  },
-    { "id": 8, "name": "무지개 지역","theme": "rainbow", "wildPool": ["fairy-rabbit","esper-owl","normal-dog","ice-penguin","grass-hedgehog","sand-camel","cave-bat","rainbow-butterfly","thunder-hamster","water-frog"], "legendPet": null },
-    { "id": 9, "name": "오로라 지역","theme": "aurora",  "wildPool": ["fairy-rabbit","esper-owl","normal-dog","ice-penguin","grass-hedgehog","sand-camel","cave-bat","rainbow-butterfly","thunder-hamster","water-frog"], "legendPet": "aurora-dragon"   }
+    {
+      "id": 1,
+      "name": "얼음 지역",
+      "theme": "ice",
+      "wildPool": [
+        "ice-horse",
+        "ice-penguin",
+        "water-turtle",
+        "water-frog"
+      ],
+      "legendPet": null
+    },
+    {
+      "id": 2,
+      "name": "숲 지역",
+      "theme": "forest",
+      "wildPool": [
+        "grass-hedgehog",
+        "fairy-rabbit",
+        "rainbow-butterfly"
+      ],
+      "legendPet": "leaf-dragon"
+    },
+    {
+      "id": 3,
+      "name": "불 지역",
+      "theme": "fire",
+      "wildPool": [
+        "lava-lizard",
+        "thunder-hamster"
+      ],
+      "legendPet": "fire-dragon"
+    },
+    {
+      "id": 4,
+      "name": "동굴 지역",
+      "theme": "cave",
+      "wildPool": [
+        "dark-cat",
+        "cave-bat",
+        "esper-owl"
+      ],
+      "legendPet": null
+    },
+    {
+      "id": 5,
+      "name": "마을 지역",
+      "theme": "village",
+      "wildPool": [
+        "normal-dog",
+        "fairy-rabbit",
+        "thunder-hamster",
+        "water-frog"
+      ],
+      "legendPet": null
+    },
+    {
+      "id": 6,
+      "name": "사막 지역",
+      "theme": "desert",
+      "wildPool": [
+        "sand-camel",
+        "star-fox",
+        "thunder-hamster",
+        "grass-hedgehog"
+      ],
+      "legendPet": null
+    },
+    {
+      "id": 7,
+      "name": "구름 지역",
+      "theme": "cloud",
+      "wildPool": [
+        "cloud-sheep",
+        "star-fox",
+        "esper-owl",
+        "rainbow-butterfly"
+      ],
+      "legendPet": "thunder-dragon"
+    },
+    {
+      "id": 8,
+      "name": "무지개 지역",
+      "theme": "rainbow",
+      "wildPool": [
+        "fairy-rabbit",
+        "esper-owl",
+        "normal-dog",
+        "ice-penguin",
+        "grass-hedgehog",
+        "sand-camel",
+        "cave-bat",
+        "rainbow-butterfly",
+        "thunder-hamster",
+        "water-frog"
+      ],
+      "legendPet": null
+    },
+    {
+      "id": 9,
+      "name": "오로라 지역",
+      "theme": "aurora",
+      "wildPool": [
+        "fairy-rabbit",
+        "esper-owl",
+        "normal-dog",
+        "ice-penguin",
+        "grass-hedgehog",
+        "sand-camel",
+        "cave-bat",
+        "rainbow-butterfly",
+        "thunder-hamster",
+        "water-frog"
+      ],
+      "legendPet": "aurora-dragon"
+    }
   ]
 }
