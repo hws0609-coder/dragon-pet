@@ -2367,11 +2367,10 @@ class MapScene extends Phaser.Scene {
           this.devilDmgTimer = this.time.addEvent({
             delay: 1000, loop: true,
             callback: () => {
-              // 아군 까마귀가 있으면 먼저 대미지
-              if (this.friendlyCrow && this.friendlyCrowHp > 0) {
-                this.damageFriendlyCrow(1);
-                return;
-              }
+              // 해골왕 → 아군거미 → 아군까마귀 → 펫 순서
+              if (this.skeletonKing && this.skeletonKingHp > 0) { this.damageSkeletonKing(1); return; }
+              if (this.friendlySpiders && this.friendlySpiders.filter(s => s.alive).length > 0) { this.damageFriendlySpider(1); return; }
+              if (this.friendlyCrow && this.friendlyCrowHp > 0) { this.damageFriendlyCrow(1); return; }
               const pet = this.saveData.bag.find(p => p.isActive && p.alive);
               if (!pet) return;
               pet.hp = Math.max(0, pet.hp - 1);
@@ -2412,13 +2411,10 @@ class MapScene extends Phaser.Scene {
         // 접촉 체크
         const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, crow.x, crow.y);
         if (dist < 40) {
-          // 아군 까마귀가 있으면 아군이 먼저 대미지
-          if (this.friendlyCrow && this.friendlyCrowHp > 0) {
-            this.damageFriendlyCrow(1);
-          } else {
-            const pet = this.saveData.bag.find(p => p.isActive && p.alive);
-            if (pet) { pet.hp = Math.max(0, pet.hp - 1); Save.save(this.saveData); this.updateHpBar(); }
-          }
+          if (this.skeletonKing && this.skeletonKingHp > 0) { this.damageSkeletonKing(1); }
+          else if (this.friendlySpiders && this.friendlySpiders.filter(s => s.alive).length > 0) { this.damageFriendlySpider(1); }
+          else if (this.friendlyCrow && this.friendlyCrowHp > 0) { this.damageFriendlyCrow(1); }
+          else { const pet = this.saveData.bag.find(p => p.isActive && p.alive); if (pet) { pet.hp = Math.max(0, pet.hp - 1); Save.save(this.saveData); this.updateHpBar(); } }
           this.killCrow(crow);
         }
       });
@@ -2477,12 +2473,10 @@ class MapScene extends Phaser.Scene {
         spider.y += Math.sin(angle) * 5;
         const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, spider.x, spider.y);
         if (dist < 35) {
-          if (this.friendlySpiders && this.friendlySpiders.filter(s => s.alive).length > 0) {
-            this.damageFriendlySpider(1);
-          } else {
-            const pet = this.saveData.bag.find(p => p.isActive && p.alive);
-            if (pet) { pet.hp = Math.max(0, pet.hp - 1); Save.save(this.saveData); this.updateHpBar(); }
-          }
+          if (this.skeletonKing && this.skeletonKingHp > 0) { this.damageSkeletonKing(1); }
+          else if (this.friendlySpiders && this.friendlySpiders.filter(s => s.alive).length > 0) { this.damageFriendlySpider(1); }
+          else if (this.friendlyCrow && this.friendlyCrowHp > 0) { this.damageFriendlyCrow(1); }
+          else { const pet = this.saveData.bag.find(p => p.isActive && p.alive); if (pet) { pet.hp = Math.max(0, pet.hp - 1); Save.save(this.saveData); this.updateHpBar(); } }
           this.killSpider(spider);
         }
       });
