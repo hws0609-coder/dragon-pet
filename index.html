@@ -1197,7 +1197,7 @@ class MapScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const allObjs = [];
     const activePet = this.saveData.bag.find(p => p.isActive && p.alive);
-    const isEsper = !!(activePet && activePet.type === '에스퍼');
+    const isEsper = !!(activePet && (activePet.type === '에스퍼' || activePet.type === '페어리'));
     const chance = isEsper ? 0.10 : 0.05;
 
     const overlay = this.add.rectangle(width/2, height/2, width, height, 0x000000, 0.7).setScrollFactor(0).setDepth(40).setOrigin(0.5);
@@ -1211,14 +1211,14 @@ class MapScene extends Phaser.Scene {
     allObjs.push(overlay, panel, angelEmoji, msgTxt);
 
     if (isEsper) {
-      const boostTxt = this.add.text(width/2, height/2 - 15, `🔮 에스퍼 펫의 힘으로 성공 확률 UP!`, {
+      const boostTxt = this.add.text(width/2, height/2 - 15, `🔮 에스퍼/페어리 펫의 힘으로 성공 확률 UP!`, {
         fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#e879f9',
         fontStyle: 'bold', stroke: '#000', strokeThickness: 2,
       }).setScrollFactor(0).setDepth(42).setOrigin(0.5);
       allObjs.push(boostTxt);
     }
 
-    const subTxt = this.add.text(width/2, height/2 + (isEsper ? 10 : 10), `(성공 확률 ${isEsper ? '10%' : '5%'}${isEsper ? '' : ' · 에스퍼 펫 동반 시 확률 UP!'})`, {
+    const subTxt = this.add.text(width/2, height/2 + (isEsper ? 10 : 10), `(성공 확률 ${isEsper ? '10%' : '5%'}${isEsper ? '' : ' · 에스퍼/페어리 펫 동반 시 확률 UP!'})`, {
       fontSize: '11px', fontFamily: 'Malgun Gothic', color: '#d8b4fe',
     }).setScrollFactor(0).setDepth(42).setOrigin(0.5);
     allObjs.push(subTxt);
