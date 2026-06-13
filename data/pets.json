@@ -699,7 +699,7 @@
       "id": "hat_1",
       "name": "왕관",
       "type": "hat",
-      "price": 500,
+      "price": 1000,
       "emoji": "👑",
       "special": "summon_dragon"
     },
