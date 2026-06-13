@@ -877,6 +877,12 @@ class MapScene extends Phaser.Scene {
     // 현재 장착 무기 로드
     const weaponId = this.saveData.cosmetics?.equipped?.weapon;
     this.equippedWeapon = weaponId ? PETS_DATA.cosmetics.find(c => c.id === weaponId) : null;
+    // 무기 사거리 (px)
+    this.weaponRange = 100;
+    if (this.equippedWeapon) {
+      if (this.equippedWeapon.range === 'mid-range') this.weaponRange = 400;
+      else if (this.equippedWeapon.range === 'ranged') this.weaponRange = 600;
+    }
     // 탈것에 따른 이동 속도 (기본 3, 장착 시 해당 speed 적용)
     const shoeId = this.saveData.cosmetics?.equipped?.shoes;
     const shoeSpeedItem = shoeId ? PETS_DATA.cosmetics.find(c => c.id === shoeId) : null;
@@ -1169,9 +1175,9 @@ class MapScene extends Phaser.Scene {
       }
 
       // HUD 안내
-      const devilMsg = weaponData
-        ? `😈 악마 출현! ${weaponData.emoji} ${weaponData.name}(으)로 퇴치하세요!`
-        : '😈 악마 출현! 상점에서 총을 구매하세요!';
+      const devilMsg = this.equippedWeapon
+        ? `😈 악마 출현! ${this.equippedWeapon.emoji} ${this.equippedWeapon.name}(으)로 퇴치하세요!`
+        : '😈 악마 출현! 상점 꾸미기에서 무기를 구매하세요!';
       const dHud = this.add.text(this.scale.width/2, 90, devilMsg, {
         fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#f87171',
         fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
@@ -1192,6 +1198,9 @@ class MapScene extends Phaser.Scene {
   shootDevil() {
     if (!this.devil || !this.player || this.devilHp <= 0) return;
     if (!this.devil.visible) return;
+    // 사거리 체크
+    const devilDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.devil.x, this.devil.y);
+    if (devilDist > this.weaponRange) return;
 
     // 총알 이펙트
     const wpn = this.equippedWeapon || { emoji:'🔫', weaponAtk:1, range:'mid-range' };
@@ -2243,7 +2252,7 @@ class MapScene extends Phaser.Scene {
                 const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, c.x, c.y);
                 if (d < minD) { minD = d; nearest = c; }
               });
-              if (!nearest || minD > 200) return; // 사거리 200px 이내만 공격
+              if (!nearest || minD > this.weaponRange) return;
               Sound.play(this, wpn.range === 'melee' ? 'slash' : 'shoot', 0.3);
               const bulletEmoji = wpn.range === 'melee' ? '💫' : '💥';
               const bullet = this.add.text(this.player.x, this.player.y - 20, bulletEmoji, { fontSize: '16px' }).setOrigin(0.5).setDepth(10);
@@ -2307,7 +2316,7 @@ class MapScene extends Phaser.Scene {
                 const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, s.x, s.y);
                 if (d < minD) { minD = d; nearest = s; }
               });
-              if (!nearest || minD > 400) return;
+              if (!nearest || minD > this.weaponRange) return;
               Sound.play(this, wpn.range === 'melee' ? 'slash' : 'shoot', 0.3);
               const bulletEmoji = wpn.range === 'melee' ? '💫' : '💥';
               const bullet = this.add.text(this.player.x, this.player.y - 20, bulletEmoji, { fontSize: '16px' }).setOrigin(0.5).setDepth(10);
