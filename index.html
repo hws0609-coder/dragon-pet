@@ -873,6 +873,7 @@ class MapScene extends Phaser.Scene {
     this.friendlyCrowAtkTimer = null;
     this.friendlyDragon = null;
     this.friendlyDragonHp = 0;
+    this.friendlyDragonAtkTimer = null;
     this.spiders = [];
     this.spiderShootTimer = null;
     this.friendlySpiders = [];
@@ -1816,6 +1817,7 @@ class MapScene extends Phaser.Scene {
   spawnFriendlyDragon() {
     if (!this.player) return;
     Sound.play(this, 'dragon', 0.5);
+    if (this.friendlyDragonAtkTimer) { this.friendlyDragonAtkTimer.remove(); this.friendlyDragonAtkTimer = null; }
     this.friendlyDragonHp = 10;
     this.friendlyDragon = this.add.text(this.player.x - 45, this.player.y - 50, '🐉', { fontSize: '36px' }).setOrigin(0.5).setDepth(9);
     this.friendlyDragon.setTint(0xffdd44);
@@ -1824,6 +1826,42 @@ class MapScene extends Phaser.Scene {
       fontStyle: 'bold', stroke: '#000', strokeThickness: 2,
     }).setOrigin(0.5).setDepth(9);
     this.friendlyDragon.label = label;
+
+    // 수호용 불꽃 공격 (1초마다, 300px)
+    this.friendlyDragonAtkTimer = this.time.addEvent({
+      delay: 1000, loop: true,
+      callback: () => {
+        if (!this.friendlyDragon || this.friendlyDragonHp <= 0) return;
+        const enemies = [];
+        if (this.spiders) this.spiders.filter(s => s.alive).forEach(s => enemies.push({ obj: s, type: 'spider' }));
+        if (this.crows) this.crows.filter(c => c.alive).forEach(c => enemies.push({ obj: c, type: 'crow' }));
+        if (this.skeletons) this.skeletons.filter(s => s.alive).forEach(s => enemies.push({ obj: s, type: 'skeleton' }));
+        if (this.devil && this.devil.visible && this.devilHp > 0) enemies.push({ obj: this.devil, type: 'devil' });
+        if (enemies.length === 0) return;
+        let nearest = null, minD = Infinity;
+        enemies.forEach(e => {
+          const d = Phaser.Math.Distance.Between(this.friendlyDragon.x, this.friendlyDragon.y, e.obj.x, e.obj.y);
+          if (d < minD) { minD = d; nearest = e; }
+        });
+        if (!nearest || minD > 300) return;
+        const bullet = this.add.text(this.friendlyDragon.x, this.friendlyDragon.y, '🔥', { fontSize: '18px' }).setOrigin(0.5).setDepth(10);
+        this.tweens.add({
+          targets: bullet, x: nearest.obj.x, y: nearest.obj.y, duration: 200,
+          onComplete: () => {
+            bullet.destroy();
+            if (nearest.type === 'spider' && nearest.obj.alive) { nearest.obj.hp--; if (nearest.obj.hp <= 0) this.killSpider(nearest.obj); }
+            else if (nearest.type === 'crow' && nearest.obj.alive) { nearest.obj.hp--; if (nearest.obj.hp <= 0) this.killCrow(nearest.obj); }
+            else if (nearest.type === 'skeleton' && nearest.obj.alive) { nearest.obj.hp--; if (nearest.obj.hp <= 0) this.killSkeleton(nearest.obj); }
+            else if (nearest.type === 'devil' && this.devilHp > 0) {
+              this.devilHp--;
+              if (this.devilHp <= 0) { this.devil.setVisible(false);
+                this.time.delayedCall(10000, () => { this.devilHp = this.devilMaxHp; if(this.devil){this.devil.x=Phaser.Math.Between(200,this.MAP_W-200);this.devil.y=Phaser.Math.Between(200,this.MAP_H-200);this.devil.setVisible(true);Sound.play(this,'demon',0.5);} });
+              }
+            }
+          },
+        });
+      },
+    });
   }
 
   damageFriendlyDragon(amount) {
@@ -1832,6 +1870,7 @@ class MapScene extends Phaser.Scene {
     this.friendlyDragon.setTint(0xff0000);
     this.time.delayedCall(150, () => { if(this.friendlyDragon && this.friendlyDragonHp > 0) this.friendlyDragon.setTint(0xffdd44); });
     if (this.friendlyDragonHp <= 0) {
+      if (this.friendlyDragonAtkTimer) { this.friendlyDragonAtkTimer.remove(); this.friendlyDragonAtkTimer = null; }
       if (this.friendlyDragon.label) this.friendlyDragon.label.destroy();
       this.friendlyDragon.destroy();
       this.friendlyDragon = null;
