@@ -1064,6 +1064,14 @@
       "price": 0,
       "emoji": "🔴",
       "special": "summon_spider"
+    },
+    {
+      "id": "hat_skeleton",
+      "name": "해골 반지",
+      "type": "hat",
+      "price": 0,
+      "emoji": "💀",
+      "special": "summon_skeleton_king"
     }
   ],
   "zones": [
