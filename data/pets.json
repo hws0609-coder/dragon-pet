@@ -1004,7 +1004,7 @@
       "emoji": "⚔️",
       "weaponAtk": 2,
       "range": "melee",
-      "attackInterval": 0
+      "attackInterval": 500
     },
     {
       "id": "hat_w2",
@@ -1014,7 +1014,7 @@
       "emoji": "🗡️",
       "weaponAtk": 1,
       "range": "melee",
-      "attackInterval": 0
+      "attackInterval": 250
     },
     {
       "id": "hat_w3",
