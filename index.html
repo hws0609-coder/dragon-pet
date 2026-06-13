@@ -873,6 +873,55 @@ class MapScene extends Phaser.Scene {
       }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
       this.time.delayedCall(3000, () => { if(this.caveHud) { this.caveHud.destroy(); this.caveHud = null; } });
     }
+
+    // ── 불 지역(3번) 열기 효과: 동행 펫 3초마다 HP -1 ──
+    this.heatTimer = null;
+    if (zoneId === 3) {
+      const activePet = this.saveData.bag.find(p => p.isActive && p.alive);
+      const isFireType = activePet && activePet.type === '불꽃';
+
+      if (!isFireType && activePet) {
+        this.heatTimer = this.time.addEvent({
+          delay: 3000,
+          loop: true,
+          callback: () => {
+            const pet = this.saveData.bag.find(p => p.isActive && p.alive);
+            if (!pet) return;
+            pet.hp = Math.max(0, pet.hp - 1);
+            Save.save(this.saveData);
+            // 데미지 이펙트
+            const { width, height } = this.scale;
+            const dmgTxt = this.add.text(width - 80, height - 80, '🔥 -1', {
+              fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#f97316',
+              fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+            }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
+            this.tweens.add({ targets: dmgTxt, y: dmgTxt.y - 30, alpha: 0, duration: 800, onComplete: () => dmgTxt.destroy() });
+            // 기절 처리
+            if (pet.hp <= 0) {
+              pet.alive = false;
+              Save.save(this.saveData);
+              if (this.heatTimer) this.heatTimer.remove();
+              const faintTxt = this.add.text(width/2, height/2, '🔥 펫이 열기에 기절했어요!', {
+                fontSize: '18px', fontFamily: 'Malgun Gothic', color: '#fb923c',
+                fontStyle: 'bold', stroke: '#000', strokeThickness: 4,
+              }).setScrollFactor(0).setDepth(30).setOrigin(0.5);
+              this.time.delayedCall(2000, () => { faintTxt.destroy(); this.scene.restart({ saveData: this.saveData }); });
+            }
+          },
+        });
+      }
+
+      // HUD 안내
+      const heatMsg = isFireType
+        ? '🔥 불꽃 속성 저항! 열기 면역'
+        : '🔥 뜨거운 지역! 펫 HP가 3초마다 -1';
+      const heatColor = isFireType ? '#fb923c' : '#f97316';
+      this.heatHud = this.add.text(this.scale.width/2, 90, heatMsg, {
+        fontSize: '13px', fontFamily: 'Malgun Gothic', color: heatColor,
+        fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+      }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
+      this.time.delayedCall(3000, () => { if(this.heatHud) { this.heatHud.destroy(); this.heatHud = null; } });
+    }
   }
 
   drawMapDecoration(theme) {
