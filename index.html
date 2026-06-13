@@ -893,6 +893,7 @@ class MapScene extends Phaser.Scene {
             if (!pet) return;
             pet.hp = Math.max(0, pet.hp - 1);
             Save.save(this.saveData);
+            this.updateHpBar();
             // 데미지 이펙트
             const { width, height } = this.scale;
             const dmgTxt = this.add.text(width - 80, height - 80, '🔥 -1', {
@@ -949,6 +950,7 @@ class MapScene extends Phaser.Scene {
               if (!pet) return;
               pet.hp = Math.max(0, pet.hp - 1);
               Save.save(this.saveData);
+              this.updateHpBar();
               const { width, height } = this.scale;
               const dmgTxt = this.add.text(width - 80, height - 80, '💧 -1', {
                 fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#facc15',
@@ -1087,6 +1089,7 @@ class MapScene extends Phaser.Scene {
     if (pet) {
       pet.hp = Math.max(0, pet.hp - 10);
       Save.save(this.saveData);
+      this.updateHpBar();
 
       // 데미지 텍스트
       const dmgTxt = this.add.text(width/2, height/2 + 30, '⚡ -10 HP!', {
@@ -1863,8 +1866,9 @@ class MapScene extends Phaser.Scene {
     const hpY = py + 24;
     this.add.rectangle(barX, hpY, barW, 8, 0x374151).setScrollFactor(0).setDepth(21).setOrigin(0,0.5);
     const hpPct = Math.max(0, Math.min(pet.hp / pet.maxHp, 1));
-    if (hpPct > 0) this.add.rectangle(barX, hpY, barW * hpPct, 8, 0xef4444).setScrollFactor(0).setDepth(22).setOrigin(0,0.5);
-    this.add.text(barX + barW/2, hpY, `HP ${pet.hp}/${pet.maxHp}`, { fontSize:'8px', fontFamily:'Malgun Gothic', color:'#fff' }).setScrollFactor(0).setDepth(23).setOrigin(0.5);
+    this.hudHpFill = this.add.rectangle(barX, hpY, barW * Math.max(hpPct, 0.001), 8, 0xef4444).setScrollFactor(0).setDepth(22).setOrigin(0,0.5);
+    this.hudHpText = this.add.text(barX + barW/2, hpY, `HP ${pet.hp}/${pet.maxHp}`, { fontSize:'8px', fontFamily:'Malgun Gothic', color:'#fff' }).setScrollFactor(0).setDepth(23).setOrigin(0.5);
+    this.hudHpBarW = barW;
 
     // XP 바
     const xpY = py + 40;
@@ -1872,6 +1876,14 @@ class MapScene extends Phaser.Scene {
     const xpPct = Math.max(0, Math.min(pet.xp / pet.xpToNext, 1));
     if (xpPct > 0) this.add.rectangle(barX, xpY, barW * xpPct, 8, 0xfbbf24).setScrollFactor(0).setDepth(22).setOrigin(0,0.5);
     this.add.text(barX + barW/2, xpY, `XP ${pet.xp}/${pet.xpToNext}`, { fontSize:'8px', fontFamily:'Malgun Gothic', color:'#1a0a3e' }).setScrollFactor(0).setDepth(23).setOrigin(0.5);
+  }
+
+  updateHpBar() {
+    const pet = this.saveData.bag.find(p => p.isActive);
+    if (!pet || !this.hudHpFill || !this.hudHpText) return;
+    const pct = Math.max(0, Math.min(pet.hp / pet.maxHp, 1));
+    this.hudHpFill.setDisplaySize(this.hudHpBarW * Math.max(pct, 0.001), 8);
+    this.hudHpText.setText(`HP ${pet.hp}/${pet.maxHp}`);
   }
 }
 
