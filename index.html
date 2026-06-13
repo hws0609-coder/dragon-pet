@@ -988,17 +988,6 @@ class MapScene extends Phaser.Scene {
               fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
             }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
             this.tweens.add({ targets: dmgTxt, y: dmgTxt.y - 30, alpha: 0, duration: 800, onComplete: () => dmgTxt.destroy() });
-            // 기절 처리
-            if (pet.hp <= 0) {
-              pet.alive = false;
-              Save.save(this.saveData);
-              if (this.heatTimer) this.heatTimer.remove();
-              const faintTxt = this.add.text(width/2, height/2, '🔥 펫이 열기에 기절했어요!', {
-                fontSize: '18px', fontFamily: 'Malgun Gothic', color: '#fb923c',
-                fontStyle: 'bold', stroke: '#000', strokeThickness: 4,
-              }).setScrollFactor(0).setDepth(30).setOrigin(0.5);
-              this.time.delayedCall(2000, () => { faintTxt.destroy(); this.scene.restart({ saveData: this.saveData }); });
-            }
           },
         });
       }
@@ -1046,16 +1035,6 @@ class MapScene extends Phaser.Scene {
                 fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
               }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
               this.tweens.add({ targets: dmgTxt, y: dmgTxt.y - 30, alpha: 0, duration: 800, onComplete: () => dmgTxt.destroy() });
-              if (pet.hp <= 0) {
-                pet.alive = false;
-                Save.save(this.saveData);
-                if (this.thirstTimer) this.thirstTimer.remove();
-                const faintTxt = this.add.text(width/2, height/2, '🏜️ 펫이 갈증으로 기절했어요!', {
-                  fontSize: '18px', fontFamily: 'Malgun Gothic', color: '#facc15',
-                  fontStyle: 'bold', stroke: '#000', strokeThickness: 4,
-                }).setScrollFactor(0).setDepth(30).setOrigin(0.5);
-                this.time.delayedCall(2000, () => { faintTxt.destroy(); this.scene.restart({ saveData: this.saveData }); });
-              }
             },
           });
         }
