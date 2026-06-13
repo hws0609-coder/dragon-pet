@@ -980,6 +980,7 @@ class MapScene extends Phaser.Scene {
     const sub = this.add.text(width/2, height/2 - 178, '체력을 모두 채울 펫을 선택하세요', { fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#86efac' }).setScrollFactor(0).setDepth(42).setOrigin(0.5);
 
     const allObjs = [overlay, panel, title, sub];
+    const itemObjs = [];
 
     if (alivePets.length === 0) {
       const noMsg = this.add.text(width/2, height/2, '치료할 펫이 없어요!', { fontSize: '16px', fontFamily: 'Malgun Gothic', color: '#fb923c' }).setScrollFactor(0).setDepth(42).setOrigin(0.5);
@@ -999,7 +1000,6 @@ class MapScene extends Phaser.Scene {
         allObjs.push(scrollHint);
       }
 
-      const itemObjs = [];
       const renderList = () => {
         itemObjs.forEach(o=>o.destroy());
         itemObjs.length = 0;
@@ -1041,7 +1041,7 @@ class MapScene extends Phaser.Scene {
     const closeBtn = this.add.rectangle(width/2, height/2 + 205, 160, 40, 0x374151).setScrollFactor(0).setDepth(42).setOrigin(0.5).setInteractive({ useHandCursor: true });
     const closeText = this.add.text(width/2, height/2 + 205, '✕ 닫기', { fontSize: '15px', fontFamily: 'Malgun Gothic', color: '#9ca3af' }).setScrollFactor(0).setDepth(43).setOrigin(0.5);
     allObjs.push(closeBtn, closeText);
-    closeBtn.on('pointerdown', () => { if(typeof itemObjs!=='undefined') itemObjs.forEach(o=>o.destroy()); allObjs.forEach(o => o.destroy()); });
+    closeBtn.on('pointerdown', () => { itemObjs.forEach(o=>o.destroy()); allObjs.forEach(o => o.destroy()); });
   }
 
   showHealEffect(petName) {
@@ -2721,6 +2721,7 @@ class ShopScene extends Phaser.Scene {
     const title=this.add.text(width/2,height/2-220,'💰 펫 팔기',{fontSize:'20px',fontFamily:'Malgun Gothic',color:'#fbbf24'}).setDepth(42).setOrigin(0.5);
     const sub=this.add.text(width/2,height/2-195,'팔 펫을 선택하세요 (동행 펫 제외)',{fontSize:'12px',fontFamily:'Malgun Gothic',color:'#fde68a'}).setDepth(42).setOrigin(0.5);
     const allObjs=[overlay,panel,title,sub];
+    const itemObjs = [];
     if(sellable.length===0){
       allObjs.push(this.add.text(width/2,height/2,'팔 수 있는 펫이 없어요!',{fontSize:'15px',fontFamily:'Malgun Gothic',color:'#fb923c'}).setDepth(42).setOrigin(0.5));
      } else {
@@ -2739,7 +2740,6 @@ class ShopScene extends Phaser.Scene {
         allObjs.push(scrollHint);
       }
 
-      const itemObjs = [];
       const renderList = () => {
         itemObjs.forEach(o=>o.destroy());
         itemObjs.length = 0;
@@ -2774,7 +2774,7 @@ class ShopScene extends Phaser.Scene {
     const cBtn=this.add.rectangle(width/2,height/2+225,150,38,0x374151).setDepth(42).setOrigin(0.5).setInteractive({useHandCursor:true});
     this.add.text(width/2,height/2+225,'✕ 닫기',{fontSize:'14px',fontFamily:'Malgun Gothic',color:'#9ca3af'}).setDepth(43).setOrigin(0.5);
     allObjs.push(cBtn);
-    cBtn.on('pointerdown',()=>{ if(typeof itemObjs!=='undefined') itemObjs.forEach(o=>o.destroy()); allObjs.forEach(o=>o.destroy()); });
+    cBtn.on('pointerdown',()=>{ itemObjs.forEach(o=>o.destroy()); allObjs.forEach(o=>o.destroy()); });
   }
 
   showConsumableSellMenu() {
