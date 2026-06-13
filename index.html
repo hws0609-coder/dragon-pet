@@ -1984,8 +1984,8 @@ class BattleScene extends Phaser.Scene {
     const sub=this.add.text(width/2,40,'효과적 ×1.5  |  불리 ×0.75  |  전설 면역',{fontSize:'10px',fontFamily:'Malgun Gothic',color:'#a78bfa'}).setDepth(42).setOrigin(0.5);
     const allObjs=[overlay,panel,title,sub];
     const chart=PETS_DATA.typeChart;
-    const emoji={'불꽃':'🔥','물':'💧','풀':'🌿','전기':'⚡','얼음':'❄️','땅':'🏔️','바람':'🌪️','어둠':'🌑','에스퍼':'🔮','페어리':'🧚','빛':'✨','노말':'⭐','독':'☠️'};
-    const colors={'불꽃':'#f97316','물':'#3b82f6','풀':'#22c55e','전기':'#eab308','얼음':'#67e8f9','땅':'#a16207','바람':'#86efac','어둠':'#7c3aed','에스퍼':'#d8b4fe','페어리':'#f9a8d4','빛':'#fde047','노말':'#9ca3af','독':'#a855f7'};
+    const emoji={'불꽃':'🔥','물':'💧','풀':'🌿','전기':'⚡','얼음':'❄️','땅':'🏔️','바람':'🌪️','어둠':'🌑','에스퍼':'🔮','페어리':'🧚','빛':'✨','노말':'⭐'};
+    const colors={'불꽃':'#f97316','물':'#3b82f6','풀':'#22c55e','전기':'#eab308','얼음':'#67e8f9','땅':'#a16207','바람':'#86efac','어둠':'#7c3aed','에스퍼':'#d8b4fe','페어리':'#f9a8d4','빛':'#fde047','노말':'#9ca3af'};
     let y=62;
     Object.keys(chart).forEach(type=>{
       const strong=chart[type];
@@ -2602,13 +2602,11 @@ class TypeChartScene extends Phaser.Scene {
     const typeColors = {
       '불꽃':'#f97316','물':'#3b82f6','풀':'#22c55e','전기':'#eab308',
       '얼음':'#67e8f9','땅':'#a16207','바람':'#86efac','어둠':'#7c3aed',
-      '에스퍼':'#d8b4fe','페어리':'#f9a8d4','빛':'#fde047','노말':'#9ca3af',
-      '독':'#a855f7'
+      '에스퍼':'#d8b4fe','페어리':'#f9a8d4','빛':'#fde047','노말':'#9ca3af'
     };
     const typeEmoji = {
       '불꽃':'🔥','물':'💧','풀':'🌿','전기':'⚡','얼음':'❄️','땅':'🏔️',
-      '바람':'🌪️','어둠':'🌑','에스퍼':'🔮','페어리':'🧚','빛':'✨','노말':'⭐',
-      '독':'☠️'
+      '바람':'🌪️','어둠':'🌑','에스퍼':'🔮','페어리':'🧚','빛':'✨','노말':'⭐'
     };
 
     const types = Object.keys(typeChart);
@@ -2696,19 +2694,56 @@ class ShopScene extends Phaser.Scene {
     const allObjs=[overlay,panel,title,sub];
     if(sellable.length===0){
       allObjs.push(this.add.text(width/2,height/2,'팔 수 있는 펫이 없어요!',{fontSize:'15px',fontFamily:'Malgun Gothic',color:'#fb923c'}).setDepth(42).setOrigin(0.5));
-    } else {
-      sellable.slice(0,9).forEach((pet,i)=>{
-        const by=height/2-160+i*40;
-        const price=PETS_DATA.sellPrices[String(Math.min(pet.level,5))];
-        const btn=this.add.rectangle(width/2,by,320,36,0x713f12).setDepth(42).setOrigin(0.5).setInteractive({useHandCursor:true});
-        btn.setStrokeStyle(1,0xca8a04);
-        const txt=this.add.text(width/2,by,`${pet.name} Lv.${pet.level}  ATK ${pet.atk}  →  🪙 ${price}`,{fontSize:'12px',fontFamily:'Malgun Gothic',color:'#fde68a'}).setDepth(43).setOrigin(0.5);
-        allObjs.push(btn,txt);
-        btn.on('pointerdown',()=>{ this.saveData.coins+=price; this.saveData.bag=this.saveData.bag.filter(p=>p!==pet); Save.save(this.saveData); allObjs.forEach(o=>o.destroy()); this.scene.restart({saveData:this.saveData}); });
-      });
+     } else {
+      // 스크롤 영역 설정
+      const listTop = height/2 - 160;
+      const listBottom = height/2 + 195;
+      const listHeight = listBottom - listTop;
+      const itemH = 40;
+      const visibleCount = Math.floor(listHeight / itemH);
+      let scrollOffset = 0;
+      const totalItems = sellable.length;
+      const maxScroll = Math.max(0, totalItems - visibleCount);
+
+      if(totalItems > visibleCount) {
+        const scrollHint = this.add.text(width/2+160, listTop-14, `총 ${totalItems}마리 ▲▼`, {fontSize:'11px',fontFamily:'Malgun Gothic',color:'#fbbf24'}).setDepth(42).setOrigin(0.5);
+        allObjs.push(scrollHint);
+      }
+
+      const itemObjs = [];
+      const renderList = () => {
+        itemObjs.forEach(o=>o.destroy());
+        itemObjs.length = 0;
+        const visible = sellable.slice(scrollOffset, scrollOffset + visibleCount);
+        visible.forEach((pet, i) => {
+          const by = listTop + i * itemH + itemH/2;
+          const price = PETS_DATA.sellPrices[String(Math.min(pet.level,5))];
+          const btn = this.add.rectangle(width/2, by, 320, 36, 0x713f12).setDepth(42).setOrigin(0.5).setInteractive({useHandCursor:true});
+          btn.setStrokeStyle(1, 0xca8a04);
+          const txt = this.add.text(width/2, by, `${pet.name} Lv.${pet.level}  ATK ${pet.atk}  →  🪙 ${price}`, {fontSize:'12px',fontFamily:'Malgun Gothic',color:'#fde68a'}).setDepth(43).setOrigin(0.5);
+          itemObjs.push(btn, txt);
+          btn.on('pointerdown', () => {
+            this.saveData.coins += price;
+            this.saveData.bag = this.saveData.bag.filter(p => p !== pet);
+            Save.save(this.saveData);
+            allObjs.forEach(o=>o.destroy());
+            itemObjs.forEach(o=>o.destroy());
+            this.scene.restart({saveData: this.saveData});
+          });
+        });
+        if(maxScroll > 0) {
+          const upBtn = this.add.text(width/2+168, listTop+16, '▲', {fontSize:'20px',color: scrollOffset>0?'#fbbf24':'#4b5563'}).setDepth(44).setOrigin(0.5).setInteractive({useHandCursor:true});
+          const dnBtn = this.add.text(width/2+168, listBottom-16, '▼', {fontSize:'20px',color: scrollOffset<maxScroll?'#fbbf24':'#4b5563'}).setDepth(44).setOrigin(0.5).setInteractive({useHandCursor:true});
+          const cntT = this.add.text(width/2+168, (listTop+listBottom)/2, `${scrollOffset+1}-${Math.min(scrollOffset+visibleCount,totalItems)}\n/${totalItems}`, {fontSize:'10px',fontFamily:'Malgun Gothic',color:'#fbbf24',align:'center'}).setDepth(44).setOrigin(0.5);
+          upBtn.on('pointerdown', ()=>{ if(scrollOffset>0){scrollOffset--;renderList();} });
+          dnBtn.on('pointerdown', ()=>{ if(scrollOffset<maxScroll){scrollOffset++;renderList();} });
+          itemObjs.push(upBtn, dnBtn, cntT);
+        }
+      };
+      renderList();
     }
-    const cBtn=this.add.rectangle(width/2,height/2+220,150,38,0x374151).setDepth(42).setOrigin(0.5).setInteractive({useHandCursor:true});
-    this.add.text(width/2,height/2+220,'✕ 닫기',{fontSize:'14px',fontFamily:'Malgun Gothic',color:'#9ca3af'}).setDepth(43).setOrigin(0.5);
+    const cBtn=this.add.rectangle(width/2,height/2+225,150,38,0x374151).setDepth(42).setOrigin(0.5).setInteractive({useHandCursor:true});
+    this.add.text(width/2,height/2+225,'✕ 닫기',{fontSize:'14px',fontFamily:'Malgun Gothic',color:'#9ca3af'}).setDepth(43).setOrigin(0.5);
     allObjs.push(cBtn);
     cBtn.on('pointerdown',()=>allObjs.forEach(o=>o.destroy()));
   }
