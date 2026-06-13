@@ -821,13 +821,13 @@ class MapScene extends Phaser.Scene {
       const isDarkType = activePet && activePet.type === '어둠';
       this.caveRadius = isDarkType ? 220 : 120;
 
-      // 어두운 오버레이
-      this.caveDark = this.add.rectangle(this.MAP_W/2, this.MAP_H/2, this.MAP_W + 400, this.MAP_H + 400, 0x000000, 0.88).setOrigin(0.5).setDepth(14);
+      // 어두운 오버레이 (화면 고정)
+      this.caveDark = this.add.rectangle(width/2, height/2, width + 100, height + 100, 0x000000, 0.88).setScrollFactor(0).setOrigin(0.5).setDepth(14);
 
-      // 스포트라이트 (마스크용)
+      // 스포트라이트 (화면 좌표 기준 마스크)
       this.caveSpotlight = this.make.graphics();
       this.caveSpotlight.fillStyle(0xffffff);
-      this.caveSpotlight.fillCircle(this.player.x, this.player.y, this.caveRadius);
+      this.caveSpotlight.fillCircle(width/2, height/2, this.caveRadius);
       const mask = this.caveSpotlight.createGeometryMask();
       mask.invertAlpha = true;
       this.caveDark.setMask(mask);
@@ -1300,11 +1300,14 @@ class MapScene extends Phaser.Scene {
       this.petFollow.x += (targetX - this.petFollow.x) * 0.15;
       this.petFollow.y += (targetY - this.petFollow.y) * 0.15;
     }
-    // 동굴 스포트라이트 업데이트
+    // 동굴 스포트라이트 업데이트 (화면 좌표)
     if (this.caveSpotlight) {
+      const cam = this.cameras.main;
+      const screenX = this.player.x - cam.scrollX;
+      const screenY = this.player.y - cam.scrollY;
       this.caveSpotlight.clear();
       this.caveSpotlight.fillStyle(0xffffff);
-      this.caveSpotlight.fillCircle(this.player.x, this.player.y, this.caveRadius);
+      this.caveSpotlight.fillCircle(screenX, screenY, this.caveRadius);
     }
     // 미니맵 플레이어 점 업데이트
     if (this.minimapDot) {
