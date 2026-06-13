@@ -1985,7 +1985,7 @@ class MapScene extends Phaser.Scene {
     if (this.textures.exists(texKey)) {
       this.legendGuardian = this.add.image(this.player.x + 50, this.player.y - 50, texKey).setDepth(9);
       const src = this.textures.get(texKey).getSourceImage();
-      this.legendGuardian.setScale(60 / src.height);
+      this.legendGuardian.setScale(200 / src.height);
     } else {
       this.legendGuardian = this.add.text(this.player.x + 50, this.player.y - 50, '💠', { fontSize: '40px' }).setOrigin(0.5).setDepth(9);
     }
