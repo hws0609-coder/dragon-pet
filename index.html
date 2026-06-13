@@ -295,10 +295,10 @@ const Utils = {
         const boss = Utils.buildPetInstance(petData, level);
         boss.isBoss = true;
         boss.name = '👑 보스 ' + boss.name;
-        // 보스 스탯 강화 (HP 1.5배, ATK 1.3배)
-        boss.maxHp = Math.round(boss.maxHp * 1.5);
+        // 보스 스탯 강화 (HP 2배, ATK 2배)
+        boss.maxHp = Math.round(boss.maxHp * 2);
         boss.hp = boss.maxHp;
-        boss.atk = Math.round(boss.atk * 1.3);
+        boss.atk = Math.round(boss.atk * 2);
         result.push(boss);
         continue;
       }
@@ -985,34 +985,63 @@ class MapScene extends Phaser.Scene {
       const noMsg = this.add.text(width/2, height/2, '치료할 펫이 없어요!', { fontSize: '16px', fontFamily: 'Malgun Gothic', color: '#fb923c' }).setScrollFactor(0).setDepth(42).setOrigin(0.5);
       allObjs.push(noMsg);
     } else {
-      alivePets.slice(0, 8).forEach((pet, i) => {
-        const by = height/2 - 150 + i * 42;
-        const needsHeal = pet.hp < pet.maxHp;
-        const btn = this.add.rectangle(width/2, by, 300, 38, needsHeal ? 0x14532d : 0x1f2937).setScrollFactor(0).setDepth(42).setOrigin(0.5);
-        btn.setStrokeStyle(1, needsHeal ? 0x4ade80 : 0x374151);
-        const txt = this.add.text(width/2, by, `${pet.name}  Lv.${pet.level}  HP ${pet.hp}/${pet.maxHp}`, {
-          fontSize: '14px', fontFamily: 'Malgun Gothic', color: needsHeal ? '#e9d5ff' : '#6b7280',
-        }).setScrollFactor(0).setDepth(43).setOrigin(0.5);
-        allObjs.push(btn, txt);
+      const listTop = height/2 - 155;
+      const listBottom = height/2 + 175;
+      const listHeight = listBottom - listTop;
+      const itemH = 42;
+      const visibleCount = Math.floor(listHeight / itemH);
+      let scrollOffset = 0;
+      const totalItems = alivePets.length;
+      const maxScroll = Math.max(0, totalItems - visibleCount);
 
-        if (needsHeal) {
-          btn.setInteractive({ useHandCursor: true });
-          btn.on('pointerdown', () => {
-            pet.hp = pet.maxHp;
-            this.saveData.mapObjects.vet.used = true;
-            Save.save(this.saveData);
-            allObjs.forEach(o => o.destroy());
-            this.showHealEffect(pet.name);
-            this.time.delayedCall(1500, () => this.scene.restart({ saveData: this.saveData }));
-          });
+      if(totalItems > visibleCount) {
+        const scrollHint = this.add.text(width/2+155, listTop-14, `총 ${totalItems}마리 ▲▼`, {fontSize:'11px',fontFamily:'Malgun Gothic',color:'#4ade80'}).setScrollFactor(0).setDepth(42).setOrigin(0.5);
+        allObjs.push(scrollHint);
+      }
+
+      const itemObjs = [];
+      const renderList = () => {
+        itemObjs.forEach(o=>o.destroy());
+        itemObjs.length = 0;
+        const visible = alivePets.slice(scrollOffset, scrollOffset + visibleCount);
+        visible.forEach((pet, i) => {
+          const by = listTop + i * itemH + itemH/2;
+          const needsHeal = pet.hp < pet.maxHp;
+          const btn = this.add.rectangle(width/2, by, 300, 38, needsHeal ? 0x14532d : 0x1f2937).setScrollFactor(0).setDepth(42).setOrigin(0.5);
+          btn.setStrokeStyle(1, needsHeal ? 0x4ade80 : 0x374151);
+          const txt = this.add.text(width/2, by, `${pet.name}  Lv.${pet.level}  HP ${pet.hp}/${pet.maxHp}`, {
+            fontSize: '14px', fontFamily: 'Malgun Gothic', color: needsHeal ? '#e9d5ff' : '#6b7280',
+          }).setScrollFactor(0).setDepth(43).setOrigin(0.5);
+          itemObjs.push(btn, txt);
+          if (needsHeal) {
+            btn.setInteractive({ useHandCursor: true });
+            btn.on('pointerdown', () => {
+              pet.hp = pet.maxHp;
+              this.saveData.mapObjects.vet.used = true;
+              Save.save(this.saveData);
+              itemObjs.forEach(o => o.destroy());
+              allObjs.forEach(o => o.destroy());
+              this.showHealEffect(pet.name);
+              this.time.delayedCall(1500, () => this.scene.restart({ saveData: this.saveData }));
+            });
+          }
+        });
+        if(maxScroll > 0) {
+          const upBtn = this.add.text(width/2+158, listTop+16, '▲', {fontSize:'20px',color: scrollOffset>0?'#4ade80':'#4b5563'}).setScrollFactor(0).setDepth(44).setOrigin(0.5).setInteractive({useHandCursor:true});
+          const dnBtn = this.add.text(width/2+158, listBottom-16, '▼', {fontSize:'20px',color: scrollOffset<maxScroll?'#4ade80':'#4b5563'}).setScrollFactor(0).setDepth(44).setOrigin(0.5).setInteractive({useHandCursor:true});
+          const cntT = this.add.text(width/2+158, (listTop+listBottom)/2, `${scrollOffset+1}-${Math.min(scrollOffset+visibleCount,totalItems)}\n/${totalItems}`, {fontSize:'10px',fontFamily:'Malgun Gothic',color:'#4ade80',align:'center'}).setScrollFactor(0).setDepth(44).setOrigin(0.5);
+          upBtn.on('pointerdown', ()=>{ if(scrollOffset>0){scrollOffset--;renderList();} });
+          dnBtn.on('pointerdown', ()=>{ if(scrollOffset<maxScroll){scrollOffset++;renderList();} });
+          itemObjs.push(upBtn, dnBtn, cntT);
         }
-      });
+      };
+      renderList();
     }
 
     const closeBtn = this.add.rectangle(width/2, height/2 + 205, 160, 40, 0x374151).setScrollFactor(0).setDepth(42).setOrigin(0.5).setInteractive({ useHandCursor: true });
     const closeText = this.add.text(width/2, height/2 + 205, '✕ 닫기', { fontSize: '15px', fontFamily: 'Malgun Gothic', color: '#9ca3af' }).setScrollFactor(0).setDepth(43).setOrigin(0.5);
     allObjs.push(closeBtn, closeText);
-    closeBtn.on('pointerdown', () => allObjs.forEach(o => o.destroy()));
+    closeBtn.on('pointerdown', () => { if(typeof itemObjs!=='undefined') itemObjs.forEach(o=>o.destroy()); allObjs.forEach(o => o.destroy()); });
   }
 
   showHealEffect(petName) {
