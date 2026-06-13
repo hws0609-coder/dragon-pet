@@ -324,7 +324,7 @@ const Save = {
       bag: [], activePetId: null,
       collection: [],
       maxLevels: {},
-      items: { heal: 0, revive: 0, rainbowFragment: 0, rainbowCrystal: 0 },
+      items: { heal: 0, revive: 0, rainbowFragment: 0, rainbowCrystal: 0, crowFeather: 0 },
       coins: 40,
       cosmetics: { owned: [], equipped: { hat: null, shoes: null, weapon: null } },
       mapProgress: { zone: 5, x: 0 },
@@ -351,6 +351,7 @@ const Save = {
     if (data.items.gun !== undefined) delete data.items.gun;
     if (data.items.rainbowFragment === undefined) data.items.rainbowFragment = 0;
     if (data.items.rainbowCrystal === undefined) data.items.rainbowCrystal = 0;
+    if (data.items.crowFeather === undefined) data.items.crowFeather = 0;
     if (data.items.gun === undefined) data.items.gun = 0;
     return data;
   },
@@ -1048,6 +1049,23 @@ class MapScene extends Phaser.Scene {
         fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
       }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
       this.time.delayedCall(3000, () => { if(this.stormHud) { this.stormHud.destroy(); this.stormHud = null; } });
+
+      // ── 구름 지역 까마귀 시스템 ──
+      this.crows = [];
+      this.friendlyCrow = null;
+      this.friendlyCrowHp = 0;
+
+      // 3초마다 적 까마귀 스폰
+      this.crowSpawnTimer = this.time.addEvent({
+        delay: 3000, loop: true,
+        callback: () => this.spawnEnemyCrow(),
+      });
+
+      // 마녀 모자 장착 시 아군 까마귀 소환
+      const equippedHat = this.saveData.cosmetics?.equipped?.hat;
+      if (equippedHat === 'hat_witch') {
+        this.spawnFriendlyCrow();
+      }
     }
 
     // ── 오로라 지역(9번) 블랙홀: 맵 전역 배회 + 근접 시 흡수 ──
@@ -1317,6 +1335,81 @@ class MapScene extends Phaser.Scene {
       this.freezeObjs.push(flake);
     }
     this.freezeObjs.push(overlay, iceTxt, helpTxt, bagBtn, bagTxt);
+  }
+
+  spawnEnemyCrow() {
+    if (!this.player) return;
+    const edge = Phaser.Math.Between(0, 3);
+    let cx, cy;
+    if (edge === 0) { cx = Phaser.Math.Between(0, this.MAP_W); cy = 0; }
+    else if (edge === 1) { cx = this.MAP_W; cy = Phaser.Math.Between(0, this.MAP_H); }
+    else if (edge === 2) { cx = Phaser.Math.Between(0, this.MAP_W); cy = this.MAP_H; }
+    else { cx = 0; cy = Phaser.Math.Between(0, this.MAP_H); }
+    const crow = this.add.text(cx, cy, '🐦‍⬛', { fontSize: '30px' }).setOrigin(0.5).setDepth(7);
+    crow.hp = 1;
+    crow.alive = true;
+    this.crows.push(crow);
+  }
+
+  killCrow(crow) {
+    crow.alive = false;
+    crow.destroy();
+    this.crows = this.crows.filter(c => c.alive);
+    // 깃털 드롭
+    this.saveData.items.crowFeather++;
+    Save.save(this.saveData);
+    const { width, height } = this.scale;
+    const ft = this.add.text(width - 80, height - 60, '🪶 +1', {
+      fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#d8b4fe',
+      fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+    }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
+    this.tweens.add({ targets: ft, y: ft.y - 25, alpha: 0, duration: 700, onComplete: () => ft.destroy() });
+    // 100개 모이면 마녀 모자 자동 합성
+    if (this.saveData.items.crowFeather >= 100) {
+      this.saveData.items.crowFeather -= 100;
+      if (!this.saveData.cosmetics.owned.includes('hat_witch')) {
+        this.saveData.cosmetics.owned.push('hat_witch');
+      }
+      Save.save(this.saveData);
+      const msg = this.add.text(width/2, height/2, '🧙 마녀 모자 완성!', {
+        fontSize: '22px', fontFamily: 'Malgun Gothic', color: '#e879f9',
+        fontStyle: 'bold', stroke: '#000', strokeThickness: 5,
+      }).setScrollFactor(0).setDepth(30).setOrigin(0.5);
+      this.tweens.add({ targets: msg, alpha: 0, duration: 2500, delay: 1500, onComplete: () => msg.destroy() });
+    }
+  }
+
+  spawnFriendlyCrow() {
+    if (!this.player) return;
+    this.friendlyCrowHp = 3;
+    this.friendlyCrow = this.add.text(this.player.x + 40, this.player.y - 30, '🐦‍⬛', { fontSize: '28px' }).setOrigin(0.5).setDepth(9);
+    this.friendlyCrow.setTint(0x00ccff);
+    const label = this.add.text(this.player.x + 40, this.player.y - 55, '아군', {
+      fontSize: '10px', fontFamily: 'Malgun Gothic', color: '#67e8f9',
+      fontStyle: 'bold', stroke: '#000', strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(9);
+    this.friendlyCrow.label = label;
+  }
+
+  damageFriendlyCrow(amount) {
+    if (!this.friendlyCrow) return false;
+    this.friendlyCrowHp -= amount;
+    this.friendlyCrow.setTint(0xff0000);
+    this.time.delayedCall(150, () => { if(this.friendlyCrow) this.friendlyCrow.setTint(0x00ccff); });
+    if (this.friendlyCrowHp <= 0) {
+      if (this.friendlyCrow.label) this.friendlyCrow.label.destroy();
+      this.friendlyCrow.destroy();
+      this.friendlyCrow = null;
+      const { width, height } = this.scale;
+      const dt = this.add.text(width/2, height/2 + 40, '🐦‍⬛💀 아군 까마귀가 쓰러졌어요!', {
+        fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#67e8f9',
+        fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+      }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
+      this.tweens.add({ targets: dt, alpha: 0, duration: 1500, delay: 500, onComplete: () => dt.destroy() });
+      // 3초 후 재소환
+      this.time.delayedCall(3000, () => this.spawnFriendlyCrow());
+    }
+    return true;
   }
 
   showAngelDialog() {
@@ -1937,6 +2030,11 @@ class MapScene extends Phaser.Scene {
           this.devilDmgTimer = this.time.addEvent({
             delay: 1000, loop: true,
             callback: () => {
+              // 아군 까마귀가 있으면 먼저 대미지
+              if (this.friendlyCrow && this.friendlyCrowHp > 0) {
+                this.damageFriendlyCrow(1);
+                return;
+              }
               const pet = this.saveData.bag.find(p => p.isActive && p.alive);
               if (!pet) return;
               pet.hp = Math.max(0, pet.hp - 1);
@@ -1964,6 +2062,71 @@ class MapScene extends Phaser.Scene {
       } else if (this.devilDmgTimer) {
         this.devilDmgTimer.remove();
         this.devilDmgTimer = null;
+      }
+    }
+
+    // 까마귀 추적 + 접촉 데미지 (구름 지역)
+    if (this.crows && this.crows.length > 0 && this.player) {
+      this.crows.forEach(crow => {
+        if (!crow.alive) return;
+        const angle = Math.atan2(this.player.y - crow.y, this.player.x - crow.x);
+        crow.x += Math.cos(angle) * 2.5;
+        crow.y += Math.sin(angle) * 2.5;
+        // 접촉 체크
+        const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, crow.x, crow.y);
+        if (dist < 40) {
+          // 아군 까마귀가 있으면 아군이 먼저 대미지
+          if (this.friendlyCrow && this.friendlyCrowHp > 0) {
+            this.damageFriendlyCrow(1);
+          } else {
+            const pet = this.saveData.bag.find(p => p.isActive && p.alive);
+            if (pet) { pet.hp = Math.max(0, pet.hp - 1); Save.save(this.saveData); this.updateHpBar(); }
+          }
+          this.killCrow(crow);
+        }
+      });
+      // 무기 자동 공격 (가장 가까운 까마귀)
+      if (!this.crowShootTimer && this.crows.length > 0) {
+        const weaponId = this.saveData.cosmetics?.equipped?.weapon;
+        const wpn = weaponId ? PETS_DATA.cosmetics.find(c => c.id === weaponId) : null;
+        if (wpn) {
+          this.crowShootTimer = this.time.addEvent({
+            delay: wpn.attackInterval || 1000, loop: true,
+            callback: () => {
+              const alive = this.crows.filter(c => c.alive);
+              if (alive.length === 0) return;
+              let nearest = alive[0], minD = Infinity;
+              alive.forEach(c => {
+                const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, c.x, c.y);
+                if (d < minD) { minD = d; nearest = c; }
+              });
+              const bulletEmoji = wpn.range === 'melee' ? '💫' : '💥';
+              const bullet = this.add.text(this.player.x, this.player.y - 20, bulletEmoji, { fontSize: '16px' }).setOrigin(0.5).setDepth(10);
+              this.tweens.add({
+                targets: bullet, x: nearest.x, y: nearest.y,
+                duration: wpn.range === 'melee' ? 80 : 250,
+                onComplete: () => {
+                  bullet.destroy();
+                  if (nearest.alive) {
+                    nearest.hp -= (wpn.weaponAtk || 1);
+                    if (nearest.hp <= 0) this.killCrow(nearest);
+                  }
+                },
+              });
+            },
+          });
+        }
+      }
+    }
+
+    // 아군 까마귀 추적 (마녀 모자)
+    if (this.friendlyCrow && this.player) {
+      const tx = this.player.x + 40, ty = this.player.y - 30;
+      this.friendlyCrow.x += (tx - this.friendlyCrow.x) * 0.12;
+      this.friendlyCrow.y += (ty - this.friendlyCrow.y) * 0.12;
+      if (this.friendlyCrow.label) {
+        this.friendlyCrow.label.x = this.friendlyCrow.x;
+        this.friendlyCrow.label.y = this.friendlyCrow.y - 22;
       }
     }
 
@@ -3171,6 +3334,7 @@ class BagScene extends Phaser.Scene {
       {key:'revive', emoji:'⭐',name:'소환 아이템',desc:'쓰러진 펫을 살림'},
       {key:'rainbowFragment', emoji:'🌈',name:'무지개 조각', desc:'10개 모으면 수정 완성'},
       {key:'rainbowCrystal', emoji:'🔮',name:'무지개 수정', desc:'펫 1마리 레벨업!'},
+      {key:'crowFeather', emoji:'🪶',name:'까마귀 깃털', desc:'100개 → 마녀 모자'},
     ];
     defs.forEach((def,i)=>{
       const count=this.saveData.items[def.key]||0;
@@ -3230,6 +3394,8 @@ class BagScene extends Phaser.Scene {
       this.showMsg('무지개 조각 10개를 모으면 수정이 완성돼요!');
     } else if (key === 'rainbowCrystal') {
       this.showCrystalPetSelect();
+    } else if (key === 'crowFeather') {
+      this.showMsg('까마귀 깃털 100개를 모으면 마녀 모자가 완성돼요!');
     }
   }
 
