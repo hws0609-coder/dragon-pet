@@ -812,6 +812,38 @@ class MapScene extends Phaser.Scene {
 
     // ── 지역별 배경음악 ──
     Sound.playZoneBGM(this, this.saveData.mapProgress.zone);
+
+    // ── 동굴 지역(4번) 어둠 효과: 시야 제한 ──
+    this.caveSpotlight = null;
+    this.caveDark = null;
+    if (zoneId === 4) {
+      const activePet = this.saveData.bag.find(p => p.isActive && p.alive);
+      const isDarkType = activePet && activePet.type === '어둠';
+      this.caveRadius = isDarkType ? 220 : 120;
+
+      // 어두운 오버레이
+      this.caveDark = this.add.rectangle(this.MAP_W/2, this.MAP_H/2, this.MAP_W + 400, this.MAP_H + 400, 0x000000, 0.88).setOrigin(0.5).setDepth(14);
+
+      // 스포트라이트 (마스크용)
+      this.caveSpotlight = this.make.graphics();
+      this.caveSpotlight.fillStyle(0xffffff);
+      this.caveSpotlight.fillCircle(this.player.x, this.player.y, this.caveRadius);
+      const mask = this.caveSpotlight.createGeometryMask();
+      mask.invertAlpha = true;
+      this.caveDark.setMask(mask);
+
+      // HUD 안내
+      const caveMsg = isDarkType
+        ? '🌑 어둠 속성 저항! 시야 확장'
+        : '🌑 동굴 지대! 시야가 좁아요';
+      const caveColor = isDarkType ? '#c084fc' : '#9ca3af';
+      this.caveHud = this.add.text(this.scale.width/2, 90, caveMsg, {
+        fontSize:'13px', fontFamily:'Malgun Gothic', color: caveColor,
+        fontStyle:'bold', stroke:'#000', strokeThickness:3,
+      }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
+      // 3초 후 HUD 자동 숨김
+      this.time.delayedCall(3000, () => { if(this.caveHud) { this.caveHud.destroy(); this.caveHud = null; } });
+    }
   }
 
   drawMapDecoration(theme) {
@@ -1267,6 +1299,12 @@ class MapScene extends Phaser.Scene {
       const targetY = this.player.y - dir.y * 42 + 6;
       this.petFollow.x += (targetX - this.petFollow.x) * 0.15;
       this.petFollow.y += (targetY - this.petFollow.y) * 0.15;
+    }
+    // 동굴 스포트라이트 업데이트
+    if (this.caveSpotlight) {
+      this.caveSpotlight.clear();
+      this.caveSpotlight.fillStyle(0xffffff);
+      this.caveSpotlight.fillCircle(this.player.x, this.player.y, this.caveRadius);
     }
     // 미니맵 플레이어 점 업데이트
     if (this.minimapDot) {
