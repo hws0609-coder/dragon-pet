@@ -51,6 +51,7 @@ const SOUND_KEYS = {
   crow:   'assets/sounds/crow.mp3',         // 까마귀 등장
   demon:  'assets/sounds/demon.mp3',        // 악마 등장
   spider: 'assets/sounds/spider.mp3',      // 거미 소환
+  skeleton:'assets/sounds/skeleton.mp3',   // 해골 등장
 };
 
 const Sound = {
@@ -329,7 +330,7 @@ const Save = {
       bag: [], activePetId: null,
       collection: [],
       maxLevels: {},
-      items: { heal: 0, revive: 0, rainbowFragment: 0, rainbowCrystal: 0, crowFeather: 0, spiderFang: 0 },
+      items: { heal: 0, revive: 0, rainbowFragment: 0, rainbowCrystal: 0, crowFeather: 0, spiderFang: 0, skeletonBone: 0 },
       coins: 40,
       cosmetics: { owned: [], equipped: { hat: null, shoes: null, weapon: null } },
       mapProgress: { zone: 5, x: 0 },
@@ -358,6 +359,7 @@ const Save = {
     if (data.items.rainbowCrystal === undefined) data.items.rainbowCrystal = 0;
     if (data.items.crowFeather === undefined) data.items.crowFeather = 0;
     if (data.items.spiderFang === undefined) data.items.spiderFang = 0;
+    if (data.items.skeletonBone === undefined) data.items.skeletonBone = 0;
     if (data.items.gun === undefined) data.items.gun = 0;
     return data;
   },
@@ -871,6 +873,12 @@ class MapScene extends Phaser.Scene {
     this.spiderShootTimer = null;
     this.friendlySpiders = [];
     this.friendlySpidersDead = false;
+    this.friendlySpiderAtkTimer = null;
+    this.skeletons = [];
+    this.skeletonKing = null;
+    this.skeletonKingHp = 0;
+    this.skeletonKingAtkTimer = null;
+    this.skeletonShootTimer = null;
     this.vineHud = null;
     this.bhHud = null;
 
@@ -933,6 +941,13 @@ class MapScene extends Phaser.Scene {
       });
 
       // 거미 구슬 아군 소환은 create() 끝에서 범용 처리
+
+      // 3초마다 해골 3마리 스폰
+      this.skeletons = [];
+      this.skeletonSpawnTimer = this.time.addEvent({
+        delay: 3000, loop: true,
+        callback: () => { for(let i=0;i<3;i++) this.spawnSkeleton(); },
+      });
     }
 
     // ── 불 지역(3번) 열기 효과: 동행 펫 3초마다 HP -1 ──
@@ -1192,6 +1207,9 @@ class MapScene extends Phaser.Scene {
     }
     if (globalHat === 'hat_spider') {
       this.spawnFriendlySpiders();
+    }
+    if (globalHat === 'hat_skeleton') {
+      this.spawnSkeletonKing();
     }
   }
 
@@ -1521,6 +1539,7 @@ class MapScene extends Phaser.Scene {
     this.friendlySpiders.forEach(s => { if(s.label) s.label.destroy(); s.destroy(); });
     this.friendlySpiders = [];
     this.friendlySpidersDead = false;
+    if (this.friendlySpiderAtkTimer) { this.friendlySpiderAtkTimer.remove(); this.friendlySpiderAtkTimer = null; }
     const offsets = [{ x: -35, y: -25 }, { x: 35, y: -25 }, { x: 0, y: -45 }];
     for (let i = 0; i < 3; i++) {
       const sp = this.add.text(this.player.x + offsets[i].x, this.player.y + offsets[i].y, '🕷️', { fontSize: '24px' }).setOrigin(0.5).setDepth(9);
@@ -1537,6 +1556,59 @@ class MapScene extends Phaser.Scene {
       this.friendlySpiders.push(sp);
     }
     Sound.play(this, 'spider', 0.4);
+
+    // 아군 거미 자동 공격 (1.5초마다)
+    this.friendlySpiderAtkTimer = this.time.addEvent({
+      delay: 1500, loop: true,
+      callback: () => {
+        const aliveSpiders = this.friendlySpiders.filter(s => s.alive);
+        if (aliveSpiders.length === 0) return;
+        // 적 목록 수집
+        const enemies = [];
+        if (this.spiders) this.spiders.filter(s => s.alive).forEach(s => enemies.push({ obj: s, type: 'spider' }));
+        if (this.crows) this.crows.filter(c => c.alive).forEach(c => enemies.push({ obj: c, type: 'crow' }));
+        if (this.devil && this.devil.visible && this.devilHp > 0) enemies.push({ obj: this.devil, type: 'devil' });
+        if (enemies.length === 0) return;
+        // 각 아군 거미가 가장 가까운 적 공격
+        aliveSpiders.forEach(sp => {
+          let nearest = null, minD = Infinity;
+          enemies.forEach(e => {
+            const d = Phaser.Math.Distance.Between(sp.x, sp.y, e.obj.x, e.obj.y);
+            if (d < minD) { minD = d; nearest = e; }
+          });
+          if (!nearest || minD > 300) return;
+          const bullet = this.add.text(sp.x, sp.y, '🕸️', { fontSize: '14px' }).setOrigin(0.5).setDepth(10);
+          this.tweens.add({
+            targets: bullet, x: nearest.obj.x, y: nearest.obj.y, duration: 200,
+            onComplete: () => {
+              bullet.destroy();
+              if (nearest.type === 'spider' && nearest.obj.alive) {
+                nearest.obj.hp--;
+                if (nearest.obj.hp <= 0) this.killSpider(nearest.obj);
+              } else if (nearest.type === 'crow' && nearest.obj.alive) {
+                nearest.obj.hp--;
+                if (nearest.obj.hp <= 0) this.killCrow(nearest.obj);
+              } else if (nearest.type === 'devil' && this.devilHp > 0) {
+                this.devilHp--;
+                if (this.devilHp <= 0) {
+                  this.devil.setVisible(false);
+                  const { width, height } = this.scale;
+                  const kt = this.add.text(width/2, height/2, '😈💀 악마를 물리쳤어요!', {
+                    fontSize: '20px', fontFamily: 'Malgun Gothic', color: '#fbbf24',
+                    fontStyle: 'bold', stroke: '#000', strokeThickness: 4,
+                  }).setScrollFactor(0).setDepth(30).setOrigin(0.5);
+                  this.tweens.add({ targets: kt, alpha: 0, duration: 2000, delay: 1000, onComplete: () => kt.destroy() });
+                  this.time.delayedCall(10000, () => {
+                    this.devilHp = this.devilMaxHp;
+                    if (this.devil) { this.devil.x = Phaser.Math.Between(200, this.MAP_W-200); this.devil.y = Phaser.Math.Between(200, this.MAP_H-200); this.devil.setVisible(true); Sound.play(this, 'demon', 0.5); }
+                  });
+                }
+              }
+            },
+          });
+        });
+      },
+    });
   }
 
   damageFriendlySpider(amount) {
@@ -1561,6 +1633,118 @@ class MapScene extends Phaser.Scene {
         this.tweens.add({ targets: dt, alpha: 0, duration: 1500, delay: 500, onComplete: () => dt.destroy() });
         this.time.delayedCall(10000, () => this.spawnFriendlySpiders());
       }
+    }
+    return true;
+  }
+
+  spawnSkeleton() {
+    if (!this.player) return;
+    Sound.play(this, 'skeleton', 0.2);
+    const edge = Phaser.Math.Between(0, 3);
+    let sx, sy;
+    if (edge === 0) { sx = Phaser.Math.Between(0, this.MAP_W); sy = 0; }
+    else if (edge === 1) { sx = this.MAP_W; sy = Phaser.Math.Between(0, this.MAP_H); }
+    else if (edge === 2) { sx = Phaser.Math.Between(0, this.MAP_W); sy = this.MAP_H; }
+    else { sx = 0; sy = Phaser.Math.Between(0, this.MAP_H); }
+    const sk = this.add.text(sx, sy, '💀', { fontSize: '30px' }).setOrigin(0.5).setDepth(7);
+    sk.hp = 1;
+    sk.alive = true;
+    this.skeletons.push(sk);
+  }
+
+  killSkeleton(sk) {
+    sk.alive = false;
+    sk.destroy();
+    this.skeletons = this.skeletons.filter(s => s.alive);
+    // 해골뼈 100% 드롭
+    this.saveData.items.skeletonBone++;
+    Save.save(this.saveData);
+    const { width, height } = this.scale;
+    const ft = this.add.text(width - 80, height - 40, '🦴 +1', {
+      fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#e5e7eb',
+      fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+    }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
+    this.tweens.add({ targets: ft, y: ft.y - 25, alpha: 0, duration: 700, onComplete: () => ft.destroy() });
+    // 100개 모이면 해골 반지 자동 합성
+    if (this.saveData.items.skeletonBone >= 100) {
+      this.saveData.items.skeletonBone -= 100;
+      if (!this.saveData.cosmetics.owned.includes('hat_skeleton')) {
+        this.saveData.cosmetics.owned.push('hat_skeleton');
+      }
+      Save.save(this.saveData);
+      const msg = this.add.text(width/2, height/2, '💀 해골 반지 완성!', {
+        fontSize: '22px', fontFamily: 'Malgun Gothic', color: '#e5e7eb',
+        fontStyle: 'bold', stroke: '#000', strokeThickness: 5,
+      }).setScrollFactor(0).setDepth(30).setOrigin(0.5);
+      this.tweens.add({ targets: msg, alpha: 0, duration: 2500, delay: 1500, onComplete: () => msg.destroy() });
+    }
+  }
+
+  spawnSkeletonKing() {
+    if (!this.player) return;
+    this.skeletonKingHp = 10;
+    this.skeletonKing = this.add.text(this.player.x - 50, this.player.y - 40, '☠️', { fontSize: '36px' }).setOrigin(0.5).setDepth(9);
+    this.skeletonKing.setTint(0xffcc00);
+    const label = this.add.text(this.player.x - 50, this.player.y - 65, '해골왕', {
+      fontSize: '9px', fontFamily: 'Malgun Gothic', color: '#fbbf24',
+      fontStyle: 'bold', stroke: '#000', strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(9);
+    this.skeletonKing.label = label;
+
+    // 해골왕 자동 공격 (1초마다, ATK 40 → 적 즉사)
+    this.skeletonKingAtkTimer = this.time.addEvent({
+      delay: 1000, loop: true,
+      callback: () => {
+        if (!this.skeletonKing || this.skeletonKingHp <= 0) return;
+        const enemies = [];
+        if (this.spiders) this.spiders.filter(s => s.alive).forEach(s => enemies.push({ obj: s, type: 'spider' }));
+        if (this.crows) this.crows.filter(c => c.alive).forEach(c => enemies.push({ obj: c, type: 'crow' }));
+        if (this.skeletons) this.skeletons.filter(s => s.alive).forEach(s => enemies.push({ obj: s, type: 'skeleton' }));
+        if (this.devil && this.devil.visible && this.devilHp > 0) enemies.push({ obj: this.devil, type: 'devil' });
+        if (enemies.length === 0) return;
+        let nearest = null, minD = Infinity;
+        enemies.forEach(e => {
+          const d = Phaser.Math.Distance.Between(this.skeletonKing.x, this.skeletonKing.y, e.obj.x, e.obj.y);
+          if (d < minD) { minD = d; nearest = e; }
+        });
+        if (!nearest || minD > 350) return;
+        const bullet = this.add.text(this.skeletonKing.x, this.skeletonKing.y, '💥', { fontSize: '20px' }).setOrigin(0.5).setDepth(10);
+        this.tweens.add({
+          targets: bullet, x: nearest.obj.x, y: nearest.obj.y, duration: 150,
+          onComplete: () => {
+            bullet.destroy();
+            if (nearest.type === 'spider' && nearest.obj.alive) { nearest.obj.hp -= 40; if (nearest.obj.hp <= 0) this.killSpider(nearest.obj); }
+            else if (nearest.type === 'crow' && nearest.obj.alive) { nearest.obj.hp -= 40; if (nearest.obj.hp <= 0) this.killCrow(nearest.obj); }
+            else if (nearest.type === 'skeleton' && nearest.obj.alive) { nearest.obj.hp -= 40; if (nearest.obj.hp <= 0) this.killSkeleton(nearest.obj); }
+            else if (nearest.type === 'devil' && this.devilHp > 0) {
+              this.devilHp -= 40;
+              if (this.devilHp <= 0) { this.devil.setVisible(false);
+                this.time.delayedCall(10000, () => { this.devilHp = this.devilMaxHp; if(this.devil){this.devil.x=Phaser.Math.Between(200,this.MAP_W-200);this.devil.y=Phaser.Math.Between(200,this.MAP_H-200);this.devil.setVisible(true);Sound.play(this,'demon',0.5);} });
+              }
+            }
+          },
+        });
+      },
+    });
+  }
+
+  damageSkeletonKing(amount) {
+    if (!this.skeletonKing || this.skeletonKingHp <= 0) return false;
+    this.skeletonKingHp -= amount;
+    this.skeletonKing.setTint(0xff0000);
+    this.time.delayedCall(150, () => { if(this.skeletonKing && this.skeletonKingHp > 0) this.skeletonKing.setTint(0xffcc00); });
+    if (this.skeletonKingHp <= 0) {
+      if (this.skeletonKing.label) this.skeletonKing.label.destroy();
+      this.skeletonKing.destroy();
+      this.skeletonKing = null;
+      if (this.skeletonKingAtkTimer) { this.skeletonKingAtkTimer.remove(); this.skeletonKingAtkTimer = null; }
+      const { width, height } = this.scale;
+      const dt = this.add.text(width/2, height/2 + 40, '☠️💀 해골왕이 쓰러졌어요!', {
+        fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#fbbf24',
+        fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+      }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
+      this.tweens.add({ targets: dt, alpha: 0, duration: 1500, delay: 500, onComplete: () => dt.destroy() });
+      this.time.delayedCall(10000, () => this.spawnSkeletonKing());
     }
     return true;
   }
@@ -2348,6 +2532,55 @@ class MapScene extends Phaser.Scene {
       });
     }
 
+    // 해골 추적 + 접촉 데미지 (동굴 지역)
+    if (this.skeletons && this.skeletons.length > 0 && this.player) {
+      this.skeletons.forEach(sk => {
+        if (!sk.alive) return;
+        const angle = Math.atan2(this.player.y - sk.y, this.player.x - sk.x);
+        sk.x += Math.cos(angle) * 5;
+        sk.y += Math.sin(angle) * 5;
+        const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, sk.x, sk.y);
+        if (dist < 35) {
+          // 해골왕 → 아군거미 → 아군까마귀 → 펫 순서로 데미지
+          if (this.skeletonKing && this.skeletonKingHp > 0) { this.damageSkeletonKing(1); }
+          else if (this.friendlySpiders && this.friendlySpiders.filter(s => s.alive).length > 0) { this.damageFriendlySpider(1); }
+          else if (this.friendlyCrow && this.friendlyCrowHp > 0) { this.damageFriendlyCrow(1); }
+          else { const pet = this.saveData.bag.find(p => p.isActive && p.alive); if (pet) { pet.hp = Math.max(0, pet.hp - 1); Save.save(this.saveData); this.updateHpBar(); } }
+          this.killSkeleton(sk);
+        }
+      });
+      // 무기 자동 공격 (해골)
+      if (!this.skeletonShootTimer) {
+        const wpn = this.equippedWeapon;
+        if (wpn) {
+          this.skeletonShootTimer = this.time.addEvent({
+            delay: wpn.attackInterval || 1000, loop: true,
+            callback: () => {
+              const alive = this.skeletons.filter(s => s.alive);
+              if (alive.length === 0) return;
+              let nearest = null, minD = Infinity;
+              alive.forEach(s => { const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, s.x, s.y); if (d < minD) { minD = d; nearest = s; } });
+              if (!nearest || minD > this.weaponRange) return;
+              Sound.play(this, this.equippedWeapon.range === 'melee' ? 'slash' : 'shoot', 0.3);
+              const be = this.equippedWeapon.range === 'melee' ? '💫' : '💥';
+              const b = this.add.text(this.player.x, this.player.y - 20, be, { fontSize: '16px' }).setOrigin(0.5).setDepth(10);
+              this.tweens.add({ targets: b, x: nearest.x, y: nearest.y, duration: this.equippedWeapon.range === 'melee' ? 80 : 250,
+                onComplete: () => { b.destroy(); if (nearest.alive) { nearest.hp -= (wpn.weaponAtk || 1); if (nearest.hp <= 0) this.killSkeleton(nearest); } },
+              });
+            },
+          });
+        }
+      }
+    }
+
+    // 해골왕 추적 (해골 반지)
+    if (this.skeletonKing && this.skeletonKingHp > 0 && this.player) {
+      const tx = this.player.x - 50, ty = this.player.y - 40;
+      this.skeletonKing.x += (tx - this.skeletonKing.x) * 0.12;
+      this.skeletonKing.y += (ty - this.skeletonKing.y) * 0.12;
+      if (this.skeletonKing.label) { this.skeletonKing.label.x = this.skeletonKing.x; this.skeletonKing.label.y = this.skeletonKing.y - 25; }
+    }
+
     // 미니맵 플레이어 점 업데이트
     if (this.minimapDot) {
       const { width } = this.scale;
@@ -2939,7 +3172,17 @@ class BattleScene extends Phaser.Scene {
     this.saveData  = data.saveData;
     this.wildPet   = data.wildPet;
     this.wildDataId = data.wildDataId;
-    this.myPet     = this.saveData.bag.find(p => p.isActive && p.alive) || this.saveData.bag.find(p => p.alive);
+    this.realPet   = this.saveData.bag.find(p => p.isActive && p.alive) || this.saveData.bag.find(p => p.alive);
+    this.skeletonKingActive = false;
+
+    // 해골 반지 장착 시 해골왕 선투입
+    const hat = this.saveData.cosmetics?.equipped?.hat;
+    if (hat === 'hat_skeleton' && this.realPet) {
+      this.myPet = { name: '☠️ 해골왕', type: '어둠', level: 99, hp: 10, maxHp: 10, atk: 40, xp: 0, xpToNext: 999, alive: true, id: '_skeleton_king', grade: 'legend', isActive: true };
+      this.skeletonKingActive = true;
+    } else {
+      this.myPet = this.realPet;
+    }
     this.turn      = 'player';
     this.skillCooldown = 0;
     this.actionLocked = false;
@@ -3110,6 +3353,14 @@ class BattleScene extends Phaser.Scene {
     this.showDamageLabel(`적 공격! ${finalDmg} 데미지`, '#fb7185');
 
     if (this.myPet.hp <= 0) {
+      // 해골왕이 쓰러지면 실제 펫으로 교체
+      if (this.skeletonKingActive && this.realPet && this.realPet.alive) {
+        this.skeletonKingActive = false;
+        this.myPet = this.realPet;
+        this.showDamageLabel('☠️ 해골왕 전사! 내 펫 출전!', '#fbbf24');
+        this.time.delayedCall(700, () => this.drawBattle());
+        return;
+      }
       this.myPet.alive = false;
       const nextPet = this.saveData.bag.find(p => p.alive && !p.isActive);
       if (nextPet) {
@@ -3299,13 +3550,13 @@ class BagScene extends Phaser.Scene {
       { label:`👟 신발` },
       { label:`⚔️ 무기` },
     ];
-    const TW = Math.floor((width-16)/4);
+    const TW = Math.floor((width-10)/5);
     const tabBgs=[], tabTxts=[];
     tabDefs.forEach((t,i)=>{
-      const x=8+TW/2+i*TW;
-      const bg=this.add.rectangle(x,34,TW-4,28,i===0?0x5b21b6:0x1e1145).setOrigin(0.5).setInteractive({useHandCursor:true});
+      const x=5+TW/2+i*TW;
+      const bg=this.add.rectangle(x,34,TW-3,28,i===0?0x5b21b6:0x1e1145).setOrigin(0.5).setInteractive({useHandCursor:true});
       bg.setStrokeStyle(1,i===0?0xe879f9:0x4c1d95);
-      const tx=this.add.text(x,34,t.label,{fontSize:'11px',fontFamily:'Malgun Gothic',color:i===0?'#fff':'#a78bfa'}).setOrigin(0.5);
+      const tx=this.add.text(x,34,t.label,{fontSize:'10px',fontFamily:'Malgun Gothic',color:i===0?'#fff':'#a78bfa'}).setOrigin(0.5);
       tabBgs.push(bg); tabTxts.push(tx);
     });
     const helpTxt=this.add.text(width/2,64,'펫 클릭: 동행  |  길게 누르기: 버리기',{fontSize:'10px',fontFamily:'Malgun Gothic',color:'#6b7280'}).setOrigin(0.5);
@@ -3561,6 +3812,7 @@ class BagScene extends Phaser.Scene {
       {key:'rainbowCrystal', emoji:'🔮',name:'무지개 수정', desc:'펫 1마리 레벨업!'},
       {key:'crowFeather', emoji:'🪶',name:'까마귀 깃털', desc:'100개 → 마녀 모자'},
       {key:'spiderFang', emoji:'🦷',name:'거미 이빨', desc:'100개 → 거미 구슬'},
+      {key:'skeletonBone', emoji:'🦴',name:'해골 뼈', desc:'100개 → 해골 반지'},
     ];
     defs.forEach((def,i)=>{
       const count=this.saveData.items[def.key]||0;
@@ -3624,6 +3876,8 @@ class BagScene extends Phaser.Scene {
       this.showMsg('까마귀 깃털 100개를 모으면 마녀 모자가 완성돼요!');
     } else if (key === 'spiderFang') {
       this.showMsg('거미 이빨 100개를 모으면 거미 구슬이 완성돼요!');
+    } else if (key === 'skeletonBone') {
+      this.showMsg('해골 뼈 100개를 모으면 해골 반지가 완성돼요!');
     }
   }
 
