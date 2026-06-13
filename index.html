@@ -46,6 +46,10 @@ const SOUND_KEYS = {
   bgm8:   'assets/sounds/bgm-zone8.mp3',    // 무지개
   bgm9:   'assets/sounds/bgm-zone9.mp3',    // 오로라
   thunder:'assets/sounds/thunder.mp3',      // 번개
+  slash:  'assets/sounds/slash.mp3',        // 근접 공격
+  shoot:  'assets/sounds/shoot.mp3',        // 원거리 공격
+  crow:   'assets/sounds/crow.mp3',         // 까마귀 등장
+  demon:  'assets/sounds/demon.mp3',        // 악마 등장
 };
 
 const Sound = {
@@ -1113,6 +1117,7 @@ class MapScene extends Phaser.Scene {
       const dx = Phaser.Math.Between(200, this.MAP_W - 200);
       const dy = Phaser.Math.Between(200, this.MAP_H - 200);
       this.devil = this.add.text(dx, dy, '😈', { fontSize: '44px' }).setOrigin(0.5).setDepth(8);
+      Sound.play(this, 'demon', 0.5);
       this.tweens.add({ targets: this.devil, scaleX: 1.1, scaleY: 1.1, duration: 600, yoyo: true, repeat: -1 });
 
       // 총 보유 시 자동 사격 타이머
@@ -1150,6 +1155,7 @@ class MapScene extends Phaser.Scene {
 
     // 총알 이펙트
     const wpn = this.equippedWeapon || { emoji:'🔫', weaponAtk:1, range:'mid-range' };
+    Sound.play(this, wpn.range === 'melee' ? 'slash' : 'shoot', 0.4);
     const bulletEmoji = wpn.range === 'melee' ? '💫' : '💥';
     const bullet = this.add.text(this.player.x, this.player.y - 20, bulletEmoji, { fontSize: '18px' }).setOrigin(0.5).setDepth(10);
     this.tweens.add({
@@ -1189,6 +1195,7 @@ class MapScene extends Phaser.Scene {
               this.devil.x = Phaser.Math.Between(200, this.MAP_W - 200);
               this.devil.y = Phaser.Math.Between(200, this.MAP_H - 200);
               this.devil.setVisible(true);
+              Sound.play(this, 'demon', 0.5);
               const rTxt = this.add.text(width/2, height/2, '😈 악마가 부활했어요!', {
                 fontSize: '18px', fontFamily: 'Malgun Gothic', color: '#f87171',
                 fontStyle: 'bold', stroke: '#000', strokeThickness: 4,
@@ -1339,6 +1346,7 @@ class MapScene extends Phaser.Scene {
 
   spawnEnemyCrow() {
     if (!this.player) return;
+    Sound.play(this, 'crow', 0.3);
     const edge = Phaser.Math.Between(0, 3);
     let cx, cy;
     if (edge === 0) { cx = Phaser.Math.Between(0, this.MAP_W); cy = 0; }
@@ -2100,6 +2108,7 @@ class MapScene extends Phaser.Scene {
                 const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, c.x, c.y);
                 if (d < minD) { minD = d; nearest = c; }
               });
+              Sound.play(this, wpn.range === 'melee' ? 'slash' : 'shoot', 0.3);
               const bulletEmoji = wpn.range === 'melee' ? '💫' : '💥';
               const bullet = this.add.text(this.player.x, this.player.y - 20, bulletEmoji, { fontSize: '16px' }).setOrigin(0.5).setDepth(10);
               this.tweens.add({
