@@ -1707,7 +1707,7 @@ class MapScene extends Phaser.Scene {
     else if (edge === 2) { sx = Phaser.Math.Between(0, this.MAP_W); sy = this.MAP_H; }
     else { sx = 0; sy = Phaser.Math.Between(0, this.MAP_H); }
     const sk = this.add.text(sx, sy, '💀', { fontSize: '30px' }).setOrigin(0.5).setDepth(7);
-    sk.hp = 1;
+    sk.hp = 2;
     sk.alive = true;
     this.skeletons.push(sk);
   }
