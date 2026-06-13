@@ -1043,14 +1043,14 @@ class MapScene extends Phaser.Scene {
 
     // ── 오로라 지역(9번) 블랙홀: 맵 전역 배회 + 근접 시 흡수 ──
     this.blackHole = null;
-    this.bhPullRange = 200;
-    this.bhSuckRange = 50;
+    this.bhPullRange = 350;
+    this.bhSuckRange = 90;
     if (zoneId === 9) {
       const activePet = this.saveData.bag.find(p => p.isActive && p.alive);
       const isLightType = !!(activePet && activePet.type === '빛');
 
       if (!isLightType) {
-        const bh = this.add.text(this.MAP_W / 2, this.MAP_H / 4, '🕳️', { fontSize: '70px' }).setOrigin(0.5).setDepth(8);
+        const bh = this.add.text(this.MAP_W / 2, this.MAP_H / 4, '🕳️', { fontSize: '210px' }).setOrigin(0.5).setDepth(8);
         this.tweens.add({ targets: bh, scaleX: 1.15, scaleY: 1.15, duration: 800, yoyo: true, repeat: -1 });
         this.tweens.add({ targets: bh, angle: 360, duration: 4000, repeat: -1 });
         this.blackHole = bh;
@@ -1739,13 +1739,18 @@ class MapScene extends Phaser.Scene {
           this.vineHud = null;
         }
       }
-      // 블랙홀 근접 시 속도 감소
+      // 블랙홀 근접 시 속도 감소 + 빨려들어가기
       if (this.blackHole) {
         const bhDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.blackHole.x, this.blackHole.y);
         if (bhDist < this.bhPullRange) {
-          spd = Math.max(1, spd - 8);
+          spd = Math.max(1, spd - 9);
+          // 블랙홀 방향으로 끌어당기기
+          const pullForce = (1 - bhDist / this.bhPullRange) * 3;
+          const angle = Math.atan2(this.blackHole.y - this.player.y, this.blackHole.x - this.player.x);
+          this.player.x += Math.cos(angle) * pullForce;
+          this.player.y += Math.sin(angle) * pullForce;
           if (!this.bhHud) {
-            this.bhHud = this.add.text(this.scale.width/2, 115, '🕳️ 블랙홀의 인력! 속도 -8', {
+            this.bhHud = this.add.text(this.scale.width/2, 115, '🕳️ 블랙홀의 인력! 빨려 들어가고 있어요!', {
               fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#c084fc',
               fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
             }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
