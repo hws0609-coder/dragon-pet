@@ -1029,16 +1029,24 @@
     {
       "id": "hat_w4",
       "name": "마법봉",
-      "type": "hat",
+      "type": "weapon",
       "price": 130,
-      "emoji": "🪄"
+      "emoji": "🪄",
+      "weaponAtk": 0,
+      "range": "barrier",
+      "attackInterval": 0,
+      "special": "aurora_barrier"
     },
     {
       "id": "hat_w5",
       "name": "방패",
-      "type": "hat",
+      "type": "weapon",
       "price": 110,
-      "emoji": "🛡️"
+      "emoji": "🛡️",
+      "weaponAtk": 1,
+      "range": "shield",
+      "attackInterval": 1500,
+      "special": "reflect_shield"
     },
     {
       "id": "weapon_gun",
