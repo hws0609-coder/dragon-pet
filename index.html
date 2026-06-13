@@ -941,13 +941,6 @@ class MapScene extends Phaser.Scene {
       });
 
       // 거미 구슬 아군 소환은 create() 끝에서 범용 처리
-
-      // 3초마다 해골 3마리 스폰
-      this.skeletons = [];
-      this.skeletonSpawnTimer = this.time.addEvent({
-        delay: 3000, loop: true,
-        callback: () => { for(let i=0;i<3;i++) this.spawnSkeleton(); },
-      });
     }
 
     // ── 불 지역(3번) 열기 효과: 동행 펫 3초마다 HP -1 ──
@@ -998,6 +991,12 @@ class MapScene extends Phaser.Scene {
         fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
       }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
       this.time.delayedCall(3000, () => { if(this.heatHud) { this.heatHud.destroy(); this.heatHud = null; } });
+
+      // 3초마다 해골 3마리 스폰
+      this.skeletonSpawnTimer = this.time.addEvent({
+        delay: 3000, loop: true,
+        callback: () => { for(let i=0;i<3;i++) this.spawnSkeleton(); },
+      });
     }
 
     // ── 사막 지역(6번) 갈증 효과: 이동속도 -2 + 3초마다 HP -1 ──
