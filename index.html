@@ -870,6 +870,8 @@ class MapScene extends Phaser.Scene {
     this.friendlyCrow = null;
     this.friendlyCrowHp = 0;
     this.friendlyCrowAtkTimer = null;
+    this.friendlyDragon = null;
+    this.friendlyDragonHp = 0;
     this.spiders = [];
     this.spiderShootTimer = null;
     this.friendlySpiders = [];
@@ -1210,6 +1212,9 @@ class MapScene extends Phaser.Scene {
     }
     if (globalHat === 'hat_skeleton') {
       this.spawnSkeletonKing();
+    }
+    if (globalHat === 'hat_1') {
+      this.spawnFriendlyDragon();
     }
   }
 
@@ -1785,6 +1790,38 @@ class MapScene extends Phaser.Scene {
       }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
       this.tweens.add({ targets: dt, alpha: 0, duration: 1500, delay: 500, onComplete: () => dt.destroy() });
       this.time.delayedCall(10000, () => this.spawnSkeletonKing());
+    }
+    return true;
+  }
+
+  spawnFriendlyDragon() {
+    if (!this.player) return;
+    this.friendlyDragonHp = 10;
+    this.friendlyDragon = this.add.text(this.player.x - 45, this.player.y - 50, '🐉', { fontSize: '36px' }).setOrigin(0.5).setDepth(9);
+    this.friendlyDragon.setTint(0xffdd44);
+    const label = this.add.text(this.player.x - 45, this.player.y - 75, '수호용', {
+      fontSize: '9px', fontFamily: 'Malgun Gothic', color: '#fbbf24',
+      fontStyle: 'bold', stroke: '#000', strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(9);
+    this.friendlyDragon.label = label;
+  }
+
+  damageFriendlyDragon(amount) {
+    if (!this.friendlyDragon || this.friendlyDragonHp <= 0) return false;
+    this.friendlyDragonHp -= amount;
+    this.friendlyDragon.setTint(0xff0000);
+    this.time.delayedCall(150, () => { if(this.friendlyDragon && this.friendlyDragonHp > 0) this.friendlyDragon.setTint(0xffdd44); });
+    if (this.friendlyDragonHp <= 0) {
+      if (this.friendlyDragon.label) this.friendlyDragon.label.destroy();
+      this.friendlyDragon.destroy();
+      this.friendlyDragon = null;
+      const { width, height } = this.scale;
+      const dt = this.add.text(width/2, height/2 + 40, '🐉💀 수호용이 쓰러졌어요!', {
+        fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#fbbf24',
+        fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+      }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
+      this.tweens.add({ targets: dt, alpha: 0, duration: 1500, delay: 500, onComplete: () => dt.destroy() });
+      this.time.delayedCall(10000, () => this.spawnFriendlyDragon());
     }
     return true;
   }
@@ -2409,6 +2446,7 @@ class MapScene extends Phaser.Scene {
             callback: () => {
               // 해골왕 → 아군거미 → 아군까마귀 → 펫 순서
               if (this.skeletonKing && this.skeletonKingHp > 0) { this.damageSkeletonKing(1); return; }
+              if (this.friendlyDragon && this.friendlyDragonHp > 0) { this.damageFriendlyDragon(1); return; }
               if (this.friendlySpiders && this.friendlySpiders.filter(s => s.alive).length > 0) { this.damageFriendlySpider(1); return; }
               if (this.friendlyCrow && this.friendlyCrowHp > 0) { this.damageFriendlyCrow(1); return; }
               const pet = this.saveData.bag.find(p => p.isActive && p.alive);
@@ -2452,6 +2490,7 @@ class MapScene extends Phaser.Scene {
         const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, crow.x, crow.y);
         if (dist < 40) {
           if (this.skeletonKing && this.skeletonKingHp > 0) { this.damageSkeletonKing(1); }
+          else if (this.friendlyDragon && this.friendlyDragonHp > 0) { this.damageFriendlyDragon(1); }
           else if (this.friendlySpiders && this.friendlySpiders.filter(s => s.alive).length > 0) { this.damageFriendlySpider(1); }
           else if (this.friendlyCrow && this.friendlyCrowHp > 0) { this.damageFriendlyCrow(1); }
           else { const pet = this.saveData.bag.find(p => p.isActive && p.alive); if (pet) { pet.hp = Math.max(0, pet.hp - 1); Save.save(this.saveData); this.updateHpBar(); } }
@@ -2514,6 +2553,7 @@ class MapScene extends Phaser.Scene {
         const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, spider.x, spider.y);
         if (dist < 35) {
           if (this.skeletonKing && this.skeletonKingHp > 0) { this.damageSkeletonKing(1); }
+          else if (this.friendlyDragon && this.friendlyDragonHp > 0) { this.damageFriendlyDragon(1); }
           else if (this.friendlySpiders && this.friendlySpiders.filter(s => s.alive).length > 0) { this.damageFriendlySpider(1); }
           else if (this.friendlyCrow && this.friendlyCrowHp > 0) { this.damageFriendlyCrow(1); }
           else { const pet = this.saveData.bag.find(p => p.isActive && p.alive); if (pet) { pet.hp = Math.max(0, pet.hp - 1); Save.save(this.saveData); this.updateHpBar(); } }
@@ -2577,6 +2617,7 @@ class MapScene extends Phaser.Scene {
         if (dist < 35) {
           // 해골왕 → 아군거미 → 아군까마귀 → 펫 순서로 데미지
           if (this.skeletonKing && this.skeletonKingHp > 0) { this.damageSkeletonKing(1); }
+          else if (this.friendlyDragon && this.friendlyDragonHp > 0) { this.damageFriendlyDragon(1); }
           else if (this.friendlySpiders && this.friendlySpiders.filter(s => s.alive).length > 0) { this.damageFriendlySpider(1); }
           else if (this.friendlyCrow && this.friendlyCrowHp > 0) { this.damageFriendlyCrow(1); }
           else { const pet = this.saveData.bag.find(p => p.isActive && p.alive); if (pet) { pet.hp = Math.max(0, pet.hp - 1); Save.save(this.saveData); this.updateHpBar(); } }
@@ -2613,6 +2654,14 @@ class MapScene extends Phaser.Scene {
       this.skeletonKing.x += (tx - this.skeletonKing.x) * 0.12;
       this.skeletonKing.y += (ty - this.skeletonKing.y) * 0.12;
       if (this.skeletonKing.label) { this.skeletonKing.label.x = this.skeletonKing.x; this.skeletonKing.label.y = this.skeletonKing.y - 25; }
+    }
+
+    // 수호용 추적 (왕관)
+    if (this.friendlyDragon && this.friendlyDragonHp > 0 && this.player) {
+      const tx = this.player.x - 45, ty = this.player.y - 50;
+      this.friendlyDragon.x += (tx - this.friendlyDragon.x) * 0.12;
+      this.friendlyDragon.y += (ty - this.friendlyDragon.y) * 0.12;
+      if (this.friendlyDragon.label) { this.friendlyDragon.label.x = this.friendlyDragon.x; this.friendlyDragon.label.y = this.friendlyDragon.y - 25; }
     }
 
     // 미니맵 플레이어 점 업데이트
