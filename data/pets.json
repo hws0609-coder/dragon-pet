@@ -89,6 +89,50 @@
       "isLegend": true
     },
     {
+      "id": "ocean-dragon",
+      "name": "바다 드래곤",
+      "grade": "legend",
+      "type": "물",
+      "img": {
+        "lv1": "assets/pets/ocean-dragon-lv1.png",
+        "lv2": "assets/pets/ocean-dragon-lv2.png",
+        "lv3": "assets/pets/ocean-dragon-lv3.png",
+        "lv4": "assets/pets/ocean-dragon-lv4.png",
+        "lv5": "assets/pets/ocean-dragon-lv5.png"
+      },
+      "baseAtk": {
+        "min": 1,
+        "max": 10
+      },
+      "baseHp": 20,
+      "wildZones": [
+        1
+      ],
+      "isLegend": true
+    },
+    {
+      "id": "rock-dragon",
+      "name": "바위 드래곤",
+      "grade": "legend",
+      "type": "땅",
+      "img": {
+        "lv1": "assets/pets/rock-dragon-lv1.png",
+        "lv2": "assets/pets/rock-dragon-lv2.png",
+        "lv3": "assets/pets/rock-dragon-lv3.png",
+        "lv4": "assets/pets/rock-dragon-lv4.png",
+        "lv5": "assets/pets/rock-dragon-lv5.png"
+      },
+      "baseAtk": {
+        "min": 1,
+        "max": 10
+      },
+      "baseHp": 20,
+      "wildZones": [
+        6
+      ],
+      "isLegend": true
+    },
+    {
       "id": "ice-horse",
       "name": "얼음 말",
       "grade": "rare",
@@ -218,6 +262,52 @@
       "wildZones": [
         6,
         7
+      ],
+      "isLegend": false
+    },
+    {
+      "id": "poison-snake",
+      "name": "독뱀",
+      "grade": "rare",
+      "type": "독",
+      "img": {
+        "lv1": "assets/pets/poison-snake-lv1.png",
+        "lv2": "assets/pets/poison-snake-lv2.png",
+        "lv3": "assets/pets/poison-snake-lv3.png",
+        "lv4": "assets/pets/poison-snake-lv4.png",
+        "lv5": "assets/pets/poison-snake-lv5.png"
+      },
+      "baseAtk": {
+        "min": 1,
+        "max": 10
+      },
+      "baseHp": 20,
+      "wildZones": [
+        4,
+        5
+      ],
+      "isLegend": false
+    },
+    {
+      "id": "storm-eagle",
+      "name": "폭풍 독수리",
+      "grade": "rare",
+      "type": "바람",
+      "img": {
+        "lv1": "assets/pets/storm-eagle-lv1.png",
+        "lv2": "assets/pets/storm-eagle-lv2.png",
+        "lv3": "assets/pets/storm-eagle-lv3.png",
+        "lv4": "assets/pets/storm-eagle-lv4.png",
+        "lv5": "assets/pets/storm-eagle-lv5.png"
+      },
+      "baseAtk": {
+        "min": 1,
+        "max": 10
+      },
+      "baseHp": 20,
+      "wildZones": [
+        7,
+        9
       ],
       "isLegend": false
     },
@@ -448,6 +538,29 @@
         5
       ],
       "isLegend": false
+    },
+    {
+      "id": "poison-centipede",
+      "name": "독 지네",
+      "grade": "normal",
+      "type": "독",
+      "img": {
+        "lv1": "assets/pets/poison-centipede-lv1.png",
+        "lv2": "assets/pets/poison-centipede-lv2.png",
+        "lv3": "assets/pets/poison-centipede-lv3.png",
+        "lv4": "assets/pets/poison-centipede-lv4.png",
+        "lv5": "assets/pets/poison-centipede-lv5.png"
+      },
+      "baseAtk": {
+        "min": 1,
+        "max": 10
+      },
+      "baseHp": 20,
+      "wildZones": [
+        4,
+        6
+      ],
+      "isLegend": false
     }
   ],
   "levels": {
@@ -532,7 +645,11 @@
     "빛": [
       "어둠"
     ],
-    "노말": []
+    "노말": [],
+    "독": [
+      "풀",
+      "페어리"
+    ]
   },
   "battleRule": {
     "skillMultiplier": 1.5,
@@ -925,7 +1042,7 @@
         "water-turtle",
         "water-frog"
       ],
-      "legendPet": null
+      "legendPet": "ocean-dragon"
     },
     {
       "id": 2,
@@ -955,7 +1072,9 @@
       "wildPool": [
         "dark-cat",
         "cave-bat",
-        "esper-owl"
+        "esper-owl",
+        "poison-snake",
+        "poison-centipede"
       ],
       "legendPet": null
     },
@@ -967,7 +1086,8 @@
         "normal-dog",
         "fairy-rabbit",
         "thunder-hamster",
-        "water-frog"
+        "water-frog",
+        "poison-snake"
       ],
       "legendPet": null
     },
@@ -979,9 +1099,10 @@
         "sand-camel",
         "star-fox",
         "thunder-hamster",
-        "grass-hedgehog"
+        "grass-hedgehog",
+        "poison-centipede"
       ],
-      "legendPet": null
+      "legendPet": "rock-dragon"
     },
     {
       "id": 7,
@@ -991,7 +1112,8 @@
         "cloud-sheep",
         "star-fox",
         "esper-owl",
-        "rainbow-butterfly"
+        "rainbow-butterfly",
+        "storm-eagle"
       ],
       "legendPet": "thunder-dragon"
     },
@@ -1027,7 +1149,8 @@
         "cave-bat",
         "rainbow-butterfly",
         "thunder-hamster",
-        "water-frog"
+        "water-frog",
+        "storm-eagle"
       ],
       "legendPet": "aurora-dragon"
     }
