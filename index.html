@@ -1155,29 +1155,43 @@ class MapScene extends Phaser.Scene {
   showAngelDialog() {
     const { width, height } = this.scale;
     const allObjs = [];
+    const activePet = this.saveData.bag.find(p => p.isActive && p.alive);
+    const isEsper = !!(activePet && activePet.type === '에스퍼');
+    const chance = isEsper ? 0.10 : 0.05;
+
     const overlay = this.add.rectangle(width/2, height/2, width, height, 0x000000, 0.7).setScrollFactor(0).setDepth(40).setOrigin(0.5);
-    const panel = this.add.rectangle(width/2, height/2, 340, 280, 0x2a1040).setScrollFactor(0).setDepth(41).setOrigin(0.5);
+    const panel = this.add.rectangle(width/2, height/2, 340, isEsper ? 320 : 280, 0x2a1040).setScrollFactor(0).setDepth(41).setOrigin(0.5);
     panel.setStrokeStyle(2, 0xf0abfc);
-    const angelEmoji = this.add.text(width/2, height/2 - 100, '👼', { fontSize: '50px' }).setScrollFactor(0).setDepth(42).setOrigin(0.5);
-    const msgTxt = this.add.text(width/2, height/2 - 40, '내가 무지개 조각을\n만들어줄게! 🌈', {
-      fontSize: '16px', fontFamily: 'Malgun Gothic', color: '#f0abfc',
+    const angelEmoji = this.add.text(width/2, height/2 - (isEsper ? 120 : 100), '👼', { fontSize: '50px' }).setScrollFactor(0).setDepth(42).setOrigin(0.5);
+    const msgTxt = this.add.text(width/2, height/2 - (isEsper ? 60 : 40), '너의 소원을 들어줄\n무지개 조각을 만들어줄게! 🌈', {
+      fontSize: '15px', fontFamily: 'Malgun Gothic', color: '#f0abfc',
       fontStyle: 'bold', align: 'center', stroke: '#000', strokeThickness: 2,
     }).setScrollFactor(0).setDepth(42).setOrigin(0.5);
-    const subTxt = this.add.text(width/2, height/2 + 10, '(성공 확률 5%)', {
-      fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#d8b4fe',
+    allObjs.push(overlay, panel, angelEmoji, msgTxt);
+
+    if (isEsper) {
+      const boostTxt = this.add.text(width/2, height/2 - 15, `🔮 에스퍼 펫의 힘으로 성공 확률 UP!`, {
+        fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#e879f9',
+        fontStyle: 'bold', stroke: '#000', strokeThickness: 2,
+      }).setScrollFactor(0).setDepth(42).setOrigin(0.5);
+      allObjs.push(boostTxt);
+    }
+
+    const subTxt = this.add.text(width/2, height/2 + (isEsper ? 10 : 10), `(성공 확률 ${isEsper ? '10%' : '5%'}${isEsper ? '' : ' · 에스퍼 펫 동반 시 확률 UP!'})`, {
+      fontSize: '11px', fontFamily: 'Malgun Gothic', color: '#d8b4fe',
     }).setScrollFactor(0).setDepth(42).setOrigin(0.5);
-    allObjs.push(overlay, panel, angelEmoji, msgTxt, subTxt);
+    allObjs.push(subTxt);
 
     // 확인 버튼
-    const okBtn = this.add.rectangle(width/2, height/2 + 55, 160, 40, 0x7c3aed).setScrollFactor(0).setDepth(42).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    const okTxt = this.add.text(width/2, height/2 + 55, '✨ 부탁할게!', {
+    const okBtn = this.add.rectangle(width/2, height/2 + (isEsper ? 55 : 55), 160, 40, 0x7c3aed).setScrollFactor(0).setDepth(42).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    const okTxt = this.add.text(width/2, height/2 + (isEsper ? 55 : 55), '✨ 부탁할게!', {
       fontSize: '15px', fontFamily: 'Malgun Gothic', color: '#fff',
     }).setScrollFactor(0).setDepth(43).setOrigin(0.5);
     allObjs.push(okBtn, okTxt);
 
     // 닫기 버튼
-    const closeBtn = this.add.rectangle(width/2, height/2 + 105, 160, 36, 0x374151).setScrollFactor(0).setDepth(42).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    const closeTxt = this.add.text(width/2, height/2 + 105, '✕ 아니야 괜찮아', {
+    const closeBtn = this.add.rectangle(width/2, height/2 + (isEsper ? 105 : 105), 160, 36, 0x374151).setScrollFactor(0).setDepth(42).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    const closeTxt = this.add.text(width/2, height/2 + (isEsper ? 105 : 105), '✕ 아니야 괜찮아', {
       fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#9ca3af',
     }).setScrollFactor(0).setDepth(43).setOrigin(0.5);
     allObjs.push(closeBtn, closeTxt);
@@ -1188,7 +1202,7 @@ class MapScene extends Phaser.Scene {
       allObjs.forEach(o => o.destroy());
       // 천사 사용 처리
       this.saveData.mapObjects.angel.used = true;
-      const success = Math.random() < 0.05;
+      const success = Math.random() < chance;
       if (success) {
         this.saveData.items.rainbowFragment++;
         Save.save(this.saveData);
