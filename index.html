@@ -674,7 +674,7 @@ class MapScene extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(3).setAlpha(0.85);
       }
       // 진입 안내 텍스트 (상단 + 중앙 반복)
-      this.add.text(vx + vw/2, vy + 30, '⚠️ 덩굴 지대 — 이동 속도 감소! ⚠️', {
+      this.add.text(vx + vw/2, vy + 30, '⚠️ 덩굴 지대 — 이동 속도 -50%! ⚠️', {
         fontSize: '18px', fontFamily: 'Malgun Gothic', color: '#fde68a',
         fontStyle: 'bold', stroke: '#000', strokeThickness: 5,
       }).setOrigin(0.5).setDepth(4);
@@ -1548,9 +1548,9 @@ class MapScene extends Phaser.Scene {
         const activePet = this.saveData.bag.find(p => p.isActive && p.alive);
         const isGrassType = activePet && activePet.type === '풀';
         if (inVine && !isGrassType) {
-          spd = Math.max(1, spd - 2);
+          spd = Math.max(1, spd * 0.5);
           if (!this.vineHud) {
-            this.vineHud = this.add.text(this.scale.width/2, 90, '🌿 덩굴 지대! 속도 -2', {
+            this.vineHud = this.add.text(this.scale.width/2, 90, '🌿 덩굴 지대! 속도 -50%', {
               fontSize:'13px', fontFamily:'Malgun Gothic', color:'#86efac',
               fontStyle:'bold', stroke:'#000', strokeThickness:3,
             }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
