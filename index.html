@@ -980,11 +980,7 @@ class MapScene extends Phaser.Scene {
           delay: 3000,
           loop: true,
           callback: () => {
-            const pet = this.saveData.bag.find(p => p.isActive && p.alive);
-            if (!pet) return;
-            pet.hp = Math.max(0, pet.hp - 1);
-            Save.save(this.saveData);
-            this.updateHpBar();
+            this.damageActivePet(1);
             // 데미지 이펙트
             const { width, height } = this.scale;
             const dmgTxt = this.add.text(width - 80, height - 80, '🔥 -1', {
@@ -1043,11 +1039,7 @@ class MapScene extends Phaser.Scene {
             delay: 3000,
             loop: true,
             callback: () => {
-              const pet = this.saveData.bag.find(p => p.isActive && p.alive);
-              if (!pet) return;
-              pet.hp = Math.max(0, pet.hp - 1);
-              Save.save(this.saveData);
-              this.updateHpBar();
+              this.damageActivePet(1);
               const { width, height } = this.scale;
               const dmgTxt = this.add.text(width - 80, height - 80, '💧 -1', {
                 fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#facc15',
@@ -2068,7 +2060,9 @@ class MapScene extends Phaser.Scene {
     const allObjs = [];
     const activePet = this.saveData.bag.find(p => p.isActive && p.alive);
     const isEsper = !!(activePet && (activePet.type === '에스퍼' || activePet.type === '페어리'));
-    const chance = isEsper ? 0.10 : 0.05;
+    const esperChances = { 1: 0.10, 2: 0.15, 3: 0.20, 4: 0.25, 5: 0.30 };
+    const chance = isEsper ? (esperChances[activePet.level] || 0.10) : 0.05;
+    const chancePct = Math.round(chance * 100);
 
     const overlay = this.add.rectangle(width/2, height/2, width, height, 0x000000, 0.7).setScrollFactor(0).setDepth(40).setOrigin(0.5);
     const panel = this.add.rectangle(width/2, height/2, 340, isEsper ? 320 : 280, 0x2a1040).setScrollFactor(0).setDepth(41).setOrigin(0.5);
@@ -2081,14 +2075,14 @@ class MapScene extends Phaser.Scene {
     allObjs.push(overlay, panel, angelEmoji, msgTxt);
 
     if (isEsper) {
-      const boostTxt = this.add.text(width/2, height/2 - 15, `🔮 에스퍼/페어리 펫의 힘으로 성공 확률 UP!`, {
+      const boostTxt = this.add.text(width/2, height/2 - 15, `🔮 Lv${activePet.level} 에스퍼/페어리 → 성공 확률 ${chancePct}%!`, {
         fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#e879f9',
         fontStyle: 'bold', stroke: '#000', strokeThickness: 2,
       }).setScrollFactor(0).setDepth(42).setOrigin(0.5);
       allObjs.push(boostTxt);
     }
 
-    const subTxt = this.add.text(width/2, height/2 + (isEsper ? 10 : 10), `(성공 확률 ${isEsper ? '10%' : '5%'}${isEsper ? '' : ' · 에스퍼/페어리 펫 동반 시 확률 UP!'})`, {
+    const subTxt = this.add.text(width/2, height/2 + (isEsper ? 10 : 10), `(성공 확률 ${chancePct}%${isEsper ? '' : ' · 에스퍼/페어리 펫 동반 시 확률 UP!'})`, {
       fontSize: '11px', fontFamily: 'Malgun Gothic', color: '#d8b4fe',
     }).setScrollFactor(0).setDepth(42).setOrigin(0.5);
     allObjs.push(subTxt);
@@ -2689,27 +2683,7 @@ class MapScene extends Phaser.Scene {
               if (this.reflectShield && this.reflectShieldHp > 0) { this.damageReflectShield(); return; }
               if (this.friendlySpiders && this.friendlySpiders.filter(s => s.alive).length > 0) { this.damageFriendlySpider(1); return; }
               if (this.friendlyCrow && this.friendlyCrowHp > 0) { this.damageFriendlyCrow(1); return; }
-              const pet = this.saveData.bag.find(p => p.isActive && p.alive);
-              if (!pet) return;
-              pet.hp = Math.max(0, pet.hp - 1);
-              Save.save(this.saveData);
-              this.updateHpBar();
-              const { width, height } = this.scale;
-              const dt = this.add.text(width - 80, height - 80, '😈 -1', {
-                fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#f87171',
-                fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
-              }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
-              this.tweens.add({ targets: dt, y: dt.y - 30, alpha: 0, duration: 800, onComplete: () => dt.destroy() });
-              if (pet.hp <= 0) {
-                pet.alive = false;
-                Save.save(this.saveData);
-                if (this.devilDmgTimer) { this.devilDmgTimer.remove(); this.devilDmgTimer = null; }
-                const ft = this.add.text(width/2, height/2, '😈 펫이 악마에게 쓰러졌어요!', {
-                  fontSize: '18px', fontFamily: 'Malgun Gothic', color: '#f87171',
-                  fontStyle: 'bold', stroke: '#000', strokeThickness: 4,
-                }).setScrollFactor(0).setDepth(30).setOrigin(0.5);
-                this.time.delayedCall(2000, () => { ft.destroy(); this.scene.restart({ saveData: this.saveData }); });
-              }
+              this.damageActivePet(1);
             },
           });
         }
@@ -2736,7 +2710,7 @@ class MapScene extends Phaser.Scene {
           else if (this.reflectShield && this.reflectShieldHp > 0) { this.damageReflectShield(); }
           else if (this.friendlySpiders && this.friendlySpiders.filter(s => s.alive).length > 0) { this.damageFriendlySpider(1); }
           else if (this.friendlyCrow && this.friendlyCrowHp > 0) { this.damageFriendlyCrow(1); }
-          else { const pet = this.saveData.bag.find(p => p.isActive && p.alive); if (pet) { pet.hp = Math.max(0, pet.hp - 1); Save.save(this.saveData); this.updateHpBar(); } }
+          else { this.damageActivePet(1); }
           this.killCrow(crow);
         }
       });
@@ -2802,7 +2776,7 @@ class MapScene extends Phaser.Scene {
           else if (this.reflectShield && this.reflectShieldHp > 0) { this.damageReflectShield(); }
           else if (this.friendlySpiders && this.friendlySpiders.filter(s => s.alive).length > 0) { this.damageFriendlySpider(1); }
           else if (this.friendlyCrow && this.friendlyCrowHp > 0) { this.damageFriendlyCrow(1); }
-          else { const pet = this.saveData.bag.find(p => p.isActive && p.alive); if (pet) { pet.hp = Math.max(0, pet.hp - 1); Save.save(this.saveData); this.updateHpBar(); } }
+          else { this.damageActivePet(1); }
           this.killSpider(spider);
         }
       });
@@ -2869,7 +2843,7 @@ class MapScene extends Phaser.Scene {
           else if (this.reflectShield && this.reflectShieldHp > 0) { this.damageReflectShield(); }
           else if (this.friendlySpiders && this.friendlySpiders.filter(s => s.alive).length > 0) { this.damageFriendlySpider(1); }
           else if (this.friendlyCrow && this.friendlyCrowHp > 0) { this.damageFriendlyCrow(1); }
-          else { const pet = this.saveData.bag.find(p => p.isActive && p.alive); if (pet) { pet.hp = Math.max(0, pet.hp - 1); Save.save(this.saveData); this.updateHpBar(); } }
+          else { this.damageActivePet(1); }
           this.killSkeleton(sk);
         }
       });
@@ -3133,6 +3107,46 @@ class MapScene extends Phaser.Scene {
     const pct = Math.max(0, Math.min(pet.hp / pet.maxHp, 1));
     this.hudHpFill.setDisplaySize(this.hudHpBarW * Math.max(pct, 0.001), 8);
     this.hudHpText.setText(`HP ${pet.hp}/${pet.maxHp}`);
+  }
+
+  damageActivePet(amount) {
+    const pet = this.saveData.bag.find(p => p.isActive && p.alive);
+    if (!pet) return;
+    pet.hp = Math.max(0, pet.hp - amount);
+    Save.save(this.saveData);
+    this.updateHpBar();
+    if (pet.hp <= 0) {
+      pet.alive = false;
+      pet.isActive = false;
+      const next = this.saveData.bag.find(p => p.alive && p.hp > 0);
+      const { width, height } = this.scale;
+      if (next) {
+        next.isActive = true;
+        Save.save(this.saveData);
+        const msg = this.add.text(width/2, height/2 + 70, `💀 ${pet.name} 사망! → ${next.name} 교체!`, {
+          fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#fb7185',
+          fontStyle: 'bold', stroke: '#000', strokeThickness: 3, align: 'center',
+        }).setScrollFactor(0).setDepth(30).setOrigin(0.5);
+        this.tweens.add({ targets: msg, alpha: 0, duration: 2000, delay: 1000, onComplete: () => msg.destroy() });
+        this.updateHpBar();
+        // 펫 스프라이트 교체
+        if (this.petSprite) {
+          const pd = PETS_DATA.pets.find(p => p.id === next.id);
+          if (pd) {
+            const texKey = `${pd.id}_lv${next.level}`;
+            if (this.textures.exists(texKey)) { this.petSprite.setTexture(texKey); }
+            else { this.petSprite.destroy(); this.petSprite = this.add.text(this.player.x, this.player.y - 50, pd.emoji || '🐾', { fontSize: '28px' }).setOrigin(0.5).setDepth(6); }
+          }
+        }
+      } else {
+        Save.save(this.saveData);
+        const msg = this.add.text(width/2, height/2, '💀 모든 펫이 쓰러졌어요!\n수의사에게 가세요!', {
+          fontSize: '16px', fontFamily: 'Malgun Gothic', color: '#fb7185',
+          fontStyle: 'bold', stroke: '#000', strokeThickness: 4, align: 'center',
+        }).setScrollFactor(0).setDepth(30).setOrigin(0.5);
+        this.tweens.add({ targets: msg, alpha: 0, duration: 3000, delay: 2000, onComplete: () => msg.destroy() });
+      }
+    }
   }
 }
 
