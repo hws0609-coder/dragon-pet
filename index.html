@@ -2745,7 +2745,7 @@ class ShopScene extends Phaser.Scene {
     const cBtn=this.add.rectangle(width/2,height/2+225,150,38,0x374151).setDepth(42).setOrigin(0.5).setInteractive({useHandCursor:true});
     this.add.text(width/2,height/2+225,'✕ 닫기',{fontSize:'14px',fontFamily:'Malgun Gothic',color:'#9ca3af'}).setDepth(43).setOrigin(0.5);
     allObjs.push(cBtn);
-    cBtn.on('pointerdown',()=>allObjs.forEach(o=>o.destroy()));
+    cBtn.on('pointerdown',()=>{ if(typeof itemObjs!=='undefined') itemObjs.forEach(o=>o.destroy()); allObjs.forEach(o=>o.destroy()); });
   }
 
   showConsumableSellMenu() {
