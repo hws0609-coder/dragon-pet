@@ -45,6 +45,7 @@ const SOUND_KEYS = {
   bgm7:   'assets/sounds/bgm-zone7.mp3',    // 구름
   bgm8:   'assets/sounds/bgm-zone8.mp3',    // 무지개
   bgm9:   'assets/sounds/bgm-zone9.mp3',    // 오로라
+  thunder:'assets/sounds/thunder.mp3',      // 번개
 };
 
 const Sound = {
@@ -977,6 +978,172 @@ class MapScene extends Phaser.Scene {
       }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
       this.time.delayedCall(3000, () => { if(this.desertHud) { this.desertHud.destroy(); this.desertHud = null; } });
     }
+
+    // ── 얼음 지역(1번) 빙결 효과: 3초 정지 시 얼음 ──
+    this.iceFreeze = false;
+    this.iceIdle = 0;
+    this.iceImmune = false;
+    if (zoneId === 1) {
+      const activePet = this.saveData.bag.find(p => p.isActive && p.alive);
+      this.iceImmune = !!(activePet && activePet.type === '얼음');
+
+      // 이전에 빙결된 상태로 돌아왔을 때
+      if (this.saveData.frozen && !this.iceImmune) {
+        this.iceFreeze = true;
+        this.time.delayedCall(100, () => this.showFreezeOverlay());
+      } else {
+        this.saveData.frozen = false;
+      }
+
+      // HUD 안내
+      const iceMsg = this.iceImmune
+        ? '❄️ 얼음 속성 저항! 빙결 면역'
+        : '❄️ 얼음 지역! 3초간 멈추면 얼어요';
+      const iceColor = this.iceImmune ? '#67e8f9' : '#9ca3af';
+      this.iceHud = this.add.text(this.scale.width/2, 90, iceMsg, {
+        fontSize: '13px', fontFamily: 'Malgun Gothic', color: iceColor,
+        fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+      }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
+      this.time.delayedCall(3000, () => { if(this.iceHud) { this.iceHud.destroy(); this.iceHud = null; } });
+    }
+
+    // ── 구름 지역(7번) 번개 효과: 7~10초마다 번개 + HP -10 ──
+    this.lightningTimer = null;
+    if (zoneId === 7) {
+      const activePet = this.saveData.bag.find(p => p.isActive && p.alive);
+      const isResist = !!(activePet && (activePet.type === '전기' || activePet.type === '바람'));
+
+      if (!isResist) {
+        const scheduleLightning = () => {
+          const delay = Phaser.Math.Between(7000, 10000);
+          this.lightningTimer = this.time.delayedCall(delay, () => {
+            this.triggerLightning();
+            scheduleLightning();
+          });
+        };
+        scheduleLightning();
+      }
+
+      // HUD 안내
+      const stormMsg = isResist
+        ? '⚡ 전기/바람 속성 저항! 번개 면역'
+        : '⛈️ 구름 지역! 번개를 조심하세요!';
+      const stormColor = isResist ? '#eab308' : '#9ca3af';
+      this.stormHud = this.add.text(this.scale.width/2, 90, stormMsg, {
+        fontSize: '13px', fontFamily: 'Malgun Gothic', color: stormColor,
+        fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+      }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
+      this.time.delayedCall(3000, () => { if(this.stormHud) { this.stormHud.destroy(); this.stormHud = null; } });
+    }
+  }
+
+  triggerLightning() {
+    const { width, height } = this.scale;
+
+    // 사운드
+    Sound.play(this, 'thunder', 0.6);
+
+    // 1단계: 화면 번쩍 (흰색 플래시 2회)
+    const flash = this.add.rectangle(width/2, height/2, width, height, 0xffffff, 0.85)
+      .setScrollFactor(0).setDepth(26).setOrigin(0.5);
+    this.tweens.add({
+      targets: flash, alpha: 0, duration: 120, yoyo: true, repeat: 2,
+      onComplete: () => flash.destroy(),
+    });
+
+    // 2단계: 큰 번개 이모지들 (맵 곳곳에)
+    const bolts = [];
+    for (let i = 0; i < 8; i++) {
+      const bx = Phaser.Math.Between(40, width - 40);
+      const by = Phaser.Math.Between(40, height - 40);
+      const bolt = this.add.text(bx, by, '⚡', {
+        fontSize: Phaser.Math.Between(40, 80) + 'px',
+      }).setScrollFactor(0).setDepth(27).setOrigin(0.5).setAlpha(0);
+      bolts.push(bolt);
+      // 깜빡깜빡 등장
+      this.tweens.add({
+        targets: bolt, alpha: 1, duration: 80,
+        delay: i * 60,
+        yoyo: true, repeat: 2,
+        onComplete: () => bolt.destroy(),
+      });
+    }
+
+    // 3단계: 중앙 대형 번개
+    const mainBolt = this.add.text(width/2, height/2 - 50, '⚡⚡⚡', {
+      fontSize: '60px',
+    }).setScrollFactor(0).setDepth(27).setOrigin(0.5).setAlpha(0);
+    this.tweens.add({
+      targets: mainBolt, alpha: 1, scaleX: 1.3, scaleY: 1.3, duration: 100,
+      delay: 200, yoyo: true, repeat: 1,
+      onComplete: () => mainBolt.destroy(),
+    });
+
+    // 4단계: HP 데미지
+    const pet = this.saveData.bag.find(p => p.isActive && p.alive);
+    if (pet) {
+      pet.hp = Math.max(0, pet.hp - 10);
+      Save.save(this.saveData);
+
+      // 데미지 텍스트
+      const dmgTxt = this.add.text(width/2, height/2 + 30, '⚡ -10 HP!', {
+        fontSize: '20px', fontFamily: 'Malgun Gothic', color: '#fde047',
+        fontStyle: 'bold', stroke: '#000', strokeThickness: 4,
+      }).setScrollFactor(0).setDepth(28).setOrigin(0.5);
+      this.tweens.add({
+        targets: dmgTxt, y: dmgTxt.y - 40, alpha: 0,
+        duration: 1200, delay: 400, onComplete: () => dmgTxt.destroy(),
+      });
+
+      // 기절 처리
+      if (pet.hp <= 0) {
+        pet.alive = false;
+        Save.save(this.saveData);
+        if (this.lightningTimer) this.lightningTimer.remove();
+        const faintTxt = this.add.text(width/2, height/2 + 70, '⚡ 펫이 번개에 기절했어요!', {
+          fontSize: '18px', fontFamily: 'Malgun Gothic', color: '#fde047',
+          fontStyle: 'bold', stroke: '#000', strokeThickness: 4,
+        }).setScrollFactor(0).setDepth(30).setOrigin(0.5);
+        this.time.delayedCall(2000, () => {
+          faintTxt.destroy();
+          this.scene.restart({ saveData: this.saveData });
+        });
+      }
+    }
+  }
+
+  showFreezeOverlay() {
+    const { width, height } = this.scale;
+    this.freezeObjs = [];
+    const overlay = this.add.rectangle(width/2, height/2, width, height, 0x87ceeb, 0.4).setScrollFactor(0).setDepth(28).setOrigin(0.5);
+    const iceTxt = this.add.text(width/2, height/2 - 30, '🥶 몸이 얼었어요!', {
+      fontSize: '22px', fontFamily: 'Malgun Gothic', color: '#e0f2fe',
+      fontStyle: 'bold', stroke: '#1e3a5f', strokeThickness: 5,
+    }).setScrollFactor(0).setDepth(29).setOrigin(0.5);
+    const helpTxt = this.add.text(width/2, height/2 + 15, '가방에서 💊 체력 회복 물약을 사용하세요!', {
+      fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#bae6fd',
+      fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+    }).setScrollFactor(0).setDepth(29).setOrigin(0.5);
+    // 가방 바로가기 버튼
+    const bagBtn = this.add.rectangle(width/2, height/2 + 60, 160, 40, 0x4c1d95).setScrollFactor(0).setDepth(29).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    const bagTxt = this.add.text(width/2, height/2 + 60, '🎒 가방 열기', {
+      fontSize: '15px', fontFamily: 'Malgun Gothic', color: '#fff',
+    }).setScrollFactor(0).setDepth(29).setOrigin(0.5);
+    bagBtn.on('pointerdown', () => {
+      Save.save(this.saveData);
+      this.scene.start('BagScene', { saveData: this.saveData });
+    });
+    // 얼음 파티클
+    for (let i = 0; i < 12; i++) {
+      const flake = this.add.text(
+        Phaser.Math.Between(50, width - 50),
+        Phaser.Math.Between(50, height - 50),
+        '❄️', { fontSize: Phaser.Math.Between(16, 28) + 'px' }
+      ).setScrollFactor(0).setDepth(28).setAlpha(0.7);
+      this.tweens.add({ targets: flake, y: flake.y + 40, alpha: 0.3, duration: Phaser.Math.Between(1500, 3000), yoyo: true, repeat: -1 });
+      this.freezeObjs.push(flake);
+    }
+    this.freezeObjs.push(overlay, iceTxt, helpTxt, bagBtn, bagTxt);
   }
 
   drawMapDecoration(theme) {
@@ -1341,6 +1508,10 @@ class MapScene extends Phaser.Scene {
 
   update() {
     if (!this.player) return;
+
+    // 얼음 지역 빙결 시 이동 차단
+    if (this.iceFreeze) return;
+
     let dx = this.moveDir.x, dy = this.moveDir.y;
 
     // 키보드
@@ -1348,6 +1519,22 @@ class MapScene extends Phaser.Scene {
     if (this.cursors.right.isDown || this.wasd.right.isDown) dx =  1;
     if (this.cursors.up.isDown    || this.wasd.up.isDown)    dy = -1;
     if (this.cursors.down.isDown  || this.wasd.down.isDown)  dy =  1;
+
+    // 얼음 지역 정지 시간 추적
+    if (this.saveData.mapProgress.zone === 1 && !this.iceImmune) {
+      if (dx === 0 && dy === 0) {
+        this.iceIdle += this.game.loop.delta;
+        if (this.iceIdle >= 3000) {
+          this.iceFreeze = true;
+          this.saveData.frozen = true;
+          Save.save(this.saveData);
+          this.showFreezeOverlay();
+          return;
+        }
+      } else {
+        this.iceIdle = 0;
+      }
+    }
 
     if (dx !== 0 || dy !== 0) {
       const len = Math.sqrt(dx*dx + dy*dy);
@@ -2597,6 +2784,15 @@ class BagScene extends Phaser.Scene {
 
   useConsumable(key) {
     if (key === 'heal') {
+      // 빙결 해제 체크
+      if (this.saveData.frozen) {
+        this.saveData.frozen = false;
+        this.saveData.items.heal--;
+        Save.save(this.saveData);
+        this.showMsg('💊 물약으로 얼음이 녹았어요!');
+        this.time.delayedCall(700, () => this.scene.start('MapScene', { saveData: this.saveData }));
+        return;
+      }
       // 동행 펫(없으면 첫 살아있는 펫) HP 회복
       let target = this.saveData.bag.find(p => p.isActive && p.alive) || this.saveData.bag.find(p => p.alive);
       if (!target) { this.showMsg('회복할 펫이 없어요!'); return; }
