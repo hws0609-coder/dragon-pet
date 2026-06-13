@@ -654,6 +654,32 @@ class MapScene extends Phaser.Scene {
     // ── 오브젝트 배치 ──
     this.spawnObjects();
 
+    // ── 숲 지역(2번) 덩굴 지대: 맵 하단 1/3 ──
+    this.vineZone = null;
+    if (zoneId === 2) {
+      const vx = 0, vy = Math.round(this.MAP_H * 2 / 3);
+      const vw = this.MAP_W, vh = this.MAP_H - vy;
+      // 덩굴 배경 (어두운 초록, 배경 이미지 위)
+      this.add.rectangle(vx + vw/2, vy + vh/2, vw, vh, 0x0a3d0a, 0.45).setOrigin(0.5).setDepth(3);
+      // 덩굴 경계선
+      this.add.rectangle(vx + vw/2, vy, vw, 6, 0x2d8a2d, 0.8).setOrigin(0.5, 0).setDepth(3);
+      // 덩굴 장식
+      const vineEmojis = ['🌿','🍃','🌱','🪴','🌾'];
+      for (let i = 0; i < 40; i++) {
+        const ex = Phaser.Math.Between(vx + 30, vx + vw - 30);
+        const ey = Phaser.Math.Between(vy + 20, vy + vh - 20);
+        this.add.text(ex, ey, vineEmojis[i % vineEmojis.length], {
+          fontSize: Phaser.Math.Between(18, 32) + 'px',
+        }).setOrigin(0.5).setDepth(3).setAlpha(0.7);
+      }
+      // 진입 안내 텍스트
+      this.add.text(vx + vw/2, vy + 30, '⚠️ 덩굴 지대 — 이동 속도 감소!', {
+        fontSize: '16px', fontFamily: 'Malgun Gothic', color: '#86efac',
+        fontStyle: 'bold', stroke: '#000', strokeThickness: 4,
+      }).setOrigin(0.5).setDepth(4);
+      this.vineZone = { x: vx, y: vy, w: vw, h: vh };
+    }
+
     // ── 캐릭터 ──
     const startX = this.saveData.mapProgress.px || this.MAP_W / 2;
     const startY = this.saveData.mapProgress.py || this.MAP_H / 2;
@@ -819,29 +845,28 @@ class MapScene extends Phaser.Scene {
     if (zoneId === 4) {
       const activePet = this.saveData.bag.find(p => p.isActive && p.alive);
       const isDarkType = activePet && activePet.type === '어둠';
-      this.caveRadius = isDarkType ? 220 : 120;
 
-      // 어두운 오버레이 (화면 고정)
-      this.caveDark = this.add.rectangle(width/2, height/2, width + 100, height + 100, 0x000000, 0.88).setScrollFactor(0).setOrigin(0.5).setDepth(14);
-
-      // 스포트라이트 (화면 좌표 기준 마스크)
-      this.caveSpotlight = this.make.graphics();
-      this.caveSpotlight.fillStyle(0xffffff);
-      this.caveSpotlight.fillCircle(width/2, height/2, this.caveRadius);
-      const mask = this.caveSpotlight.createGeometryMask();
-      mask.invertAlpha = true;
-      this.caveDark.setMask(mask);
+      if (!isDarkType) {
+        // 어둠 속성이 아닐 때만 시야 제한
+        this.caveRadius = 120;
+        this.caveDark = this.add.rectangle(width/2, height/2, width + 100, height + 100, 0x000000, 0.88).setScrollFactor(0).setOrigin(0.5).setDepth(14);
+        this.caveSpotlight = this.make.graphics();
+        this.caveSpotlight.fillStyle(0xffffff);
+        this.caveSpotlight.fillCircle(width/2, height/2, this.caveRadius);
+        const mask = this.caveSpotlight.createGeometryMask();
+        mask.invertAlpha = true;
+        this.caveDark.setMask(mask);
+      }
 
       // HUD 안내
       const caveMsg = isDarkType
-        ? '🌑 어둠 속성 저항! 시야 확장'
+        ? '🌑 어둠 속성 저항! 맵 전체가 밝아요'
         : '🌑 동굴 지대! 시야가 좁아요';
       const caveColor = isDarkType ? '#c084fc' : '#9ca3af';
       this.caveHud = this.add.text(this.scale.width/2, 90, caveMsg, {
         fontSize:'13px', fontFamily:'Malgun Gothic', color: caveColor,
         fontStyle:'bold', stroke:'#000', strokeThickness:3,
       }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
-      // 3초 후 HUD 자동 숨김
       this.time.delayedCall(3000, () => { if(this.caveHud) { this.caveHud.destroy(); this.caveHud = null; } });
     }
   }
@@ -870,32 +895,6 @@ class MapScene extends Phaser.Scene {
     // 경계선
     const border = this.add.rectangle(this.MAP_W/2, this.MAP_H/2, this.MAP_W-4, this.MAP_H-4, 0x000000, 0).setOrigin(0.5);
     border.setStrokeStyle(4, 0xffffff, 0.3);
-
-    // 숲 지역(2번) 덩굴 지대: 맵 하단 1/3 영역, 통과 시 속도 감소
-    this.vineZone = null;
-    if (theme === 'forest') {
-      const vx = 0, vy = Math.round(this.MAP_H * 2 / 3);
-      const vw = this.MAP_W, vh = this.MAP_H - vy;
-      // 덩굴 배경 (어두운 초록)
-      this.add.rectangle(vx + vw/2, vy + vh/2, vw, vh, 0x0a3d0a, 0.45).setOrigin(0.5).setDepth(1);
-      // 덩굴 경계선
-      this.add.rectangle(vx + vw/2, vy, vw, 4, 0x2d8a2d, 0.7).setOrigin(0.5, 0).setDepth(1);
-      // 덩굴 장식
-      const vineEmojis = ['🌿','🍃','🌱','🪴','🌾'];
-      for (let i = 0; i < 40; i++) {
-        const ex = Phaser.Math.Between(vx + 30, vx + vw - 30);
-        const ey = Phaser.Math.Between(vy + 20, vy + vh - 20);
-        this.add.text(ex, ey, vineEmojis[i % vineEmojis.length], {
-          fontSize: Phaser.Math.Between(18, 32) + 'px',
-        }).setOrigin(0.5).setDepth(1).setAlpha(0.6);
-      }
-      // 진입 안내 텍스트
-      this.add.text(vx + vw/2, vy + 24, '⚠️ 덩굴 지대 — 이동 속도 감소!', {
-        fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#86efac',
-        fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
-      }).setOrigin(0.5).setDepth(2);
-      this.vineZone = { x: vx, y: vy, w: vw, h: vh };
-    }
   }
 
   spawnObjects() {
