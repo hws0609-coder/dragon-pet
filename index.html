@@ -1040,6 +1040,47 @@ class MapScene extends Phaser.Scene {
       }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
       this.time.delayedCall(3000, () => { if(this.stormHud) { this.stormHud.destroy(); this.stormHud = null; } });
     }
+
+    // ── 오로라 지역(9번) 블랙홀: 맵 전역 배회 + 근접 시 흡수 ──
+    this.blackHole = null;
+    this.bhPullRange = 200;
+    this.bhSuckRange = 50;
+    if (zoneId === 9) {
+      const activePet = this.saveData.bag.find(p => p.isActive && p.alive);
+      const isLightType = !!(activePet && activePet.type === '빛');
+
+      if (!isLightType) {
+        const bh = this.add.text(this.MAP_W / 2, this.MAP_H / 4, '🕳️', { fontSize: '70px' }).setOrigin(0.5).setDepth(8);
+        this.tweens.add({ targets: bh, scaleX: 1.15, scaleY: 1.15, duration: 800, yoyo: true, repeat: -1 });
+        this.tweens.add({ targets: bh, angle: 360, duration: 4000, repeat: -1 });
+        this.blackHole = bh;
+        this.moveBhToRandom();
+      }
+
+      // HUD 안내
+      const bhMsg = isLightType
+        ? '✨ 빛 속성 저항! 블랙홀 면역'
+        : '🕳️ 블랙홀을 조심하세요! 가까이 가면 빨려 들어가요!';
+      const bhColor = isLightType ? '#fde047' : '#c084fc';
+      const bhHud = this.add.text(this.scale.width/2, 90, bhMsg, {
+        fontSize: '12px', fontFamily: 'Malgun Gothic', color: bhColor,
+        fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+      }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
+      this.time.delayedCall(3000, () => bhHud.destroy());
+    }
+  }
+
+  moveBhToRandom() {
+    if (!this.blackHole) return;
+    const tx = Phaser.Math.Between(100, this.MAP_W - 100);
+    const ty = Phaser.Math.Between(100, this.MAP_H - 100);
+    const dist = Phaser.Math.Distance.Between(this.blackHole.x, this.blackHole.y, tx, ty);
+    const duration = Math.max(3000, dist * 3);
+    this.tweens.add({
+      targets: this.blackHole, x: tx, y: ty, duration,
+      ease: 'Sine.easeInOut',
+      onComplete: () => this.moveBhToRandom(),
+    });
   }
 
   triggerLightning() {
@@ -1698,6 +1739,22 @@ class MapScene extends Phaser.Scene {
           this.vineHud = null;
         }
       }
+      // 블랙홀 근접 시 속도 감소
+      if (this.blackHole) {
+        const bhDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.blackHole.x, this.blackHole.y);
+        if (bhDist < this.bhPullRange) {
+          spd = Math.max(1, spd - 8);
+          if (!this.bhHud) {
+            this.bhHud = this.add.text(this.scale.width/2, 115, '🕳️ 블랙홀의 인력! 속도 -8', {
+              fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#c084fc',
+              fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+            }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
+          }
+        } else if (this.bhHud) {
+          this.bhHud.destroy();
+          this.bhHud = null;
+        }
+      }
       const nx = this.player.x + ndx * spd;
       const ny = this.player.y + ndy * spd;
       this.player.x = Phaser.Math.Clamp(nx, 20, this.MAP_W - 20);
@@ -1738,6 +1795,38 @@ class MapScene extends Phaser.Scene {
       const { width } = this.scale;
       this.minimapDot.x = (width - 90) + (this.player.x / this.MAP_W) * 80;
       this.minimapDot.y = 22 + (this.player.y / this.MAP_H) * 58;
+    }
+
+    // 블랙홀 흡수 체크 (이동 여부와 무관하게 항상)
+    if (this.blackHole && this.player) {
+      const bhDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.blackHole.x, this.blackHole.y);
+      if (bhDist < this.bhSuckRange) {
+        // 흡수 연출 후 랜덤 위치 텔레포트
+        const { width, height } = this.scale;
+        const suckTxt = this.add.text(width/2, height/2, '🕳️ 블랙홀에 빨려 들어갔어요!', {
+          fontSize: '18px', fontFamily: 'Malgun Gothic', color: '#c084fc',
+          fontStyle: 'bold', stroke: '#000', strokeThickness: 4,
+        }).setScrollFactor(0).setDepth(30).setOrigin(0.5);
+        // 화면 플래시
+        const flash = this.add.rectangle(width/2, height/2, width, height, 0x2d0060, 0.7)
+          .setScrollFactor(0).setDepth(29).setOrigin(0.5);
+        // 랜덤 위치로 텔레포트
+        const newX = Phaser.Math.Between(100, this.MAP_W - 100);
+        const newY = Phaser.Math.Between(100, this.MAP_H - 100);
+        this.time.delayedCall(1200, () => {
+          this.player.x = newX;
+          this.player.y = newY;
+          this.saveData.mapProgress.px = newX;
+          this.saveData.mapProgress.py = newY;
+          Save.save(this.saveData);
+          flash.destroy();
+          suckTxt.destroy();
+          if (this.bhHud) { this.bhHud.destroy(); this.bhHud = null; }
+        });
+        // 블랙홀을 멀리 이동시켜서 연속 흡수 방지
+        this.blackHole.x = Phaser.Math.Between(100, this.MAP_W - 100);
+        this.blackHole.y = Phaser.Math.Between(100, this.MAP_H - 100);
+      }
     }
   }
 
