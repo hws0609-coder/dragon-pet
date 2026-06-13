@@ -922,6 +922,61 @@ class MapScene extends Phaser.Scene {
       }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
       this.time.delayedCall(3000, () => { if(this.heatHud) { this.heatHud.destroy(); this.heatHud = null; } });
     }
+
+    // ── 사막 지역(6번) 갈증 효과: 이동속도 -2 + 3초마다 HP -1 ──
+    this.desertSlow = false;
+    this.thirstTimer = null;
+    if (zoneId === 6) {
+      const activePet = this.saveData.bag.find(p => p.isActive && p.alive);
+      const isResist = activePet && (activePet.type === '물' || activePet.type === '땅');
+
+      if (!isResist) {
+        // 속도 감소
+        this.desertSlow = true;
+        this.SPEED = Math.max(1, this.SPEED - 2);
+
+        // HP 감소 타이머
+        if (activePet) {
+          this.thirstTimer = this.time.addEvent({
+            delay: 3000,
+            loop: true,
+            callback: () => {
+              const pet = this.saveData.bag.find(p => p.isActive && p.alive);
+              if (!pet) return;
+              pet.hp = Math.max(0, pet.hp - 1);
+              Save.save(this.saveData);
+              const { width, height } = this.scale;
+              const dmgTxt = this.add.text(width - 80, height - 80, '💧 -1', {
+                fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#facc15',
+                fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+              }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
+              this.tweens.add({ targets: dmgTxt, y: dmgTxt.y - 30, alpha: 0, duration: 800, onComplete: () => dmgTxt.destroy() });
+              if (pet.hp <= 0) {
+                pet.alive = false;
+                Save.save(this.saveData);
+                if (this.thirstTimer) this.thirstTimer.remove();
+                const faintTxt = this.add.text(width/2, height/2, '🏜️ 펫이 갈증으로 기절했어요!', {
+                  fontSize: '18px', fontFamily: 'Malgun Gothic', color: '#facc15',
+                  fontStyle: 'bold', stroke: '#000', strokeThickness: 4,
+                }).setScrollFactor(0).setDepth(30).setOrigin(0.5);
+                this.time.delayedCall(2000, () => { faintTxt.destroy(); this.scene.restart({ saveData: this.saveData }); });
+              }
+            },
+          });
+        }
+      }
+
+      // HUD 안내
+      const desertMsg = isResist
+        ? '🏜️ 물/땅 속성 저항! 갈증 면역'
+        : '🏜️ 사막 갈증! 속도 -2 · HP 3초마다 -1';
+      const desertColor = isResist ? '#60a5fa' : '#facc15';
+      this.desertHud = this.add.text(this.scale.width/2, 90, desertMsg, {
+        fontSize: '13px', fontFamily: 'Malgun Gothic', color: desertColor,
+        fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+      }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
+      this.time.delayedCall(3000, () => { if(this.desertHud) { this.desertHud.destroy(); this.desertHud = null; } });
+    }
   }
 
   drawMapDecoration(theme) {
