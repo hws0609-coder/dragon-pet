@@ -50,6 +50,7 @@ const SOUND_KEYS = {
   shoot:  'assets/sounds/shoot.mp3',        // 원거리 공격
   crow:   'assets/sounds/crow.mp3',         // 까마귀 등장
   demon:  'assets/sounds/demon.mp3',        // 악마 등장
+  spider: 'assets/sounds/spider.mp3',      // 거미 소환
 };
 
 const Sound = {
@@ -328,7 +329,7 @@ const Save = {
       bag: [], activePetId: null,
       collection: [],
       maxLevels: {},
-      items: { heal: 0, revive: 0, rainbowFragment: 0, rainbowCrystal: 0, crowFeather: 0 },
+      items: { heal: 0, revive: 0, rainbowFragment: 0, rainbowCrystal: 0, crowFeather: 0, spiderFang: 0 },
       coins: 40,
       cosmetics: { owned: [], equipped: { hat: null, shoes: null, weapon: null } },
       mapProgress: { zone: 5, x: 0 },
@@ -356,6 +357,7 @@ const Save = {
     if (data.items.rainbowFragment === undefined) data.items.rainbowFragment = 0;
     if (data.items.rainbowCrystal === undefined) data.items.rainbowCrystal = 0;
     if (data.items.crowFeather === undefined) data.items.crowFeather = 0;
+    if (data.items.spiderFang === undefined) data.items.spiderFang = 0;
     if (data.items.gun === undefined) data.items.gun = 0;
     return data;
   },
@@ -865,6 +867,10 @@ class MapScene extends Phaser.Scene {
     this.devilDmgTimer = null;
     this.friendlyCrow = null;
     this.friendlyCrowHp = 0;
+    this.spiders = [];
+    this.spiderShootTimer = null;
+    this.friendlySpiders = [];
+    this.friendlySpidersDead = false;
     this.vineHud = null;
     this.bhHud = null;
 
@@ -908,6 +914,23 @@ class MapScene extends Phaser.Scene {
         fontStyle:'bold', stroke:'#000', strokeThickness:3,
       }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
       this.time.delayedCall(3000, () => { if(this.caveHud) { this.caveHud.destroy(); this.caveHud = null; } });
+
+      // ── 동굴 지역 거미 시스템 ──
+      this.spiders = [];
+      this.friendlySpiders = [];
+      this.friendlySpidersDead = false;
+
+      // 1.5초마다 적 거미 스폰
+      this.spiderSpawnTimer = this.time.addEvent({
+        delay: 1500, loop: true,
+        callback: () => this.spawnEnemySpider(),
+      });
+
+      // 거미 구슬 장착 시 아군 거미 소환
+      const equippedHat = this.saveData.cosmetics?.equipped?.hat;
+      if (equippedHat === 'hat_spider') {
+        this.spawnFriendlySpiders();
+      }
     }
 
     // ── 불 지역(3번) 열기 효과: 동행 펫 3초마다 HP -1 ──
@@ -1379,11 +1402,12 @@ class MapScene extends Phaser.Scene {
     crow.alive = false;
     crow.destroy();
     this.crows = this.crows.filter(c => c.alive);
-    // 깃털 드롭
-    this.saveData.items.crowFeather++;
-    Save.save(this.saveData);
-    const { width, height } = this.scale;
-    const ft = this.add.text(width - 80, height - 60, '🪶 +1', {
+    // 깃털 60% 확률 드롭
+    if (Math.random() < 0.6) {
+      this.saveData.items.crowFeather++;
+      Save.save(this.saveData);
+      const { width, height } = this.scale;
+      const ft = this.add.text(width - 80, height - 60, '🪶 +1', {
       fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#d8b4fe',
       fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
     }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
@@ -1400,6 +1424,7 @@ class MapScene extends Phaser.Scene {
         fontStyle: 'bold', stroke: '#000', strokeThickness: 5,
       }).setScrollFactor(0).setDepth(30).setOrigin(0.5);
       this.tweens.add({ targets: msg, alpha: 0, duration: 2500, delay: 1500, onComplete: () => msg.destroy() });
+    }
     }
   }
 
@@ -1432,6 +1457,100 @@ class MapScene extends Phaser.Scene {
       this.tweens.add({ targets: dt, alpha: 0, duration: 1500, delay: 500, onComplete: () => dt.destroy() });
       // 3초 후 재소환
       this.time.delayedCall(3000, () => this.spawnFriendlyCrow());
+    }
+    return true;
+  }
+
+  spawnEnemySpider() {
+    if (!this.player) return;
+    Sound.play(this, 'spider', 0.2);
+    const edge = Phaser.Math.Between(0, 3);
+    let sx, sy;
+    if (edge === 0) { sx = Phaser.Math.Between(0, this.MAP_W); sy = 0; }
+    else if (edge === 1) { sx = this.MAP_W; sy = Phaser.Math.Between(0, this.MAP_H); }
+    else if (edge === 2) { sx = Phaser.Math.Between(0, this.MAP_W); sy = this.MAP_H; }
+    else { sx = 0; sy = Phaser.Math.Between(0, this.MAP_H); }
+    const spider = this.add.text(sx, sy, '🕷️', { fontSize: '28px' }).setOrigin(0.5).setDepth(7);
+    spider.hp = 1;
+    spider.alive = true;
+    this.spiders.push(spider);
+  }
+
+  killSpider(spider) {
+    spider.alive = false;
+    spider.destroy();
+    this.spiders = this.spiders.filter(s => s.alive);
+    // 거미이빨 60% 확률 드롭
+    if (Math.random() < 0.6) {
+      this.saveData.items.spiderFang++;
+      Save.save(this.saveData);
+      const { width, height } = this.scale;
+      const ft = this.add.text(width - 80, height - 60, '🦷 +1', {
+        fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#d8b4fe',
+        fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+      }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
+      this.tweens.add({ targets: ft, y: ft.y - 25, alpha: 0, duration: 700, onComplete: () => ft.destroy() });
+      // 100개 모이면 거미 구슬 자동 합성
+      if (this.saveData.items.spiderFang >= 100) {
+        this.saveData.items.spiderFang -= 100;
+        if (!this.saveData.cosmetics.owned.includes('hat_spider')) {
+          this.saveData.cosmetics.owned.push('hat_spider');
+        }
+        Save.save(this.saveData);
+        const msg = this.add.text(width/2, height/2, '🔴 거미 구슬 완성!', {
+          fontSize: '22px', fontFamily: 'Malgun Gothic', color: '#ef4444',
+          fontStyle: 'bold', stroke: '#000', strokeThickness: 5,
+        }).setScrollFactor(0).setDepth(30).setOrigin(0.5);
+        this.tweens.add({ targets: msg, alpha: 0, duration: 2500, delay: 1500, onComplete: () => msg.destroy() });
+      }
+    }
+  }
+
+  spawnFriendlySpiders() {
+    if (!this.player) return;
+    this.friendlySpiders.forEach(s => { if(s.label) s.label.destroy(); s.destroy(); });
+    this.friendlySpiders = [];
+    this.friendlySpidersDead = false;
+    const offsets = [{ x: -35, y: -25 }, { x: 35, y: -25 }, { x: 0, y: -45 }];
+    for (let i = 0; i < 3; i++) {
+      const sp = this.add.text(this.player.x + offsets[i].x, this.player.y + offsets[i].y, '🕷️', { fontSize: '24px' }).setOrigin(0.5).setDepth(9);
+      sp.setTint(0x44ff44);
+      sp.hp = 1;
+      sp.alive = true;
+      sp.offsetX = offsets[i].x;
+      sp.offsetY = offsets[i].y;
+      const label = this.add.text(sp.x, sp.y - 18, '아군', {
+        fontSize: '8px', fontFamily: 'Malgun Gothic', color: '#4ade80',
+        fontStyle: 'bold', stroke: '#000', strokeThickness: 2,
+      }).setOrigin(0.5).setDepth(9);
+      sp.label = label;
+      this.friendlySpiders.push(sp);
+    }
+    Sound.play(this, 'spider', 0.4);
+  }
+
+  damageFriendlySpider(amount) {
+    const alive = this.friendlySpiders.filter(s => s.alive);
+    if (alive.length === 0) return false;
+    const target = alive[0];
+    target.hp -= amount;
+    target.setTint(0xff0000);
+    this.time.delayedCall(150, () => { if(target.alive) target.setTint(0x44ff44); });
+    if (target.hp <= 0) {
+      target.alive = false;
+      if (target.label) target.label.destroy();
+      target.destroy();
+      const aliveNow = this.friendlySpiders.filter(s => s.alive);
+      if (aliveNow.length === 0 && !this.friendlySpidersDead) {
+        this.friendlySpidersDead = true;
+        const { width, height } = this.scale;
+        const dt = this.add.text(width/2, height/2 + 40, '🕷️💀 아군 거미가 모두 쓰러졌어요!', {
+          fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#4ade80',
+          fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+        }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
+        this.tweens.add({ targets: dt, alpha: 0, duration: 1500, delay: 500, onComplete: () => dt.destroy() });
+        this.time.delayedCall(10000, () => this.spawnFriendlySpiders());
+      }
     }
     return true;
   }
@@ -2153,6 +2272,70 @@ class MapScene extends Phaser.Scene {
         this.friendlyCrow.label.x = this.friendlyCrow.x;
         this.friendlyCrow.label.y = this.friendlyCrow.y - 22;
       }
+    }
+
+    // 거미 추적 + 접촉 데미지 (동굴 지역)
+    if (this.spiders && this.spiders.length > 0 && this.player) {
+      this.spiders.forEach(spider => {
+        if (!spider.alive) return;
+        const angle = Math.atan2(this.player.y - spider.y, this.player.x - spider.x);
+        spider.x += Math.cos(angle) * 5;
+        spider.y += Math.sin(angle) * 5;
+        const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, spider.x, spider.y);
+        if (dist < 35) {
+          if (this.friendlySpiders && this.friendlySpiders.filter(s => s.alive).length > 0) {
+            this.damageFriendlySpider(1);
+          } else {
+            const pet = this.saveData.bag.find(p => p.isActive && p.alive);
+            if (pet) { pet.hp = Math.max(0, pet.hp - 1); Save.save(this.saveData); this.updateHpBar(); }
+          }
+          this.killSpider(spider);
+        }
+      });
+      // 무기 자동 공격 (거미)
+      if (!this.spiderShootTimer) {
+        const wpn = this.equippedWeapon;
+        if (wpn) {
+          this.spiderShootTimer = this.time.addEvent({
+            delay: wpn.attackInterval || 1000, loop: true,
+            callback: () => {
+              const alive = this.spiders.filter(s => s.alive);
+              if (alive.length === 0) return;
+              let nearest = null, minD = Infinity;
+              alive.forEach(s => {
+                const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, s.x, s.y);
+                if (d < minD) { minD = d; nearest = s; }
+              });
+              if (!nearest || minD > 400) return;
+              Sound.play(this, wpn.range === 'melee' ? 'slash' : 'shoot', 0.3);
+              const bulletEmoji = wpn.range === 'melee' ? '💫' : '💥';
+              const bullet = this.add.text(this.player.x, this.player.y - 20, bulletEmoji, { fontSize: '16px' }).setOrigin(0.5).setDepth(10);
+              this.tweens.add({
+                targets: bullet, x: nearest.x, y: nearest.y,
+                duration: wpn.range === 'melee' ? 80 : 250,
+                onComplete: () => {
+                  bullet.destroy();
+                  if (nearest.alive) {
+                    nearest.hp -= (wpn.weaponAtk || 1);
+                    if (nearest.hp <= 0) this.killSpider(nearest);
+                  }
+                },
+              });
+            },
+          });
+        }
+      }
+    }
+
+    // 아군 거미 추적 (거미 구슬)
+    if (this.friendlySpiders && this.player) {
+      this.friendlySpiders.forEach(sp => {
+        if (!sp.alive) return;
+        const tx = this.player.x + sp.offsetX, ty = this.player.y + sp.offsetY;
+        sp.x += (tx - sp.x) * 0.12;
+        sp.y += (ty - sp.y) * 0.12;
+        if (sp.label) { sp.label.x = sp.x; sp.label.y = sp.y - 18; }
+      });
     }
 
     // 미니맵 플레이어 점 업데이트
@@ -3360,6 +3543,7 @@ class BagScene extends Phaser.Scene {
       {key:'rainbowFragment', emoji:'🌈',name:'무지개 조각', desc:'10개 모으면 수정 완성'},
       {key:'rainbowCrystal', emoji:'🔮',name:'무지개 수정', desc:'펫 1마리 레벨업!'},
       {key:'crowFeather', emoji:'🪶',name:'까마귀 깃털', desc:'100개 → 마녀 모자'},
+      {key:'spiderFang', emoji:'🦷',name:'거미 이빨', desc:'100개 → 거미 구슬'},
     ];
     defs.forEach((def,i)=>{
       const count=this.saveData.items[def.key]||0;
@@ -3421,6 +3605,8 @@ class BagScene extends Phaser.Scene {
       this.showCrystalPetSelect();
     } else if (key === 'crowFeather') {
       this.showMsg('까마귀 깃털 100개를 모으면 마녀 모자가 완성돼요!');
+    } else if (key === 'spiderFang') {
+      this.showMsg('거미 이빨 100개를 모으면 거미 구슬이 완성돼요!');
     }
   }
 
