@@ -1806,31 +1806,31 @@ class MapScene extends Phaser.Scene {
     if (this.blackHole && this.player) {
       const bhDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.blackHole.x, this.blackHole.y);
       if (bhDist < this.bhSuckRange) {
-        // 흡수 연출 후 랜덤 위치 텔레포트
+        // 흡수 연출 후 랜덤 지역 텔레포트
         const { width, height } = this.scale;
-        const suckTxt = this.add.text(width/2, height/2, '🕳️ 블랙홀에 빨려 들어갔어요!', {
+        const randZone = Phaser.Math.Between(1, 9);
+        const zoneName = ['','얼음','숲','불','동굴','마을','사막','구름','무지개','오로라'][randZone];
+        const suckTxt = this.add.text(width/2, height/2, `🕳️ 블랙홀에 빨려 들어갔어요!`, {
           fontSize: '18px', fontFamily: 'Malgun Gothic', color: '#c084fc',
           fontStyle: 'bold', stroke: '#000', strokeThickness: 4,
         }).setScrollFactor(0).setDepth(30).setOrigin(0.5);
-        // 화면 플래시
+        const destTxt = this.add.text(width/2, height/2 + 35, `→ ${zoneName} 지역으로 이동!`, {
+          fontSize: '15px', fontFamily: 'Malgun Gothic', color: '#e879f9',
+          fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+        }).setScrollFactor(0).setDepth(30).setOrigin(0.5);
         const flash = this.add.rectangle(width/2, height/2, width, height, 0x2d0060, 0.7)
           .setScrollFactor(0).setDepth(29).setOrigin(0.5);
-        // 랜덤 위치로 텔레포트
-        const newX = Phaser.Math.Between(100, this.MAP_W - 100);
-        const newY = Phaser.Math.Between(100, this.MAP_H - 100);
-        this.time.delayedCall(1200, () => {
-          this.player.x = newX;
-          this.player.y = newY;
-          this.saveData.mapProgress.px = newX;
-          this.saveData.mapProgress.py = newY;
+        this.time.delayedCall(1800, () => {
+          this.saveData.mapProgress.zone = randZone;
+          this.saveData.mapProgress.px = null;
+          this.saveData.mapProgress.py = null;
+          this.saveData.mapObjects = null;
           Save.save(this.saveData);
-          flash.destroy();
-          suckTxt.destroy();
-          if (this.bhHud) { this.bhHud.destroy(); this.bhHud = null; }
+          this.scene.restart({ saveData: this.saveData });
         });
-        // 블랙홀을 멀리 이동시켜서 연속 흡수 방지
-        this.blackHole.x = Phaser.Math.Between(100, this.MAP_W - 100);
-        this.blackHole.y = Phaser.Math.Between(100, this.MAP_H - 100);
+        // 연속 흡수 방지
+        this.blackHole.x = -9999;
+        this.blackHole.y = -9999;
       }
     }
   }
