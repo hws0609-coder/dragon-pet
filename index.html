@@ -3437,12 +3437,26 @@ class BattleScene extends Phaser.Scene {
 
     if (this.myPet.hp <= 0) {
       // 해골왕이 쓰러지면 실제 펫으로 교체
-      if (this.skeletonKingActive && this.realPet && this.realPet.alive) {
+      if (this.skeletonKingActive) {
         this.skeletonKingActive = false;
-        this.myPet = this.realPet;
-        this.showDamageLabel('☠️ 해골왕 전사! 내 펫 출전!', '#fbbf24');
-        this.time.delayedCall(700, () => this.drawBattle());
-        return;
+        // 실제 펫이 살아있고 HP가 있으면 교체
+        if (this.realPet && this.realPet.alive && this.realPet.hp > 0) {
+          this.myPet = this.realPet;
+          this.showDamageLabel('☠️ 해골왕 전사! 내 펫 출전!', '#fbbf24');
+          this.time.delayedCall(700, () => this.drawBattle());
+          return;
+        }
+        // 실제 펫도 못 싸우면 다음 펫 찾기
+        if (this.realPet) this.realPet.alive = false;
+        const nextPet = this.saveData.bag.find(p => p.alive && p.hp > 0);
+        if (nextPet) {
+          this.showDamageLabel('☠️ 해골왕 전사!', '#fbbf24');
+          this.time.delayedCall(700, () => this.scene.start('PetSwapScene', { saveData: this.saveData, wildPet: this.wildPet, wildDataId: this.wildDataId }));
+          return;
+        } else {
+          this.time.delayedCall(700, () => this.battleLose());
+          return;
+        }
       }
       this.myPet.alive = false;
       const nextPet = this.saveData.bag.find(p => p.alive && !p.isActive);
