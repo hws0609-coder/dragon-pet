@@ -324,7 +324,7 @@ const Save = {
       bag: [], activePetId: null,
       collection: [],
       maxLevels: {},
-      items: { heal: 0, revive: 0, rainbowFragment: 0, rainbowCrystal: 0 },
+      items: { heal: 0, revive: 0, rainbowFragment: 0, rainbowCrystal: 0, gun: 0 },
       coins: 40,
       cosmetics: { owned: [], equipped: { hat: null, shoes: null } },
       mapProgress: { zone: 5, x: 0 },
@@ -343,6 +343,7 @@ const Save = {
     if (data.cosmetics.equipped.shoes === undefined) data.cosmetics.equipped.shoes = null;
     if (data.items.rainbowFragment === undefined) data.items.rainbowFragment = 0;
     if (data.items.rainbowCrystal === undefined) data.items.rainbowCrystal = 0;
+    if (data.items.gun === undefined) data.items.gun = 0;
     return data;
   },
   load() {
@@ -1043,6 +1044,7 @@ class MapScene extends Phaser.Scene {
 
     // ── 오로라 지역(9번) 블랙홀: 맵 전역 배회 + 근접 시 흡수 ──
     this.blackHole = null;
+    this.blackHole2 = null;
     this.bhPullRange = 350;
     this.bhSuckRange = 90;
     if (zoneId === 9) {
@@ -1055,6 +1057,12 @@ class MapScene extends Phaser.Scene {
         this.tweens.add({ targets: bh, angle: 360, duration: 4000, repeat: -1 });
         this.blackHole = bh;
         this.moveBhToRandom();
+
+        const bh2 = this.add.text(this.MAP_W / 2, this.MAP_H * 3 / 4, '🕳️', { fontSize: '210px' }).setOrigin(0.5).setDepth(8);
+        this.tweens.add({ targets: bh2, scaleX: 1.15, scaleY: 1.15, duration: 900, yoyo: true, repeat: -1 });
+        this.tweens.add({ targets: bh2, angle: -360, duration: 3500, repeat: -1 });
+        this.blackHole2 = bh2;
+        this.moveBh2ToRandom();
       }
 
       // HUD 안내
@@ -1068,6 +1076,98 @@ class MapScene extends Phaser.Scene {
       }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
       this.time.delayedCall(3000, () => bhHud.destroy());
     }
+
+    // ── 무지개 지역(8번) 악마: 캐릭터 추적 + 총으로 퇴치 ──
+    this.devil = null;
+    this.devilHp = 0;
+    this.devilMaxHp = 5;
+    this.shootTimer = null;
+    if (zoneId === 8) {
+      this.devilHp = 5;
+      const dx = Phaser.Math.Between(200, this.MAP_W - 200);
+      const dy = Phaser.Math.Between(200, this.MAP_H - 200);
+      this.devil = this.add.text(dx, dy, '😈', { fontSize: '44px' }).setOrigin(0.5).setDepth(8);
+      this.tweens.add({ targets: this.devil, scaleX: 1.1, scaleY: 1.1, duration: 600, yoyo: true, repeat: -1 });
+
+      // 총 보유 시 자동 사격 타이머
+      if (this.saveData.items.gun) {
+        // 총 HUD 표시
+        this.gunHud = this.add.text(this.scale.width/2, 115, '🔫 자동 사격 중!', {
+          fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#60a5fa',
+          fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+        }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
+        this.shootTimer = this.time.addEvent({
+          delay: 1000,
+          loop: true,
+          callback: () => this.shootDevil(),
+        });
+      }
+
+      // HUD 안내
+      const devilMsg = this.saveData.items.gun
+        ? '😈 악마 출현! 총으로 퇴치하세요!'
+        : '😈 악마 출현! 상점에서 총을 구매하세요!';
+      const dHud = this.add.text(this.scale.width/2, 90, devilMsg, {
+        fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#f87171',
+        fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+      }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
+      this.time.delayedCall(3000, () => dHud.destroy());
+    }
+  }
+
+  shootDevil() {
+    if (!this.devil || !this.player || this.devilHp <= 0) return;
+    if (!this.devil.visible) return;
+
+    // 총알 이펙트
+    const bullet = this.add.text(this.player.x, this.player.y - 20, '💥', { fontSize: '18px' }).setOrigin(0.5).setDepth(10);
+    this.tweens.add({
+      targets: bullet,
+      x: this.devil.x, y: this.devil.y,
+      duration: 300,
+      onComplete: () => {
+        bullet.destroy();
+        if (this.devilHp <= 0) return;
+        this.devilHp--;
+
+        // 데미지 텍스트
+        const dmg = this.add.text(this.devil.x, this.devil.y - 30, `-1 (${this.devilHp}/${this.devilMaxHp})`, {
+          fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#f87171',
+          fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+        }).setOrigin(0.5).setDepth(11);
+        this.tweens.add({ targets: dmg, y: dmg.y - 25, alpha: 0, duration: 700, onComplete: () => dmg.destroy() });
+
+        // 히트 이펙트
+        this.devil.setTint(0xff0000);
+        this.time.delayedCall(150, () => { if(this.devil) this.devil.clearTint(); });
+
+        // 악마 사망
+        if (this.devilHp <= 0) {
+          this.devil.setVisible(false);
+          const { width, height } = this.scale;
+          const killTxt = this.add.text(width/2, height/2, '😈💀 악마를 물리쳤어요!', {
+            fontSize: '20px', fontFamily: 'Malgun Gothic', color: '#fbbf24',
+            fontStyle: 'bold', stroke: '#000', strokeThickness: 4,
+          }).setScrollFactor(0).setDepth(30).setOrigin(0.5);
+          this.tweens.add({ targets: killTxt, alpha: 0, duration: 2000, delay: 1000, onComplete: () => killTxt.destroy() });
+
+          // 10초 후 부활
+          this.time.delayedCall(10000, () => {
+            this.devilHp = this.devilMaxHp;
+            if (this.devil) {
+              this.devil.x = Phaser.Math.Between(200, this.MAP_W - 200);
+              this.devil.y = Phaser.Math.Between(200, this.MAP_H - 200);
+              this.devil.setVisible(true);
+              const rTxt = this.add.text(width/2, height/2, '😈 악마가 부활했어요!', {
+                fontSize: '18px', fontFamily: 'Malgun Gothic', color: '#f87171',
+                fontStyle: 'bold', stroke: '#000', strokeThickness: 4,
+              }).setScrollFactor(0).setDepth(30).setOrigin(0.5);
+              this.tweens.add({ targets: rTxt, alpha: 0, duration: 2000, delay: 1000, onComplete: () => rTxt.destroy() });
+            }
+          });
+        }
+      },
+    });
   }
 
   moveBhToRandom() {
@@ -1080,6 +1180,19 @@ class MapScene extends Phaser.Scene {
       targets: this.blackHole, x: tx, y: ty, duration,
       ease: 'Sine.easeInOut',
       onComplete: () => this.moveBhToRandom(),
+    });
+  }
+
+  moveBh2ToRandom() {
+    if (!this.blackHole2) return;
+    const tx = Phaser.Math.Between(100, this.MAP_W - 100);
+    const ty = Phaser.Math.Between(100, this.MAP_H - 100);
+    const dist = Phaser.Math.Distance.Between(this.blackHole2.x, this.blackHole2.y, tx, ty);
+    const duration = Math.max(3000, dist * 2.5);
+    this.tweens.add({
+      targets: this.blackHole2, x: tx, y: ty, duration,
+      ease: 'Sine.easeInOut',
+      onComplete: () => this.moveBh2ToRandom(),
     });
   }
 
@@ -1740,25 +1853,27 @@ class MapScene extends Phaser.Scene {
         }
       }
       // 블랙홀 근접 시 속도 감소 + 빨려들어가기
-      if (this.blackHole) {
-        const bhDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.blackHole.x, this.blackHole.y);
+      const bhs = [this.blackHole, this.blackHole2].filter(b => b);
+      let nearBh = false;
+      bhs.forEach(bh => {
+        const bhDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, bh.x, bh.y);
         if (bhDist < this.bhPullRange) {
           spd = Math.max(1, spd - 9);
-          // 블랙홀 방향으로 끌어당기기
           const pullForce = (1 - bhDist / this.bhPullRange) * 3;
-          const angle = Math.atan2(this.blackHole.y - this.player.y, this.blackHole.x - this.player.x);
+          const angle = Math.atan2(bh.y - this.player.y, bh.x - this.player.x);
           this.player.x += Math.cos(angle) * pullForce;
           this.player.y += Math.sin(angle) * pullForce;
-          if (!this.bhHud) {
-            this.bhHud = this.add.text(this.scale.width/2, 115, '🕳️ 블랙홀의 인력! 빨려 들어가고 있어요!', {
-              fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#c084fc',
-              fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
-            }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
-          }
-        } else if (this.bhHud) {
-          this.bhHud.destroy();
-          this.bhHud = null;
+          nearBh = true;
         }
+      });
+      if (nearBh && !this.bhHud) {
+        this.bhHud = this.add.text(this.scale.width/2, 115, '🕳️ 블랙홀의 인력! 빨려 들어가고 있어요!', {
+          fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#c084fc',
+          fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+        }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
+      } else if (!nearBh && this.bhHud) {
+        this.bhHud.destroy();
+        this.bhHud = null;
       }
       const nx = this.player.x + ndx * spd;
       const ny = this.player.y + ndy * spd;
@@ -1795,6 +1910,50 @@ class MapScene extends Phaser.Scene {
       this.caveSpotlight.fillStyle(0xffffff);
       this.caveSpotlight.fillCircle(screenX, screenY, this.caveRadius);
     }
+    // 악마 캐릭터 추적 (무지개 지역)
+    if (this.devil && this.devil.visible && this.player) {
+      const speed = 7;
+      const angle = Math.atan2(this.player.y - this.devil.y, this.player.x - this.devil.x);
+      this.devil.x += Math.cos(angle) * speed;
+      this.devil.y += Math.sin(angle) * speed;
+
+      // 악마 접촉 시 동행 펫 HP 감소 (초당 1)
+      const touchDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.devil.x, this.devil.y);
+      if (touchDist < 50) {
+        if (!this.devilDmgTimer) {
+          this.devilDmgTimer = this.time.addEvent({
+            delay: 1000, loop: true,
+            callback: () => {
+              const pet = this.saveData.bag.find(p => p.isActive && p.alive);
+              if (!pet) return;
+              pet.hp = Math.max(0, pet.hp - 1);
+              Save.save(this.saveData);
+              this.updateHpBar();
+              const { width, height } = this.scale;
+              const dt = this.add.text(width - 80, height - 80, '😈 -1', {
+                fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#f87171',
+                fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+              }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
+              this.tweens.add({ targets: dt, y: dt.y - 30, alpha: 0, duration: 800, onComplete: () => dt.destroy() });
+              if (pet.hp <= 0) {
+                pet.alive = false;
+                Save.save(this.saveData);
+                if (this.devilDmgTimer) { this.devilDmgTimer.remove(); this.devilDmgTimer = null; }
+                const ft = this.add.text(width/2, height/2, '😈 펫이 악마에게 쓰러졌어요!', {
+                  fontSize: '18px', fontFamily: 'Malgun Gothic', color: '#f87171',
+                  fontStyle: 'bold', stroke: '#000', strokeThickness: 4,
+                }).setScrollFactor(0).setDepth(30).setOrigin(0.5);
+                this.time.delayedCall(2000, () => { ft.destroy(); this.scene.restart({ saveData: this.saveData }); });
+              }
+            },
+          });
+        }
+      } else if (this.devilDmgTimer) {
+        this.devilDmgTimer.remove();
+        this.devilDmgTimer = null;
+      }
+    }
+
     // 미니맵 플레이어 점 업데이트
     if (this.minimapDot) {
       const { width } = this.scale;
@@ -1803,10 +1962,10 @@ class MapScene extends Phaser.Scene {
     }
 
     // 블랙홀 흡수 체크 (이동 여부와 무관하게 항상)
-    if (this.blackHole && this.player) {
-      const bhDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.blackHole.x, this.blackHole.y);
+    [this.blackHole, this.blackHole2].forEach(bh => {
+      if (!bh || !this.player) return;
+      const bhDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, bh.x, bh.y);
       if (bhDist < this.bhSuckRange) {
-        // 흡수 연출 후 랜덤 지역 텔레포트
         const { width, height } = this.scale;
         const randZone = Phaser.Math.Between(1, 9);
         const zoneName = ['','얼음','숲','불','동굴','마을','사막','구름','무지개','오로라'][randZone];
@@ -1829,10 +1988,12 @@ class MapScene extends Phaser.Scene {
           this.scene.restart({ saveData: this.saveData });
         });
         // 연속 흡수 방지
-        this.blackHole.x = -9999;
-        this.blackHole.y = -9999;
+        bh.x = -9999;
+        bh.y = -9999;
+        if (this.blackHole) { this.blackHole.x = -9999; this.blackHole.y = -9999; }
+        if (this.blackHole2) { this.blackHole2.x = -9999; this.blackHole2.y = -9999; }
       }
-    }
+    });
   }
 
   createMinimap() {
@@ -3395,6 +3556,7 @@ class ShopScene extends Phaser.Scene {
       {label:'🎩 모자 팔기',    sub:'구매가의 50%에 팔아요',        color:0x312e81,border:0xa855f7,fn:()=>this.showCosmeticSellMenu('hat')},
       {label:'👟 신발 팔기',    sub:'구매가의 50%에 팔아요',        color:0x1e3a5f,border:0x60a5fa,fn:()=>this.showCosmeticSellMenu('shoes')},
       {label:'✨ 캐릭터 꾸미기',sub:'코인으로 모자와 신발을 사요', color:0x4c1d95,border:0xa855f7,fn:()=>this.scene.start('CosmeticScene',{saveData:this.saveData})},
+      {label:'🔫 총 구매 (200🪙)',sub: this.saveData.items.gun ? '✅ 이미 보유 중' : '무지개 지역 악마 퇴치용', color:0x1f2937,border:0x6b7280,fn:()=>this.buyGun()},
     ];
     btns.forEach((b,i)=>{
       const y=110+i*70;
@@ -3579,6 +3741,22 @@ class ShopScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const t = this.add.text(width/2, height/2-30, msg, { fontSize:'16px', fontFamily:'Malgun Gothic', color:'#fb923c', stroke:'#000', strokeThickness:3 }).setOrigin(0.5).setDepth(60);
     this.time.delayedCall(1200, () => t.destroy());
+  }
+
+  buyGun() {
+    if (this.saveData.items.gun) {
+      this.showSellMsg('이미 총을 가지고 있어요!');
+      return;
+    }
+    if (this.saveData.coins < 200) {
+      this.showSellMsg('코인이 부족해요! (200🪙 필요)');
+      return;
+    }
+    this.saveData.coins -= 200;
+    this.saveData.items.gun = 1;
+    Save.save(this.saveData);
+    this.showSellMsg('🔫 총 구매 완료! 무지개 지역에서 악마를 퇴치하세요!');
+    this.time.delayedCall(1200, () => this.scene.restart({ saveData: this.saveData }));
   }
 }
 
