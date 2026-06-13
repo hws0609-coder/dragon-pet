@@ -324,9 +324,9 @@ const Save = {
       bag: [], activePetId: null,
       collection: [],
       maxLevels: {},
-      items: { heal: 0, revive: 0, rainbowFragment: 0, rainbowCrystal: 0, gun: 0 },
+      items: { heal: 0, revive: 0, rainbowFragment: 0, rainbowCrystal: 0 },
       coins: 40,
-      cosmetics: { owned: [], equipped: { hat: null, shoes: null } },
+      cosmetics: { owned: [], equipped: { hat: null, shoes: null, weapon: null } },
       mapProgress: { zone: 5, x: 0 },
       mapObjects: null,
       muted: false,
@@ -341,6 +341,14 @@ const Save = {
     if (!data.maxLevels) data.maxLevels = {};
     if (!data.cosmetics) data.cosmetics = { owned: [], equipped: { hat: null, shoes: null } };
     if (data.cosmetics.equipped.shoes === undefined) data.cosmetics.equipped.shoes = null;
+    if (data.cosmetics.equipped.weapon === undefined) data.cosmetics.equipped.weapon = null;
+    // gun을 items에서 weapon으로 마이그레이션
+    if (data.items.gun) {
+      if (!data.cosmetics.owned.includes('weapon_gun')) data.cosmetics.owned.push('weapon_gun');
+      data.cosmetics.equipped.weapon = 'weapon_gun';
+      delete data.items.gun;
+    }
+    if (data.items.gun !== undefined) delete data.items.gun;
     if (data.items.rainbowFragment === undefined) data.items.rainbowFragment = 0;
     if (data.items.rainbowCrystal === undefined) data.items.rainbowCrystal = 0;
     if (data.items.gun === undefined) data.items.gun = 0;
@@ -1090,22 +1098,25 @@ class MapScene extends Phaser.Scene {
       this.tweens.add({ targets: this.devil, scaleX: 1.1, scaleY: 1.1, duration: 600, yoyo: true, repeat: -1 });
 
       // 총 보유 시 자동 사격 타이머
-      if (this.saveData.items.gun) {
-        // 총 HUD 표시
-        this.gunHud = this.add.text(this.scale.width/2, 115, '🔫 자동 사격 중!', {
+      const weaponId = this.saveData.cosmetics?.equipped?.weapon;
+      const weaponData = weaponId ? PETS_DATA.cosmetics.find(c => c.id === weaponId) : null;
+      if (weaponData) {
+        this.equippedWeapon = weaponData;
+        // 무기 HUD 표시
+        this.gunHud = this.add.text(this.scale.width/2, 115, `${weaponData.emoji} ${weaponData.name} 장착 중!`, {
           fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#60a5fa',
           fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
         }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
         this.shootTimer = this.time.addEvent({
-          delay: 1000,
+          delay: weaponData.attackInterval || 1000,
           loop: true,
           callback: () => this.shootDevil(),
         });
       }
 
       // HUD 안내
-      const devilMsg = this.saveData.items.gun
-        ? '😈 악마 출현! 총으로 퇴치하세요!'
+      const devilMsg = weaponData
+        ? `😈 악마 출현! ${weaponData.emoji} ${weaponData.name}(으)로 퇴치하세요!`
         : '😈 악마 출현! 상점에서 총을 구매하세요!';
       const dHud = this.add.text(this.scale.width/2, 90, devilMsg, {
         fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#f87171',
@@ -1120,18 +1131,20 @@ class MapScene extends Phaser.Scene {
     if (!this.devil.visible) return;
 
     // 총알 이펙트
-    const bullet = this.add.text(this.player.x, this.player.y - 20, '💥', { fontSize: '18px' }).setOrigin(0.5).setDepth(10);
+    const wpn = this.equippedWeapon || { emoji:'🔫', weaponAtk:1, range:'mid-range' };
+    const bulletEmoji = wpn.range === 'melee' ? '💫' : '💥';
+    const bullet = this.add.text(this.player.x, this.player.y - 20, bulletEmoji, { fontSize: '18px' }).setOrigin(0.5).setDepth(10);
     this.tweens.add({
       targets: bullet,
       x: this.devil.x, y: this.devil.y,
-      duration: 300,
+      duration: wpn.range === 'melee' ? 100 : 300,
       onComplete: () => {
         bullet.destroy();
         if (this.devilHp <= 0) return;
-        this.devilHp--;
+        this.devilHp -= (wpn.weaponAtk || 1);
 
         // 데미지 텍스트
-        const dmg = this.add.text(this.devil.x, this.devil.y - 30, `-1 (${this.devilHp}/${this.devilMaxHp})`, {
+        const dmg = this.add.text(this.devil.x, this.devil.y - 30, `-${wpn.weaponAtk||1} (${this.devilHp}/${this.devilMaxHp})`, {
           fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#f87171',
           fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
         }).setOrigin(0.5).setDepth(11);
@@ -2896,6 +2909,7 @@ class BagScene extends Phaser.Scene {
       { label:`💊 아이템` },
       { label:`🎩 모자` },
       { label:`👟 신발` },
+      { label:`⚔️ 무기` },
     ];
     const TW = Math.floor((width-16)/4);
     const tabBgs=[], tabTxts=[];
@@ -2917,7 +2931,8 @@ class BagScene extends Phaser.Scene {
       if      (idx===0) this.renderPetCards(120, this.tabObjs);
       else if (idx===1) this.renderConsumableCards(120, this.tabObjs);
       else if (idx===2) this.renderCosmeticCards('hat',   100, this.tabObjs);
-      else              this.renderCosmeticCards('shoes', 100, this.tabObjs);
+      else if (idx===3) this.renderCosmeticCards('shoes', 100, this.tabObjs);
+      else              this.renderCosmeticCards('weapon',100, this.tabObjs);
     };
     switchTab(0);
     tabBgs.forEach((b,i)=>b.on('pointerdown',()=>switchTab(i)));
@@ -3282,7 +3297,7 @@ class BagScene extends Phaser.Scene {
       const c=PETS_DATA.cosmetics.find(x=>x.id===id);
       return c && c.type===type;
     });
-    const label=type==='hat'?'모자':'신발';
+    const label=type==='hat'?'모자':type==='shoes'?'신발':'무기';
     if(ownedIds.length===0){
       objs.push(this.add.text(width/2,height/2-40,`보유 ${label}이 없어요\n상점 꾸미기에서 구매해 보세요!`,
         {fontSize:'14px',fontFamily:'Malgun Gothic',color:'#6b7280',align:'center'}).setOrigin(0.5));
@@ -3555,8 +3570,8 @@ class ShopScene extends Phaser.Scene {
       {label:'💊 아이템 팔기',  sub:'체력회복·소환 아이템 판매',   color:0x14532d,border:0x4ade80,fn:()=>this.showConsumableSellMenu()},
       {label:'🎩 모자 팔기',    sub:'구매가의 50%에 팔아요',        color:0x312e81,border:0xa855f7,fn:()=>this.showCosmeticSellMenu('hat')},
       {label:'👟 신발 팔기',    sub:'구매가의 50%에 팔아요',        color:0x1e3a5f,border:0x60a5fa,fn:()=>this.showCosmeticSellMenu('shoes')},
-      {label:'✨ 캐릭터 꾸미기',sub:'코인으로 모자와 신발을 사요', color:0x4c1d95,border:0xa855f7,fn:()=>this.scene.start('CosmeticScene',{saveData:this.saveData})},
-      {label:'🔫 총 구매 (200🪙)',sub: this.saveData.items.gun ? '✅ 이미 보유 중' : '무지개 지역 악마 퇴치용', color:0x1f2937,border:0x6b7280,fn:()=>this.buyGun()},
+      {label:'✨ 캐릭터 꾸미기',sub:'모자·신발·무기를 구매해요', color:0x4c1d95,border:0xa855f7,fn:()=>this.scene.start('CosmeticScene',{saveData:this.saveData})},
+      
     ];
     btns.forEach((b,i)=>{
       const y=110+i*70;
@@ -3784,15 +3799,18 @@ class CosmeticScene extends Phaser.Scene {
     // 캐릭터 미리보기
     this.drawPreview(width / 2, 100);
 
-    // 탭 버튼 (모자 / 신발) — 미리보기 아래로 내림
+    // 탭 버튼 (모자 / 신발 / 무기)
     this.currentTab = 'hat';
     const tabY = 185;
-    const tabHat  = this.add.rectangle(width/2 - 75, tabY, 130, 36, 0x5b21b6).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    const tabHat  = this.add.rectangle(width/2 - 130, tabY, 110, 36, 0x5b21b6).setOrigin(0.5).setInteractive({ useHandCursor: true });
     tabHat.setStrokeStyle(2, 0xe879f9);
-    const tabHatTxt  = this.add.text(width/2 - 75, tabY, '🎩 모자', { fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#fff' }).setOrigin(0.5);
-    const tabShoe = this.add.rectangle(width/2 + 75, tabY, 130, 36, 0x1e1145).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    const tabHatTxt  = this.add.text(width/2 - 130, tabY, '🎩 모자', { fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#fff' }).setOrigin(0.5);
+    const tabShoe = this.add.rectangle(width/2, tabY, 110, 36, 0x1e1145).setOrigin(0.5).setInteractive({ useHandCursor: true });
     tabShoe.setStrokeStyle(2, 0x4c1d95);
-    const tabShoeTxt = this.add.text(width/2 + 75, tabY, '👟 신발', { fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#a78bfa' }).setOrigin(0.5);
+    const tabShoeTxt = this.add.text(width/2, tabY, '👟 신발', { fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#a78bfa' }).setOrigin(0.5);
+    const tabWeapon = this.add.rectangle(width/2 + 130, tabY, 110, 36, 0x1e1145).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    tabWeapon.setStrokeStyle(2, 0x4c1d95);
+    const tabWeaponTxt = this.add.text(width/2 + 130, tabY, '⚔️ 무기', { fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#a78bfa' }).setOrigin(0.5);
 
     // 아이템 목록 (탭별 표시)
     const allItems = PETS_DATA.cosmetics;
@@ -3815,12 +3833,16 @@ class CosmeticScene extends Phaser.Scene {
       tabShoe.setFillStyle(tab === 'shoes' ? 0x5b21b6 : 0x1e1145);
       tabShoe.setStrokeStyle(2, tab === 'shoes' ? 0xe879f9 : 0x4c1d95);
       tabShoeTxt.setColor(tab === 'shoes' ? '#fff' : '#a78bfa');
+      tabWeapon.setFillStyle(tab === 'weapon' ? 0x5b21b6 : 0x1e1145);
+      tabWeapon.setStrokeStyle(2, tab === 'weapon' ? 0xe879f9 : 0x4c1d95);
+      tabWeaponTxt.setColor(tab === 'weapon' ? '#fff' : '#a78bfa');
     };
 
     renderItems('hat');
 
     tabHat.on('pointerdown',  () => { this.currentTab = 'hat';   renderItems('hat'); });
     tabShoe.on('pointerdown', () => { this.currentTab = 'shoes'; renderItems('shoes'); });
+    tabWeapon.on('pointerdown', () => { this.currentTab = 'weapon'; renderItems('weapon'); });
 
     const backBtn = this.add.rectangle(width / 2, height - 32, 200, 42, 0x4c1d95).setOrigin(0.5).setInteractive({ useHandCursor: true });
     this.add.text(width / 2, height - 32, '← 상점으로', { fontSize: '15px', fontFamily: 'Malgun Gothic', color: '#fff' }).setOrigin(0.5);
