@@ -839,7 +839,7 @@
       "id": "shoes_1",
       "name": "강아지",
       "type": "shoes",
-      "price": 30,
+      "price": 39,
       "emoji": "🐶",
       "speed": 3.5
     },
@@ -847,7 +847,7 @@
       "id": "shoes_2",
       "name": "토끼",
       "type": "shoes",
-      "price": 30,
+      "price": 39,
       "emoji": "🐰",
       "speed": 4.5
     },
@@ -855,7 +855,7 @@
       "id": "shoes_3",
       "name": "곰",
       "type": "shoes",
-      "price": 40,
+      "price": 52,
       "emoji": "🐻",
       "speed": 3.0
     },
@@ -863,7 +863,7 @@
       "id": "shoes_4",
       "name": "판다",
       "type": "shoes",
-      "price": 50,
+      "price": 65,
       "emoji": "🐼",
       "speed": 3.0
     },
@@ -871,7 +871,7 @@
       "id": "shoes_5",
       "name": "호랑이",
       "type": "shoes",
-      "price": 60,
+      "price": 78,
       "emoji": "🐯",
       "speed": 5.5
     },
@@ -879,7 +879,7 @@
       "id": "shoes_6",
       "name": "사자",
       "type": "shoes",
-      "price": 70,
+      "price": 91,
       "emoji": "🦁",
       "speed": 5.0
     },
@@ -887,7 +887,7 @@
       "id": "shoes_7",
       "name": "돼지",
       "type": "shoes",
-      "price": 30,
+      "price": 39,
       "emoji": "🐷",
       "speed": 2.5
     },
@@ -895,7 +895,7 @@
       "id": "shoes_8",
       "name": "펭귄",
       "type": "shoes",
-      "price": 40,
+      "price": 52,
       "emoji": "🐧",
       "speed": 2.5
     },
@@ -903,7 +903,7 @@
       "id": "shoes_9",
       "name": "나비",
       "type": "shoes",
-      "price": 35,
+      "price": 46,
       "emoji": "🦋",
       "speed": 4.0
     },
@@ -911,7 +911,7 @@
       "id": "shoes_10",
       "name": "여우",
       "type": "shoes",
-      "price": 50,
+      "price": 65,
       "emoji": "🦊",
       "speed": 5.0
     },
@@ -919,7 +919,7 @@
       "id": "shoes_11",
       "name": "자동차",
       "type": "shoes",
-      "price": 50,
+      "price": 65,
       "emoji": "🚗",
       "speed": 6.0
     },
@@ -927,7 +927,7 @@
       "id": "shoes_12",
       "name": "레이싱카",
       "type": "shoes",
-      "price": 80,
+      "price": 104,
       "emoji": "🏎️",
       "speed": 8.0
     },
@@ -935,7 +935,7 @@
       "id": "shoes_13",
       "name": "버스",
       "type": "shoes",
-      "price": 60,
+      "price": 78,
       "emoji": "🚌",
       "speed": 5.0
     },
@@ -943,7 +943,7 @@
       "id": "shoes_14",
       "name": "로켓",
       "type": "shoes",
-      "price": 120,
+      "price": 156,
       "emoji": "🚀",
       "speed": 10.0
     },
@@ -951,7 +951,7 @@
       "id": "shoes_15",
       "name": "UFO",
       "type": "shoes",
-      "price": 100,
+      "price": 130,
       "emoji": "🛸",
       "speed": 9.0
     },
@@ -959,7 +959,7 @@
       "id": "shoes_16",
       "name": "자전거",
       "type": "shoes",
-      "price": 40,
+      "price": 52,
       "emoji": "🚲",
       "speed": 4.0
     },
@@ -967,7 +967,7 @@
       "id": "shoes_17",
       "name": "스쿠터",
       "type": "shoes",
-      "price": 55,
+      "price": 72,
       "emoji": "🛵",
       "speed": 6.0
     },
@@ -975,7 +975,7 @@
       "id": "shoes_18",
       "name": "헬리콥터",
       "type": "shoes",
-      "price": 90,
+      "price": 117,
       "emoji": "🚁",
       "speed": 7.0
     },
@@ -983,7 +983,7 @@
       "id": "shoes_19",
       "name": "기차",
       "type": "shoes",
-      "price": 65,
+      "price": 85,
       "emoji": "🚂",
       "speed": 7.0
     },
@@ -991,30 +991,39 @@
       "id": "shoes_20",
       "name": "돛배",
       "type": "shoes",
-      "price": 45,
+      "price": 59,
       "emoji": "⛵",
       "speed": 3.5
     },
     {
       "id": "hat_w1",
       "name": "검",
-      "type": "hat",
-      "price": 150,
-      "emoji": "⚔️"
+      "type": "weapon",
+      "price": 120,
+      "emoji": "⚔️",
+      "weaponAtk": 2,
+      "range": "melee",
+      "attackInterval": 0
     },
     {
       "id": "hat_w2",
       "name": "단검",
-      "type": "hat",
-      "price": 100,
-      "emoji": "🗡️"
+      "type": "weapon",
+      "price": 70,
+      "emoji": "🗡️",
+      "weaponAtk": 1,
+      "range": "melee",
+      "attackInterval": 0
     },
     {
       "id": "hat_w3",
       "name": "활",
-      "type": "hat",
-      "price": 120,
-      "emoji": "🏹"
+      "type": "weapon",
+      "price": 180,
+      "emoji": "🏹",
+      "weaponAtk": 1,
+      "range": "ranged",
+      "attackInterval": 2000
     },
     {
       "id": "hat_w4",
@@ -1029,6 +1038,16 @@
       "type": "hat",
       "price": 110,
       "emoji": "🛡️"
+    },
+    {
+      "id": "weapon_gun",
+      "name": "총",
+      "type": "weapon",
+      "price": 250,
+      "emoji": "🔫",
+      "weaponAtk": 1,
+      "range": "mid-range",
+      "attackInterval": 1000
     }
   ],
   "zones": [
