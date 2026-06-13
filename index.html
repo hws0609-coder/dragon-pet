@@ -2078,8 +2078,8 @@ class MapScene extends Phaser.Scene {
       this.crows.forEach(crow => {
         if (!crow.alive) return;
         const angle = Math.atan2(this.player.y - crow.y, this.player.x - crow.x);
-        crow.x += Math.cos(angle) * 2.5;
-        crow.y += Math.sin(angle) * 2.5;
+        crow.x += Math.cos(angle) * 6;
+        crow.y += Math.sin(angle) * 6;
         // 접촉 체크
         const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, crow.x, crow.y);
         if (dist < 40) {
