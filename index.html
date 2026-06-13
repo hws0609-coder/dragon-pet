@@ -4603,12 +4603,13 @@ class ShopScene extends Phaser.Scene {
       {label:'💊 아이템 팔기',  sub:'체력회복·소환 아이템 판매',   color:0x14532d,border:0x4ade80,fn:()=>this.showConsumableSellMenu()},
       {label:'🎩 모자 팔기',    sub:'구매가의 50%에 팔아요',        color:0x312e81,border:0xa855f7,fn:()=>this.showCosmeticSellMenu('hat')},
       {label:'👟 신발 팔기',    sub:'구매가의 50%에 팔아요',        color:0x1e3a5f,border:0x60a5fa,fn:()=>this.showCosmeticSellMenu('shoes')},
+      {label:'⚔️ 무기 팔기',    sub:'구매가의 50%에 팔아요',        color:0x7f1d1d,border:0xf87171,fn:()=>this.showCosmeticSellMenu('weapon')},
       {label:'✨ 캐릭터 꾸미기',sub:'모자·신발·무기를 구매해요', color:0x4c1d95,border:0xa855f7,fn:()=>this.scene.start('CosmeticScene',{saveData:this.saveData})},
       
     ];
     btns.forEach((b,i)=>{
-      const y=110+i*70;
-      const bg=this.add.rectangle(width/2,y,320,58,b.color).setOrigin(0.5).setInteractive({useHandCursor:true});
+      const y=100+i*60;
+      const bg=this.add.rectangle(width/2,y,320,50,b.color).setOrigin(0.5).setInteractive({useHandCursor:true});
       bg.setStrokeStyle(2,b.border);
       this.add.text(width/2,y-12,b.label,{fontSize:'17px',fontFamily:'Malgun Gothic',color:'#fff',fontStyle:'bold'}).setOrigin(0.5);
       this.add.text(width/2,y+12,b.sub,{fontSize:'11px',fontFamily:'Malgun Gothic',color:'#ddd6fe'}).setOrigin(0.5);
@@ -4758,8 +4759,8 @@ class ShopScene extends Phaser.Scene {
 
   showCosmeticSellMenu(type) {
     const { width, height } = this.scale;
-    const ownedIds=this.saveData.cosmetics.owned.filter(id=>{ const c=PETS_DATA.cosmetics.find(x=>x.id===id); return c&&c.type===type; });
-    const label=type==='hat'?'🎩 모자':'👟 신발';
+    const ownedIds=this.saveData.cosmetics.owned.filter(id=>{ const c=PETS_DATA.cosmetics.find(x=>x.id===id); return c&&c.type===type&&c.price>0; });
+    const label=type==='hat'?'🎩 모자':type==='shoes'?'👟 신발':'⚔️ 무기';
     const overlay=this.add.rectangle(width/2,height/2,width,height,0x000000,0.75).setDepth(40).setOrigin(0.5);
     const panel=this.add.rectangle(width/2,height/2,400,520,0x0f1a2e).setDepth(41).setOrigin(0.5);
     panel.setStrokeStyle(2,0x60a5fa);
