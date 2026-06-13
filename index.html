@@ -4460,7 +4460,7 @@ class CosmeticScene extends Phaser.Scene {
     const renderItems = (tab) => {
       this.itemObjs.forEach(o => o.destroy());
       this.itemObjs = [];
-      const filtered = allItems.filter(c => c.type === tab);
+      const filtered = allItems.filter(c => c.type === tab && c.price > 0);
       const startY = 235;
       filtered.forEach((item, i) => {
         const col = i % 4, row = Math.floor(i / 4);
