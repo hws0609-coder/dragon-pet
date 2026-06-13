@@ -2243,7 +2243,7 @@ class MapScene extends Phaser.Scene {
                 const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, c.x, c.y);
                 if (d < minD) { minD = d; nearest = c; }
               });
-              if (!nearest || minD > 400) return; // 사거리 400px 이내만 공격
+              if (!nearest || minD > 200) return; // 사거리 200px 이내만 공격
               Sound.play(this, wpn.range === 'melee' ? 'slash' : 'shoot', 0.3);
               const bulletEmoji = wpn.range === 'melee' ? '💫' : '💥';
               const bullet = this.add.text(this.player.x, this.player.y - 20, bulletEmoji, { fontSize: '16px' }).setOrigin(0.5).setDepth(10);
