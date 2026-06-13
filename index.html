@@ -627,6 +627,8 @@ class MapScene extends Phaser.Scene {
     }
     // 펫 이미지 로드 (동행 펫 표시용)
     Utils.queuePetImages(this);
+    // 전설의 수호신 이미지 로드
+    if (!this.textures.exists('legend-guardian')) this.load.image('legend-guardian', 'assets/items/legend-guardian.png');
     // 사운드 로드 (지역별 BGM 포함)
     Sound.queue(this);
     // 이미지 로드 실패해도 게임 진행
@@ -874,6 +876,9 @@ class MapScene extends Phaser.Scene {
     this.friendlyDragon = null;
     this.friendlyDragonHp = 0;
     this.friendlyDragonAtkTimer = null;
+    this.legendGuardian = null;
+    this.legendGuardianHp = 0;
+    this.legendGuardianAtkTimer = null;
     this.spiders = [];
     this.spiderShootTimer = null;
     this.friendlySpiders = [];
@@ -1232,6 +1237,9 @@ class MapScene extends Phaser.Scene {
     }
     if (globalHat === 'hat_1') {
       this.spawnFriendlyDragon();
+    }
+    if (globalHat === 'hat_legend_gem') {
+      this.spawnLegendGuardian();
     }
   }
 
@@ -1974,6 +1982,86 @@ class MapScene extends Phaser.Scene {
     return true;
   }
 
+  spawnLegendGuardian() {
+    if (!this.player) return;
+    Sound.play(this, 'dragon', 0.6);
+    if (this.legendGuardianAtkTimer) { this.legendGuardianAtkTimer.remove(); this.legendGuardianAtkTimer = null; }
+    this.legendGuardianHp = 30;
+    // 이미지가 있으면 이미지, 없으면 이모지
+    const texKey = 'legend-guardian';
+    if (this.textures.exists(texKey)) {
+      this.legendGuardian = this.add.image(this.player.x + 50, this.player.y - 50, texKey).setDepth(9);
+      const src = this.textures.get(texKey).getSourceImage();
+      this.legendGuardian.setScale(60 / src.height);
+    } else {
+      this.legendGuardian = this.add.text(this.player.x + 50, this.player.y - 50, '💠', { fontSize: '40px' }).setOrigin(0.5).setDepth(9);
+    }
+    this.legendGuardian.setTint(0x00ffcc);
+    this.tweens.add({ targets: this.legendGuardian, scaleX: (this.legendGuardian.scaleX || 1) * 1.08, scaleY: (this.legendGuardian.scaleY || 1) * 1.08, duration: 600, yoyo: true, repeat: -1 });
+    const label = this.add.text(this.player.x + 50, this.player.y - 80, '전설의 수호신', {
+      fontSize: '9px', fontFamily: 'Malgun Gothic', color: '#5eead4',
+      fontStyle: 'bold', stroke: '#000', strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(9);
+    this.legendGuardian.label = label;
+
+    // 수호신 공격 (0.25초마다, ATK 3, 400px)
+    this.legendGuardianAtkTimer = this.time.addEvent({
+      delay: 250, loop: true,
+      callback: () => {
+        if (!this.legendGuardian || this.legendGuardianHp <= 0) return;
+        const enemies = [];
+        if (this.spiders) this.spiders.filter(s => s.alive).forEach(s => enemies.push({ obj: s, type: 'spider' }));
+        if (this.crows) this.crows.filter(c => c.alive).forEach(c => enemies.push({ obj: c, type: 'crow' }));
+        if (this.skeletons) this.skeletons.filter(s => s.alive).forEach(s => enemies.push({ obj: s, type: 'skeleton' }));
+        if (this.devil && this.devil.visible && this.devilHp > 0) enemies.push({ obj: this.devil, type: 'devil' });
+        if (enemies.length === 0) return;
+        let nearest = null, minD = Infinity;
+        enemies.forEach(e => {
+          const d = Phaser.Math.Distance.Between(this.legendGuardian.x, this.legendGuardian.y, e.obj.x, e.obj.y);
+          if (d < minD) { minD = d; nearest = e; }
+        });
+        if (!nearest || minD > 400) return;
+        const bullet = this.add.text(this.legendGuardian.x, this.legendGuardian.y, '✨', { fontSize: '16px' }).setOrigin(0.5).setDepth(10);
+        this.tweens.add({
+          targets: bullet, x: nearest.obj.x, y: nearest.obj.y, duration: 120,
+          onComplete: () => {
+            bullet.destroy();
+            if (nearest.type === 'spider' && nearest.obj.alive) { nearest.obj.hp -= 3; if (nearest.obj.hp <= 0) this.killSpider(nearest.obj); }
+            else if (nearest.type === 'crow' && nearest.obj.alive) { nearest.obj.hp -= 3; if (nearest.obj.hp <= 0) this.killCrow(nearest.obj); }
+            else if (nearest.type === 'skeleton' && nearest.obj.alive) { nearest.obj.hp -= 3; if (nearest.obj.hp <= 0) this.killSkeleton(nearest.obj); }
+            else if (nearest.type === 'devil' && this.devilHp > 0) {
+              this.devilHp -= 3;
+              if (this.devilHp <= 0) { this.devil.setVisible(false);
+                this.time.delayedCall(10000, () => { this.devilHp = this.devilMaxHp; if(this.devil){this.devil.x=Phaser.Math.Between(200,this.MAP_W-200);this.devil.y=Phaser.Math.Between(200,this.MAP_H-200);this.devil.setVisible(true);Sound.play(this,'demon',0.5);} });
+              }
+            }
+          },
+        });
+      },
+    });
+  }
+
+  damageLegendGuardian(amount) {
+    if (!this.legendGuardian || this.legendGuardianHp <= 0) return false;
+    this.legendGuardianHp -= amount;
+    this.legendGuardian.setTint(0xff0000);
+    this.time.delayedCall(150, () => { if(this.legendGuardian && this.legendGuardianHp > 0) this.legendGuardian.setTint(0x00ffcc); });
+    if (this.legendGuardianHp <= 0) {
+      if (this.legendGuardianAtkTimer) { this.legendGuardianAtkTimer.remove(); this.legendGuardianAtkTimer = null; }
+      if (this.legendGuardian.label) this.legendGuardian.label.destroy();
+      this.legendGuardian.destroy();
+      this.legendGuardian = null;
+      const { width, height } = this.scale;
+      const dt = this.add.text(width/2, height/2 + 40, '💠💀 전설의 수호신이 쓰러졌어요!', {
+        fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#5eead4',
+        fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+      }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
+      this.tweens.add({ targets: dt, alpha: 0, duration: 2000, delay: 500, onComplete: () => dt.destroy() });
+      this.time.delayedCall(15000, () => this.spawnLegendGuardian());
+    }
+    return true;
+  }
+
   showAngelDialog() {
     const { width, height } = this.scale;
     const allObjs = [];
@@ -2593,6 +2681,7 @@ class MapScene extends Phaser.Scene {
             delay: 1000, loop: true,
             callback: () => {
               // 해골왕 → 아군거미 → 아군까마귀 → 펫 순서
+              if (this.legendGuardian && this.legendGuardianHp > 0) { this.damageLegendGuardian(1); return; }
               if (this.skeletonKing && this.skeletonKingHp > 0) { this.damageSkeletonKing(1); return; }
               if (this.friendlyDragon && this.friendlyDragonHp > 0) { this.damageFriendlyDragon(1); return; }
               if (this.auroraBarrier && this.auroraBarrierHp > 0) { this.damageAuroraBarrier(); return; }
@@ -2639,7 +2728,8 @@ class MapScene extends Phaser.Scene {
         // 접촉 체크
         const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, crow.x, crow.y);
         if (dist < 40) {
-          if (this.skeletonKing && this.skeletonKingHp > 0) { this.damageSkeletonKing(1); }
+          if (this.legendGuardian && this.legendGuardianHp > 0) { this.damageLegendGuardian(1); }
+          else if (this.skeletonKing && this.skeletonKingHp > 0) { this.damageSkeletonKing(1); }
           else if (this.friendlyDragon && this.friendlyDragonHp > 0) { this.damageFriendlyDragon(1); }
           else if (this.auroraBarrier && this.auroraBarrierHp > 0) { this.damageAuroraBarrier(); }
           else if (this.reflectShield && this.reflectShieldHp > 0) { this.damageReflectShield(); }
@@ -2704,7 +2794,8 @@ class MapScene extends Phaser.Scene {
         spider.y += Math.sin(angle) * 5;
         const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, spider.x, spider.y);
         if (dist < 35) {
-          if (this.skeletonKing && this.skeletonKingHp > 0) { this.damageSkeletonKing(1); }
+          if (this.legendGuardian && this.legendGuardianHp > 0) { this.damageLegendGuardian(1); }
+          else if (this.skeletonKing && this.skeletonKingHp > 0) { this.damageSkeletonKing(1); }
           else if (this.friendlyDragon && this.friendlyDragonHp > 0) { this.damageFriendlyDragon(1); }
           else if (this.auroraBarrier && this.auroraBarrierHp > 0) { this.damageAuroraBarrier(); }
           else if (this.reflectShield && this.reflectShieldHp > 0) { this.damageReflectShield(); }
@@ -2770,7 +2861,8 @@ class MapScene extends Phaser.Scene {
         const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, sk.x, sk.y);
         if (dist < 35) {
           // 해골왕 → 아군거미 → 아군까마귀 → 펫 순서로 데미지
-          if (this.skeletonKing && this.skeletonKingHp > 0) { this.damageSkeletonKing(1); }
+          if (this.legendGuardian && this.legendGuardianHp > 0) { this.damageLegendGuardian(1); }
+          else if (this.skeletonKing && this.skeletonKingHp > 0) { this.damageSkeletonKing(1); }
           else if (this.friendlyDragon && this.friendlyDragonHp > 0) { this.damageFriendlyDragon(1); }
           else if (this.auroraBarrier && this.auroraBarrierHp > 0) { this.damageAuroraBarrier(); }
           else if (this.reflectShield && this.reflectShieldHp > 0) { this.damageReflectShield(); }
@@ -2831,6 +2923,14 @@ class MapScene extends Phaser.Scene {
       this.reflectShield.x = this.player.x;
       this.reflectShield.y = this.player.y;
       if (this.reflectShield.label) { this.reflectShield.label.x = this.player.x; this.reflectShield.label.y = this.player.y - 70; }
+    }
+
+    // 전설의 수호신 추적
+    if (this.legendGuardian && this.legendGuardianHp > 0 && this.player) {
+      const tx = this.player.x + 50, ty = this.player.y - 50;
+      this.legendGuardian.x += (tx - this.legendGuardian.x) * 0.12;
+      this.legendGuardian.y += (ty - this.legendGuardian.y) * 0.12;
+      if (this.legendGuardian.label) { this.legendGuardian.label.x = this.legendGuardian.x; this.legendGuardian.label.y = this.legendGuardian.y - 30; }
     }
 
     // 미니맵 플레이어 점 업데이트
@@ -3845,6 +3945,27 @@ class BagScene extends Phaser.Scene {
     };
     switchTab(0);
     tabBgs.forEach((b,i)=>b.on('pointerdown',()=>switchTab(i)));
+
+    // 전설의 수호 보석 합성 체크
+    const owned = this.saveData.cosmetics.owned;
+    const hasAll = owned.includes('hat_skeleton') && owned.includes('hat_witch') && owned.includes('hat_spider') && owned.includes('hat_1') && (this.saveData.items.rainbowCrystal >= 1);
+    if (hasAll && !owned.includes('hat_legend_gem')) {
+      const gemBtn = this.add.rectangle(width/2, height - 80, 280, 38, 0xb45309).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      gemBtn.setStrokeStyle(2, 0xfbbf24);
+      this.add.text(width/2, height - 80, '💠 전설의 수호 보석 합성!', { fontSize: '14px', fontFamily: 'Malgun Gothic', color: '#fde047', fontStyle: 'bold' }).setOrigin(0.5);
+      gemBtn.on('pointerdown', () => {
+        // 재료 소모
+        this.saveData.cosmetics.owned = this.saveData.cosmetics.owned.filter(id => !['hat_skeleton','hat_witch','hat_spider','hat_1'].includes(id));
+        this.saveData.items.rainbowCrystal--;
+        // 장착 해제
+        if (['hat_skeleton','hat_witch','hat_spider','hat_1'].includes(this.saveData.cosmetics.equipped.hat)) this.saveData.cosmetics.equipped.hat = null;
+        // 전설 보석 지급
+        this.saveData.cosmetics.owned.push('hat_legend_gem');
+        Save.save(this.saveData);
+        this.showMsg('💠 전설의 수호 보석 완성!! 모자 탭에서 장착하세요!');
+        this.time.delayedCall(1200, () => this.scene.restart({ saveData: this.saveData }));
+      });
+    }
 
     // 하단 메뉴: 펫 강화 / 틀린문제 / 모험으로
     const fuseBtn=this.add.rectangle(width*0.22,height-36,118,42,0x6d28d9).setOrigin(0.5).setInteractive({useHandCursor:true});
