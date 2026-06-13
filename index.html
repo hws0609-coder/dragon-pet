@@ -52,6 +52,7 @@ const SOUND_KEYS = {
   demon:  'assets/sounds/demon.mp3',        // 악마 등장
   spider: 'assets/sounds/spider.mp3',      // 거미 소환
   skeleton:'assets/sounds/skeleton.mp3',   // 해골 등장
+  dragon: 'assets/sounds/dragon.mp3',     // 용 소환
 };
 
 const Sound = {
@@ -1814,6 +1815,7 @@ class MapScene extends Phaser.Scene {
 
   spawnFriendlyDragon() {
     if (!this.player) return;
+    Sound.play(this, 'dragon', 0.5);
     this.friendlyDragonHp = 10;
     this.friendlyDragon = this.add.text(this.player.x - 45, this.player.y - 50, '🐉', { fontSize: '36px' }).setOrigin(0.5).setDepth(9);
     this.friendlyDragon.setTint(0xffdd44);
