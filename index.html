@@ -869,6 +869,7 @@ class MapScene extends Phaser.Scene {
     this.devilDmgTimer = null;
     this.friendlyCrow = null;
     this.friendlyCrowHp = 0;
+    this.friendlyCrowAtkTimer = null;
     this.spiders = [];
     this.spiderShootTimer = null;
     this.friendlySpiders = [];
@@ -1457,6 +1458,7 @@ class MapScene extends Phaser.Scene {
 
   spawnFriendlyCrow() {
     if (!this.player) return;
+    if (this.friendlyCrowAtkTimer) { this.friendlyCrowAtkTimer.remove(); this.friendlyCrowAtkTimer = null; }
     this.friendlyCrowHp = 3;
     this.friendlyCrow = this.add.text(this.player.x + 40, this.player.y - 30, '🐦‍⬛', { fontSize: '28px' }).setOrigin(0.5).setDepth(9);
     this.friendlyCrow.setTint(0x00ccff);
@@ -1465,6 +1467,42 @@ class MapScene extends Phaser.Scene {
       fontStyle: 'bold', stroke: '#000', strokeThickness: 2,
     }).setOrigin(0.5).setDepth(9);
     this.friendlyCrow.label = label;
+
+    // 아군 까마귀 자동 공격 (1.5초마다)
+    this.friendlyCrowAtkTimer = this.time.addEvent({
+      delay: 1500, loop: true,
+      callback: () => {
+        if (!this.friendlyCrow || this.friendlyCrowHp <= 0) return;
+        const enemies = [];
+        if (this.spiders) this.spiders.filter(s => s.alive).forEach(s => enemies.push({ obj: s, type: 'spider' }));
+        if (this.crows) this.crows.filter(c => c.alive).forEach(c => enemies.push({ obj: c, type: 'crow' }));
+        if (this.skeletons) this.skeletons.filter(s => s.alive).forEach(s => enemies.push({ obj: s, type: 'skeleton' }));
+        if (this.devil && this.devil.visible && this.devilHp > 0) enemies.push({ obj: this.devil, type: 'devil' });
+        if (enemies.length === 0) return;
+        let nearest = null, minD = Infinity;
+        enemies.forEach(e => {
+          const d = Phaser.Math.Distance.Between(this.friendlyCrow.x, this.friendlyCrow.y, e.obj.x, e.obj.y);
+          if (d < minD) { minD = d; nearest = e; }
+        });
+        if (!nearest || minD > 300) return;
+        const bullet = this.add.text(this.friendlyCrow.x, this.friendlyCrow.y, '💨', { fontSize: '14px' }).setOrigin(0.5).setDepth(10);
+        this.tweens.add({
+          targets: bullet, x: nearest.obj.x, y: nearest.obj.y, duration: 200,
+          onComplete: () => {
+            bullet.destroy();
+            if (nearest.type === 'spider' && nearest.obj.alive) { nearest.obj.hp--; if (nearest.obj.hp <= 0) this.killSpider(nearest.obj); }
+            else if (nearest.type === 'crow' && nearest.obj.alive) { nearest.obj.hp--; if (nearest.obj.hp <= 0) this.killCrow(nearest.obj); }
+            else if (nearest.type === 'skeleton' && nearest.obj.alive) { nearest.obj.hp--; if (nearest.obj.hp <= 0) this.killSkeleton(nearest.obj); }
+            else if (nearest.type === 'devil' && this.devilHp > 0) {
+              this.devilHp--;
+              if (this.devilHp <= 0) { this.devil.setVisible(false);
+                this.time.delayedCall(10000, () => { this.devilHp = this.devilMaxHp; if(this.devil){this.devil.x=Phaser.Math.Between(200,this.MAP_W-200);this.devil.y=Phaser.Math.Between(200,this.MAP_H-200);this.devil.setVisible(true);Sound.play(this,'demon',0.5);} });
+              }
+            }
+          },
+        });
+      },
+    });
   }
 
   damageFriendlyCrow(amount) {
@@ -1473,6 +1511,7 @@ class MapScene extends Phaser.Scene {
     this.friendlyCrow.setTint(0xff0000);
     this.time.delayedCall(150, () => { if(this.friendlyCrow) this.friendlyCrow.setTint(0x00ccff); });
     if (this.friendlyCrowHp <= 0) {
+      if (this.friendlyCrowAtkTimer) { this.friendlyCrowAtkTimer.remove(); this.friendlyCrowAtkTimer = null; }
       if (this.friendlyCrow.label) this.friendlyCrow.label.destroy();
       this.friendlyCrow.destroy();
       this.friendlyCrow = null;
@@ -1655,10 +1694,11 @@ class MapScene extends Phaser.Scene {
     sk.alive = false;
     sk.destroy();
     this.skeletons = this.skeletons.filter(s => s.alive);
-    // 해골뼈 100% 드롭
-    this.saveData.items.skeletonBone++;
-    Save.save(this.saveData);
-    const { width, height } = this.scale;
+    // 해골뼈 50% 확률 드롭
+    if (Math.random() < 0.5) {
+      this.saveData.items.skeletonBone++;
+      Save.save(this.saveData);
+      const { width, height } = this.scale;
     const ft = this.add.text(width - 80, height - 40, '🦴 +1', {
       fontSize: '13px', fontFamily: 'Malgun Gothic', color: '#e5e7eb',
       fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
@@ -1677,6 +1717,7 @@ class MapScene extends Phaser.Scene {
       }).setScrollFactor(0).setDepth(30).setOrigin(0.5);
       this.tweens.add({ targets: msg, alpha: 0, duration: 2500, delay: 1500, onComplete: () => msg.destroy() });
     }
+    }
   }
 
   spawnSkeletonKing() {
@@ -1690,7 +1731,7 @@ class MapScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(9);
     this.skeletonKing.label = label;
 
-    // 해골왕 자동 공격 (1초마다, ATK 40 → 적 즉사)
+    // 해골왕 자동 공격 (1초마다, ATK 30)
     this.skeletonKingAtkTimer = this.time.addEvent({
       delay: 1000, loop: true,
       callback: () => {
@@ -1712,11 +1753,11 @@ class MapScene extends Phaser.Scene {
           targets: bullet, x: nearest.obj.x, y: nearest.obj.y, duration: 150,
           onComplete: () => {
             bullet.destroy();
-            if (nearest.type === 'spider' && nearest.obj.alive) { nearest.obj.hp -= 40; if (nearest.obj.hp <= 0) this.killSpider(nearest.obj); }
-            else if (nearest.type === 'crow' && nearest.obj.alive) { nearest.obj.hp -= 40; if (nearest.obj.hp <= 0) this.killCrow(nearest.obj); }
-            else if (nearest.type === 'skeleton' && nearest.obj.alive) { nearest.obj.hp -= 40; if (nearest.obj.hp <= 0) this.killSkeleton(nearest.obj); }
+            if (nearest.type === 'spider' && nearest.obj.alive) { nearest.obj.hp -= 30; if (nearest.obj.hp <= 0) this.killSpider(nearest.obj); }
+            else if (nearest.type === 'crow' && nearest.obj.alive) { nearest.obj.hp -= 30; if (nearest.obj.hp <= 0) this.killCrow(nearest.obj); }
+            else if (nearest.type === 'skeleton' && nearest.obj.alive) { nearest.obj.hp -= 30; if (nearest.obj.hp <= 0) this.killSkeleton(nearest.obj); }
             else if (nearest.type === 'devil' && this.devilHp > 0) {
-              this.devilHp -= 40;
+              this.devilHp -= 30;
               if (this.devilHp <= 0) { this.devil.setVisible(false);
                 this.time.delayedCall(10000, () => { this.devilHp = this.devilMaxHp; if(this.devil){this.devil.x=Phaser.Math.Between(200,this.MAP_W-200);this.devil.y=Phaser.Math.Between(200,this.MAP_H-200);this.devil.setVisible(true);Sound.play(this,'demon',0.5);} });
               }
@@ -3171,7 +3212,7 @@ class BattleScene extends Phaser.Scene {
     // 해골 반지 장착 시 해골왕 선투입
     const hat = this.saveData.cosmetics?.equipped?.hat;
     if (hat === 'hat_skeleton' && this.realPet) {
-      this.myPet = { name: '☠️ 해골왕', type: '어둠', level: 99, hp: 10, maxHp: 10, atk: 40, xp: 0, xpToNext: 999, alive: true, id: '_skeleton_king', grade: 'legend', isActive: true };
+      this.myPet = { name: '☠️ 해골왕', type: '어둠', level: 99, hp: 10, maxHp: 10, atk: 30, xp: 0, xpToNext: 999, alive: true, id: '_skeleton_king', grade: 'legend', isActive: true };
       this.skeletonKingActive = true;
     } else {
       this.myPet = this.realPet;
