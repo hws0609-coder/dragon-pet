@@ -1827,9 +1827,9 @@ class MapScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(9);
     this.friendlyDragon.label = label;
 
-    // 수호용 불꽃 공격 (1초마다, 300px)
+    // 수호용 불꽃 공격 (0.5초마다, 300px)
     this.friendlyDragonAtkTimer = this.time.addEvent({
-      delay: 1000, loop: true,
+      delay: 500, loop: true,
       callback: () => {
         if (!this.friendlyDragon || this.friendlyDragonHp <= 0) return;
         const enemies = [];
