@@ -926,11 +926,7 @@ class MapScene extends Phaser.Scene {
         callback: () => this.spawnEnemySpider(),
       });
 
-      // 거미 구슬 장착 시 아군 거미 소환
-      const equippedHat = this.saveData.cosmetics?.equipped?.hat;
-      if (equippedHat === 'hat_spider') {
-        this.spawnFriendlySpiders();
-      }
+      // 거미 구슬 아군 소환은 create() 끝에서 범용 처리
     }
 
     // ── 불 지역(3번) 열기 효과: 동행 펫 3초마다 HP -1 ──
@@ -1106,11 +1102,7 @@ class MapScene extends Phaser.Scene {
         callback: () => this.spawnEnemyCrow(),
       });
 
-      // 마녀 모자 장착 시 아군 까마귀 소환
-      const equippedHat = this.saveData.cosmetics?.equipped?.hat;
-      if (equippedHat === 'hat_witch') {
-        this.spawnFriendlyCrow();
-      }
+      // 마녀 모자 아군 소환은 create() 끝에서 범용 처리
     }
 
     // ── 오로라 지역(9번) 블랙홀: 맵 전역 배회 + 근접 시 흡수 ──
@@ -1185,6 +1177,15 @@ class MapScene extends Phaser.Scene {
         fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
       }).setScrollFactor(0).setDepth(25).setOrigin(0.5);
       this.time.delayedCall(3000, () => dHud.destroy());
+    }
+
+    // ── 모든 지역 공통: 특수 모자 아군 소환 ──
+    const globalHat = this.saveData.cosmetics?.equipped?.hat;
+    if (globalHat === 'hat_witch') {
+      this.spawnFriendlyCrow();
+    }
+    if (globalHat === 'hat_spider') {
+      this.spawnFriendlySpiders();
     }
   }
 
