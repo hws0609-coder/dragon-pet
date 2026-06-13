@@ -7,8 +7,8 @@
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #1a0a3e; display: flex; justify-content: center; align-items: center; width: 100vw; height: 100vh; overflow: hidden; margin: 0; padding: 0; font-family: 'Malgun Gothic', sans-serif; }
-#game-container { width: 100vw; height: 100vh; position: relative; }
+body { background: #1a0a3e; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; font-family: 'Malgun Gothic', sans-serif; }
+#game-container { width: 600px; height: 800px; position: relative; }
 canvas { display: block; }
 </style>
 </head>
@@ -1984,8 +1984,8 @@ class BattleScene extends Phaser.Scene {
     const sub=this.add.text(width/2,40,'효과적 ×1.5  |  불리 ×0.75  |  전설 면역',{fontSize:'10px',fontFamily:'Malgun Gothic',color:'#a78bfa'}).setDepth(42).setOrigin(0.5);
     const allObjs=[overlay,panel,title,sub];
     const chart=PETS_DATA.typeChart;
-    const emoji={'불꽃':'🔥','물':'💧','풀':'🌿','전기':'⚡','얼음':'❄️','땅':'🏔️','바람':'🌪️','어둠':'🌑','에스퍼':'🔮','페어리':'🧚','빛':'✨','노말':'⭐'};
-    const colors={'불꽃':'#f97316','물':'#3b82f6','풀':'#22c55e','전기':'#eab308','얼음':'#67e8f9','땅':'#a16207','바람':'#86efac','어둠':'#7c3aed','에스퍼':'#d8b4fe','페어리':'#f9a8d4','빛':'#fde047','노말':'#9ca3af'};
+    const emoji={'불꽃':'🔥','물':'💧','풀':'🌿','전기':'⚡','얼음':'❄️','땅':'🏔️','바람':'🌪️','어둠':'🌑','에스퍼':'🔮','페어리':'🧚','빛':'✨','노말':'⭐','독':'☠️'};
+    const colors={'불꽃':'#f97316','물':'#3b82f6','풀':'#22c55e','전기':'#eab308','얼음':'#67e8f9','땅':'#a16207','바람':'#86efac','어둠':'#7c3aed','에스퍼':'#d8b4fe','페어리':'#f9a8d4','빛':'#fde047','노말':'#9ca3af','독':'#a855f7'};
     let y=62;
     Object.keys(chart).forEach(type=>{
       const strong=chart[type];
@@ -2602,11 +2602,13 @@ class TypeChartScene extends Phaser.Scene {
     const typeColors = {
       '불꽃':'#f97316','물':'#3b82f6','풀':'#22c55e','전기':'#eab308',
       '얼음':'#67e8f9','땅':'#a16207','바람':'#86efac','어둠':'#7c3aed',
-      '에스퍼':'#d8b4fe','페어리':'#f9a8d4','빛':'#fde047','노말':'#9ca3af'
+      '에스퍼':'#d8b4fe','페어리':'#f9a8d4','빛':'#fde047','노말':'#9ca3af',
+      '독':'#a855f7'
     };
     const typeEmoji = {
       '불꽃':'🔥','물':'💧','풀':'🌿','전기':'⚡','얼음':'❄️','땅':'🏔️',
-      '바람':'🌪️','어둠':'🌑','에스퍼':'🔮','페어리':'🧚','빛':'✨','노말':'⭐'
+      '바람':'🌪️','어둠':'🌑','에스퍼':'🔮','페어리':'🧚','빛':'✨','노말':'⭐',
+      '독':'☠️'
     };
 
     const types = Object.keys(typeChart);
