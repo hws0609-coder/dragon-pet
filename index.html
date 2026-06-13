@@ -3569,6 +3569,10 @@ class BattleScene extends Phaser.Scene {
       // 해골왕이 쓰러지면 실제 펫으로 교체
       if (this.skeletonKingActive) {
         this.skeletonKingActive = false;
+        // 해골 반지 제거 (다시 모아야 함)
+        this.saveData.cosmetics.owned = this.saveData.cosmetics.owned.filter(id => id !== 'hat_skeleton');
+        if (this.saveData.cosmetics.equipped.hat === 'hat_skeleton') this.saveData.cosmetics.equipped.hat = null;
+        Save.save(this.saveData);
         // 실제 펫이 살아있고 HP가 있으면 교체
         if (this.realPet && this.realPet.alive && this.realPet.hp > 0) {
           this.myPet = this.realPet;
