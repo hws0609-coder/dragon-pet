@@ -853,6 +853,24 @@ class MapScene extends Phaser.Scene {
 
     // ── 이동 상태 ──
     this.moveDir = { x: 0, y: 0 };
+
+    // ── 전투/지역 효과 초기화 ──
+    this.equippedWeapon = null;
+    this.shootTimer = null;
+    this.crowShootTimer = null;
+    this.crows = [];
+    this.devil = null;
+    this.devilHp = 0;
+    this.devilMaxHp = 5;
+    this.devilDmgTimer = null;
+    this.friendlyCrow = null;
+    this.friendlyCrowHp = 0;
+    this.vineHud = null;
+    this.bhHud = null;
+
+    // 현재 장착 무기 로드
+    const weaponId = this.saveData.cosmetics?.equipped?.weapon;
+    this.equippedWeapon = weaponId ? PETS_DATA.cosmetics.find(c => c.id === weaponId) : null;
     // 탈것에 따른 이동 속도 (기본 3, 장착 시 해당 speed 적용)
     const shoeId = this.saveData.cosmetics?.equipped?.shoes;
     const shoeSpeedItem = shoeId ? PETS_DATA.cosmetics.find(c => c.id === shoeId) : null;
@@ -1120,11 +1138,9 @@ class MapScene extends Phaser.Scene {
       Sound.play(this, 'demon', 0.5);
       this.tweens.add({ targets: this.devil, scaleX: 1.1, scaleY: 1.1, duration: 600, yoyo: true, repeat: -1 });
 
-      // 총 보유 시 자동 사격 타이머
-      const weaponId = this.saveData.cosmetics?.equipped?.weapon;
-      const weaponData = weaponId ? PETS_DATA.cosmetics.find(c => c.id === weaponId) : null;
-      if (weaponData) {
-        this.equippedWeapon = weaponData;
+      // 무기 장착 시 자동 사격 타이머
+      if (this.equippedWeapon) {
+        const weaponData = this.equippedWeapon;
         // 무기 HUD 표시
         this.gunHud = this.add.text(this.scale.width/2, 115, `${weaponData.emoji} ${weaponData.name} 장착 중!`, {
           fontSize: '12px', fontFamily: 'Malgun Gothic', color: '#60a5fa',
@@ -1354,7 +1370,7 @@ class MapScene extends Phaser.Scene {
     else if (edge === 2) { cx = Phaser.Math.Between(0, this.MAP_W); cy = this.MAP_H; }
     else { cx = 0; cy = Phaser.Math.Between(0, this.MAP_H); }
     const crow = this.add.text(cx, cy, '🐦‍⬛', { fontSize: '30px' }).setOrigin(0.5).setDepth(7);
-    crow.hp = 1;
+    crow.hp = 3;
     crow.alive = true;
     this.crows.push(crow);
   }
@@ -2095,19 +2111,19 @@ class MapScene extends Phaser.Scene {
       });
       // 무기 자동 공격 (가장 가까운 까마귀)
       if (!this.crowShootTimer && this.crows.length > 0) {
-        const weaponId = this.saveData.cosmetics?.equipped?.weapon;
-        const wpn = weaponId ? PETS_DATA.cosmetics.find(c => c.id === weaponId) : null;
+        const wpn = this.equippedWeapon;
         if (wpn) {
           this.crowShootTimer = this.time.addEvent({
             delay: wpn.attackInterval || 1000, loop: true,
             callback: () => {
               const alive = this.crows.filter(c => c.alive);
               if (alive.length === 0) return;
-              let nearest = alive[0], minD = Infinity;
+              let nearest = null, minD = Infinity;
               alive.forEach(c => {
                 const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, c.x, c.y);
                 if (d < minD) { minD = d; nearest = c; }
               });
+              if (!nearest || minD > 400) return; // 사거리 400px 이내만 공격
               Sound.play(this, wpn.range === 'melee' ? 'slash' : 'shoot', 0.3);
               const bulletEmoji = wpn.range === 'melee' ? '💫' : '💥';
               const bullet = this.add.text(this.player.x, this.player.y - 20, bulletEmoji, { fontSize: '16px' }).setOrigin(0.5).setDepth(10);
